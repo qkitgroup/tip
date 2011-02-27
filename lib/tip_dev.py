@@ -37,37 +37,44 @@ class Current_Dev(object):
 
 class Heater_Dev(object):
     class dummyheater(object):
-          def set_output0(self,value):
-		pass
-          def set_output1(self,value):
-		pass
+        def set_output0(self,value):
+            pass
+        def set_output1(self,value):
+            pass
 
     def __init__(self,DATA):
-	if DATA.config.getboolean('debug','dummymode'):
-		self.HDev = self.dummyheater()
-	elif DATA.config.get('Heater',"Output_device").strip() == "LabJack":
-		try:
-			import devices.LabJack as LabJack
-			self.HDev = LabJack.LabJack()
-		except:
-			print("LabJack not found, using dummy heater.")
-			self.HDev = self.dummyheater()
-	elif DATA.config.get('Heater',"Output_device").strip() == "NI-DAQ":
-		try:
-			import devices.nidaq4 as nidaq
-			self.HDev = nidaq
-		except:
-			print("NI-DAQ not found, using dummy heater.")
-			self.HDev = self.dummyheater()
-	
-		
+        if DATA.config.getboolean('debug','dummymode'):
+            self.HDev = self.dummyheater()
+            
+        elif DATA.config.get('Heater',"Output_device").strip() == "LabJack":
+            try:
+                import devices.LabJack as LabJack
+                self.HDev = LabJack.LabJack()
+            except:
+                print("LabJack not found, using dummy heater.")
+                self.HDev = self.dummyheater()
+        elif DATA.config.get('Heater',"Output_device").strip() == "NI-DAQ":
+            try:
+                import devices.nidaq4 as nidaq
+                self.HDev = nidaq
+            except:
+                print("NI-DAQ not found, using dummy heater.")
+                self.HDev = self.dummyheater()
+        else:
+            pass
+
+
     def set_Heat(self,value):
         # calculate Heat for Black Fridge (R=600Ohm)
         if value < 0 :
             value = 0
         OUT_Volt = math.sqrt(value*480)
         print "Set Heat to"+str(OUT_Volt)
-        return self.HDev.set_output0(OUT_Volt)
+        # sanity check
+        if OUT_Volt > 0.999:
+            OUT_Volt = 0.999
+        self.HDev.set_output0(OUT_Volt)
+        return OUT_Volt
 
     def set_Heat_High_res(self,value):
         self.HDev.set_output1(value)
@@ -80,31 +87,49 @@ class IO_worker(Thread):
         #self.rate = Rate_Dev()
         #print self.DATA.config.get('RBridge', 'GPIB_Addr')
         #time.sleep(2)
-	        
+
         self.RBR = tip_R_Bridge.R_bridge(self.DATA)
         self.HTR = Heater_Dev(self.DATA)
         
         #self.curr = Current_Dev()
 
-    def run(self): 
+    def run(self):
+        #set initial values
+        BRange = self.DATA.bridge.get_Range()
         while True:
             if not self.DATA.Running:
                 return
-            #self.DATA.set_Rate(self.rate.getRate())
+            
+            # check if the range changed, this is something like an ISR
+            if BRange != self.DATA.bridge.get_Range():
+                BRange = self.DATA.bridge.get_Range()
+                # set the new range, AVS47 waits 3 secs
+                NR = self.RBR.set_Range(BRange)
+                if NR!=BRange:
+                    print "Range change failed"
+            
+            #update the values in the storage
             R = self.RBR.get_R()
+            self.DATA.set_last_Res(R)
             T = self.RBR.get_T_from_R(R)
             self.DATA.set_Temp(T)
+            ## for do not heat to much the mixing chamber
+            if T > 0.7:
+                self.HTR.set_Heat(0)
+                self.DATA.set_ctrl_Temp(0)
+                
             NHW,error = self.DATA.PID.update_Heat(T)
-            #print NHW,error
             # set the new heating power from pid
-            self.HTR.set_Heat(NHW)
+            HT=self.HTR.set_Heat(NHW)
+            self.DATA.set_Heat(HT)
             if self.DATA.debug:
-            	print "T=%.2fmK R=%.2fOhm Heat:%.4f" % (T*1000,R,NHW*1e6)
-            self.DATA.set_Heat(NHW)
+            	print "T=%.2fmK R=%.2fOhm Heat %0.4f(V) %.4f(uW)" % (T*1000,R,HT,HT**2/480*1e6)
             self.DATA.set_pidE(error)
-            self.DATA.set_last_Res(R)
-            # set the next current 
+            
+            # wait for the next turn
             time.sleep(self.DATA.cycle_time)
+            
+            # kill thread
             if not self.DATA.Running:
                 return
 

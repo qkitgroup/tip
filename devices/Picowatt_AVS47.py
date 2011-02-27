@@ -233,7 +233,7 @@ class Picowatt_AVS47(Instrument):
 
         # connect the MAV bit to the SRQ
         self._visainstrument.write("*ESE 1;*SRE 32")
-        time.sleep(1)
+        #time.sleep(1)
         # Get the next ADC conversion into the controllers buffer
         self._visainstrument.write("ADC;")
         self._visainstrument.write("AVE 2")
@@ -242,11 +242,12 @@ class Picowatt_AVS47(Instrument):
         # initiate the reading
         #self._visainstrument.write("RES ?; *OPC")
         #self._visainstrument.write("RES ?")
+        self._visainstrument.write("AVE ?")
         i=0
-        while(not int(self._get_overload(self))):
+        while(not int(self._get_overload())):
             i+=1
 
-            if i>10:
+            if i>20:
                 print "AVS47 claims an overload"
                 break
             
@@ -255,8 +256,8 @@ class Picowatt_AVS47(Instrument):
         #self._visainstrument.write("*OPC")
         
     def _get_resistance(self):
-        self._request_resistance()
-    
+        #self._request_resistance()
+        self._request_ave_resistance()
         # int sleep_time_ms=500
         #time.sleep(1)
         if self._message_available():
@@ -353,8 +354,10 @@ class Picowatt_AVS47(Instrument):
             cmd="ARN 1"
         else:
             self._visainstrument.write("ARN 0")
-            cmd="RAN " + str(n)
+            cmd="RAN " + str(int(n))
         self._visainstrument.write(cmd)
+        time.sleep(3)
+        return self._get_range()
 
     def _get_range(self):
         return int(self._visainstrument.ask("RAN ?").split()[1])
@@ -364,7 +367,7 @@ class Picowatt_AVS47(Instrument):
     def _get_autorange(self):
         return int(self._visainstrument.ask("ARN ?").split()[1])
     def _set_excitation(self,n):
-        cmd="EXC " + str(n)
+        cmd="EXC " + str(int(n))
         self._visainstrument.write(cmd)
 
     def _get_excitation(self):
@@ -388,6 +391,17 @@ class Picowatt_AVS47(Instrument):
         #time.sleep(1)
         #print int(self._visainstrument._get_spoll().rstrip())
         return self._visainstrument.read().split()[1]
+    def _get_ave(self):
+        self._visainstrument.write("ADC")
+        self._visainstrument.write("AVE 2")
+        time.sleep(1)
+        self._visainstrument.write("RES ?")
+        #        self._visainstrument.wait_for_srq()
+        #print dir(self._visainstrument)
+        #time.sleep(1)
+        #print int(self._visainstrument._get_spoll().rstrip())
+        return self._visainstrument.read().split()[1]
+
     def _get_testR(self,init_R=0):
         return float(random.random()+init_R)
 
@@ -401,17 +415,21 @@ if __name__ == "__main__":
     #avs.reset()
     #avs._open()
     avs._set_remote()
-    print avs._get_autorange()
-    avs._set_autorange(ON=0)
-    avs._set_input(1)
-    avs._set_channel(0,4,5)
+    #print avs._get_autorange()
+    #avs._set_autorange(ON=0)
+    #avs._set_input(1)
+    avs._set_channel(0,4,7)
     #print avs._get_mux()
    
-    print avs._get_adc()
+    #print avs._get_adc()
+    
     #print avs._get_range()
     #print avs._get_id()
     
     #print avs._get_resistance()
+    print avs._set_range(6)
+
+    print avs._get_ave()
     avs._close()
 
 """

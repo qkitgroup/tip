@@ -15,10 +15,12 @@ import server.tip_srv_thread as tip_srv
 
 if __name__ == "__main__":
 
-
-    DATA = DATA()
-    DATA.config = ConfigParser.RawConfigParser()
-    DATA.config.read('settings.cfg')
+    Conf = ConfigParser.RawConfigParser()
+    Conf.read('settings.cfg')
+    
+    DATA = DATA(Conf)
+    DATA.config = Conf
+    #DATA.config.read('settings.cfg')
     
     
 

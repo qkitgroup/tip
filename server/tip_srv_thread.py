@@ -31,59 +31,67 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 #	self.data = data
 
     def set_handler(self,cmds):
-	try:
-		print cmds	
-		cmd = cmds.pop(0)
-		if cmd == 'T' or cmd == 'TCTRL':
-			T=float(cmds.pop(0))
-			self.wfile.write("1\n")
-			self.data.set_ctrl_Temp(T)
+        try:
+            print cmds	
+            cmd = cmds.pop(0)
+            if cmd == 'T' or cmd == 'TCTRL':
+                T=float(cmds.pop(0))
+                self.wfile.write("1\n")
+                self.data.set_ctrl_Temp(T)
 
-		elif cmd == 'PID':
-			PID = float(cmds.pop(0)),float(cmds.pop(0)),float(cmds.pop(0))
-			print PID
-			self.data.set_PID(PID)
-			self.wfile.write("1\n")
-		else:
-			pass
-	except:
-		print "set_handler exception..."
-		raise
+            elif cmd == 'PID':
+                PID = float(cmds.pop(0)),float(cmds.pop(0)),float(cmds.pop(0))
+                print PID
+                self.data.set_PID(PID)
+                self.wfile.write("1\n")
+                
+            elif cmd == 'BRANGE':
+                BRANGE = float(cmds.pop(0))
+                print BRANGE
+                self.data.bridge.set_Range(BRANGE)
+                self.wfile.write("1\n")
+            else:
+                pass
+        except:
+            print "set_handler exception..."
+            raise
 
     def get_handler(self,cmds):
         try:
-                logstr(cmds)          
-                cmd = cmds.pop(0)
-		# only send T
-                if cmd == 'T':
-                        self.wfile.write(str(self.data.get_last_Temp()))
-                elif cmd == 'TCTRL':
-                        self.wfile.write(str(self.data.get_ctrl_Temp()))
-                elif cmd == 'PID':
-                        self.wfile.write(str(self.data.get_PID()))
-                elif cmd == 'HEAT':
-                        self.wfile.write(str(self.data.get_last_Heat()))
-                elif cmd == 'PIDE':
-                        self.wfile.write(str(self.data.get_last_pidE()))
-                elif cmd == 'RES':
-                        self.wfile.write(str(self.data.get_last_Res()))
+            logstr(cmds)          
+            cmd = cmds.pop(0)
+            # only send T
+            if cmd == 'T':
+                self.wfile.write(str(self.data.get_last_Temp()))
+            elif cmd == 'TCTRL':
+                self.wfile.write(str(self.data.get_ctrl_Temp()))
+            elif cmd == 'PID':
+                self.wfile.write(str(self.data.get_PID()))
+            elif cmd == 'HEAT':
+                self.wfile.write(str(self.data.get_last_Heat()))
+            elif cmd == 'PIDE':
+                self.wfile.write(str(self.data.get_last_pidE()))
+            elif cmd == 'RES':
+                self.wfile.write(str(self.data.get_last_Res()))
+            elif cmd == 'BRANGE':
+                self.wfile.write(str(self.data.bridge.get_Range()))
 
-		# send active state
-                elif cmd == 'S':	
-                        self.wfile.write(str(T))
-		# send configuration object
-			CFG = ""
-		elif cmd == 'CFG':
-                        self.wfile.write(str(CFG))
-                else:
-                        pass
+            # send active state
+            elif cmd == 'S':	
+                self.wfile.write(str(T))
+            # send configuration object
+            elif cmd == 'CFG':
+                CFG = ""
+                self.wfile.write(str(CFG))
+            else:
+                    pass
         except:
                 raise
 
     def checkaddress(self,(ip,port)):
-        logger.info("Client connect from %s %s" % str(ip), str(port))
+        #logging.info("Client connect from %s %s" % str(ip), str(port))
         print ip, port
-	
+
     def handle(self):
         self.checkaddress(self.request.getpeername())
         self.data = self.server.data

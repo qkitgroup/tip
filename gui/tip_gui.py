@@ -25,7 +25,7 @@ except:
 # try to get rid of the following
 import wx
 
-UpdateInterval = 1
+UpdateInterval = 2
 DEBUG = True
 
 def logstr(logstring):
@@ -73,14 +73,14 @@ class State(HasTraits):
     H = Float(0)
     
     Tctrl = Float(0.00,auto_set=False, enter_set=True,desc="Target temperature for control")
-    P =    Float(0.1,auto_set=False, enter_set=True,desc="proportional gain for pid")
-    I = Float(0.1,auto_set=False, enter_set=True,desc="integral gain for pid")
+    P =    Float(0.04,auto_set=False, enter_set=True,desc="proportional gain for pid")
+    I = Float(0.04,auto_set=False, enter_set=True,desc="integral gain for pid")
     D = Float(0,auto_set=False, enter_set=True,desc="differential gain for pid")
     #update = Button(show_label=False)
     
     view = View(Group(Group(
-        HGroup( Item(name='T',format_str="%.4f",style='readonly'),
-                Item(name='R',format_str="%.4f",style='readonly'),
+        HGroup( Item(name='T',format_str="%.5f",style='readonly'),
+                Item(name='R',format_str="%.1f",style='readonly'),
                 Item(name='H',format_str="%.4f",style='readonly')),
         HGroup( Item(name='Tctrl_display',label='Control T',style='readonly'),
                 Item(name="Tctrl",label='new T')),
@@ -93,7 +93,7 @@ class State(HasTraits):
         rc.send("set T "+str(self.Tctrl))
         if not int(rc.recv().strip()) == 1:
             raise Error("communication error")
-        rc.send("set PID %.2f %.2f %.2f"% (self.P,self.I,self.D))
+        rc.send("set PID %.3f %.3f %.3f"% (self.P,self.I,self.D))
         if not int(rc.recv().strip()) == 1:
             raise Error("communication error")
         rc.close()
@@ -160,10 +160,10 @@ class AcquisitionThread(Thread):
         return self.rc.recv()
 
     def update_remote(self,cmd):
-	self.rc.send(str("set "+cmd))
+        self.rc.send(str("set "+cmd))
 
     def stop_remote(self):
-	self.rc.send("EXIT\n")
+        self.rc.send("EXIT\n")
         self.rc.close()
     def process(self, image):
         """ Spawns the processing job.
@@ -179,6 +179,10 @@ class AcquisitionThread(Thread):
     def run(self):
         """ Runs the acquisition loop.
         """
+        self.T_arr =numpy.zeros(100)
+        self.pidE_arr=numpy.zeros(100)
+        self.Heat_arr = numpy.zeros(100)
+        self.time = numpy.arange(100)
         self.setup_acquire_from_remote()
 
         self.display('Start')
@@ -187,22 +191,22 @@ class AcquisitionThread(Thread):
             # get state
             T=self.acquire_from_remote("T")
             Heat=self.acquire_from_remote("HEAT")
-	    pidE=self.acquire_from_remote("PIDE")
+            pidE=self.acquire_from_remote("PIDE")
             Tctrl=self.acquire_from_remote("TCTRL")
             R=self.acquire_from_remote("RES")
-	    #logstr(T)
+            #logstr(T)
             #self.display(T)
-	    self.state.T = float(T)
+            self.state.T = float(T)
             self.state.R = float(R)
             self.state.H = float(Heat)
-	    self.state.Tctrl_display = float(Tctrl)
-	    self.T_arr = numpy.delete(numpy.append(self.T_arr,T),0)
-	    self.pidE_arr = numpy.delete(numpy.append(self.pidE_arr,pidE),0)
-	    self.Heat_arr = numpy.delete(numpy.append(self.Heat_arr,Heat),0)
+            self.state.Tctrl_display = float(Tctrl)
+            self.T_arr = numpy.delete(numpy.append(self.T_arr,T),0)
+            self.pidE_arr = numpy.delete(numpy.append(self.pidE_arr,pidE),0)
+            self.Heat_arr = numpy.delete(numpy.append(self.Heat_arr,Heat),0)
             self.update_plots(self.time,self.T_arr,self.pidE_arr,self.Heat_arr)
             sleep(UpdateInterval)
             
-        self.stop_remote()
+        #self.stop_remote()
         self.display('Connection stopped')
 
 
@@ -223,24 +227,24 @@ class ControlPanel(HasTraits):
     results_string =  String()
     acquisition_thread = Instance(AcquisitionThread)
     view = View(VSplit(
-	   Group(Item('state',style='custom',show_label=False,label='State')),
-		
-	   Group(
+        Group(Item('state',style='custom',show_label=False,label='State')),
+        
+        Group(
                 Group(
                   Item('start_stop_acquisition', show_label=False ),
                   Item('results_string',show_label=False,springy=True, style='custom' ),
                   label="Control", dock='tab',
-		),
+                ),
                 Group(
                      Group(
-		        Item('configuration',style='custom',show_label=False),
-			label="Configuration",),
-			label='Experiment', dock="tab",
-              	), 
-		layout='tabbed'
-	    ),
-	    ),
-            )
+                    Item('configuration',style='custom',show_label=False),
+                    label="Configuration",),
+                label='Bridge', dock="tab",
+                ), 
+                layout='tabbed'
+            ),
+        ),
+        )
 
     def _start_stop_acquisition_fired(self):
         """ Callback of the "start stop acquisition" button. This starts
@@ -253,10 +257,10 @@ class ControlPanel(HasTraits):
             self.acquisition_thread = AcquisitionThread()
             self.acquisition_thread.display = self.add_line
 
-	    self.acquisition_thread.time = self.data.time
-	    self.acquisition_thread.T_arr = self.data.T_arr
-	    self.acquisition_thread.pidE_arr = self.data.pidE_arr
-            self.acquisition_thread.Heat_arr = self.data.Heat_arr
+            #self.acquisition_thread.time = self.data.time
+            #self.acquisition_thread.T_arr = self.data.T_arr
+            #self.acquisition_thread.pidE_arr = self.data.pidE_arr
+            #self.acquisition_thread.Heat_arr = self.data.Heat_arr
             self.acquisition_thread.state = self.state
 
             self.acquisition_thread.update_plots = self.update_plots

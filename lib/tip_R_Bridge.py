@@ -19,8 +19,8 @@ class R_bridge(object):
             self.config.get('Calibration','FOrder'),
             self.config.get('Calibration','Interpolation')
         )
-	print "Done."
-	print "Open and setup Bridge, may take a couple of seconds..."        
+        print "Done."
+        print "Open and setup Bridge, may take a couple of seconds..."        
         # import bridge hardware class 
         import devices.Picowatt_AVS47 as AVS
         self.AVS = AVS
@@ -29,9 +29,9 @@ class R_bridge(object):
             # init from config file
             self.setup_device()
             #sys.exit()
-	    print "Done."
-	else:
-	    print "Bridge dummymode enabled: Done."
+            print "Done."
+        else:
+            print "Bridge dummymode enabled: Done."
         
         # make sure that we gracefully go down
         atexit.register(self.disconnect)
@@ -66,11 +66,13 @@ class R_bridge(object):
     def get_R(self):
         if not self.dummymode:
             #return self.BR._get_testR(init_R=10000)
-            R = self.BR._get_adc()
+            #R = self.BR._get_adc()
+            R = self.BR._get_ave() # two averages ....
             #print R
             return float(R)
         else:
             return random.random()*100+10000
+
     def get_T_from_R(self, R):
         return self.CP.getT_from_R(R)
     def get_T(self):
@@ -79,6 +81,9 @@ class R_bridge(object):
         else:
             # in dummymode we get 100mK + some random mK
             return random.random()/100+0.1
+    def set_Range(self,Range):
+        return self.BR._set_range(Range)
+        
     def disconnect(self):
         if not self.dummymode:
             print "disconnecting the bridge ..."
