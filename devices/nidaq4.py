@@ -434,6 +434,6 @@ def set_output0(v_value):
     
 if __name__ == '__main__':
     # some tests
-    buf= numpy.linspace(0,5,10)
-    print sync_write_read('Dev1/ai0','Dev1/ao0',buf,rate=100000)
-    
+    #buf= numpy.linspace(0,5,10)
+    #print sync_write_read('Dev1/ai0','Dev1/ao0',buf,rate=100000)
+    print set_output0(0)

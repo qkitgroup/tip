@@ -17,7 +17,7 @@ class pidcontrol(object):
         self.dState = 0 # Last position input
         self.iState = 0 # Integrator state
         
-        self.iMax  = 0  # Maximum allowable integrator state
+        self.iMax  = 1  # Maximum allowable integrator state
         self.iMin  = 0  # Minimum allowable integrator state
 
     def set_P(self, P):
