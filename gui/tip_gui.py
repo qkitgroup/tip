@@ -82,7 +82,7 @@ class State(HasTraits):
         HGroup( Item(name='T',format_str="%.5f",style='readonly'),
                 Item(name='R',format_str="%.1f",style='readonly'),
                 Item(name='H',format_str="%.4f",style='readonly')),
-        HGroup( Item(name='Tctrl_display',label='Control T',style='readonly'),
+        HGroup( Item(name='Tctrl_display',label='Control T',format_str="%.5f",style='readonly'),
                 Item(name="Tctrl",label='new T')),
                 label="Temperature",show_border=True),
         HGroup( Item('P'), Item('I'), Item('D'),label="PID parameters",show_border=True)
