@@ -57,19 +57,20 @@ class Bridge(HasTraits):
 	)
         )
     def _BRange_changed(self):
-        """
-        rc = remote_client()    
-        rc.send("set T "+str(self.Tctrl))
+        #rms = np.sqrt(sum(a*a)/len(a))
+        range_map= {'NONE':0, '2R':1, '20R':2, '200R':3, '2K':4, '20K':5, '200K':6, '2M':7}
+        rc = remote_client()  
+        rc.send("set BRange "+str(range_map.get(self.BRange)))
         if not int(rc.recv().strip()) == 1:
             raise Error("communication error")
         rc.close()
-        """
-        print self.BRange
+        
+        #print self.BRange
         
 class State(HasTraits):
     T = Float(1)
     Tctrl_display = Float(0.00,desc="Target temperature for control")
-    R = Float(0)
+    R = Float(1000000.0)
     H = Float(0)
     
     Tctrl = Float(0.00,auto_set=False, enter_set=True,desc="Target temperature for control")
@@ -79,11 +80,11 @@ class State(HasTraits):
     #update = Button(show_label=False)
     
     view = View(Group(Group(
-        HGroup( Item(name='T',format_str="%.5f",style='readonly'),
-                Item(name='R',format_str="%.1f",style='readonly'),
-                Item(name='H',format_str="%.4f",style='readonly')),
-        HGroup( Item(name='Tctrl_display',label='Control T',format_str="%.5f",style='readonly'),
-                Item(name="Tctrl",label='new T')),
+        HGroup( Item(name='T',format_str="%.5f K",style='readonly'),
+                Item(name='R',format_str="%.1f Ohm",style='readonly'),
+                Item(name='H',format_str="%.4f uW",style='readonly')),
+        HGroup( Item(name='Tctrl_display',label='Control T',format_str="%.5f K",style='readonly'),
+                Item(name="Tctrl",label='new T (K)',format_str="%.5f")),
                 label="Temperature",show_border=True),
         HGroup( Item('P'), Item('I'), Item('D'),label="PID parameters",show_border=True)
                 ))
