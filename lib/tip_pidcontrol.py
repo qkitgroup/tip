@@ -5,7 +5,7 @@
 class pidcontrol(object):
     def __init__(self,data):
         
-	self.data = data
+        self.data = data
         self.hold = False
         
         self.target_temperature = 0.01
@@ -17,8 +17,8 @@ class pidcontrol(object):
         self.dState = 0 # Last position input
         self.iState = 0 # Integrator state
         
-        self.iMax  = 1  # Maximum allowable integrator state
-        self.iMin  = 0  # Minimum allowable integrator state
+        self.iMax  = 0.01  # Maximum allowable integrator state
+        self.iMin  = -0.001  # Minimum allowable integrator state
 
     def set_P(self, P):
         self.data.ctrl_PID[0] = P
@@ -54,8 +54,10 @@ class pidcontrol(object):
             self.iState = self.iMax
         if self.iState < self.iMin:
             self.iState = self.iMin
-            
+        
         iTerm = self.data.get_PID()[1] * self.iState; #calculate the integral term
         dTerm = self.data.get_PID()[2] * ( reading - self.dState)
         self.dState = reading
+        print "P:%.5f I:%.5f D:%.5f terms"%(pTerm,iTerm,dTerm)
+        print "I:%.5f D:%.5f states"%(self.iState,self.dState)
         return pTerm + iTerm - dTerm

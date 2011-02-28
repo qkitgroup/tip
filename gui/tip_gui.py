@@ -74,8 +74,8 @@ class State(HasTraits):
     H = Float(0)
     
     Tctrl = Float(0.00,auto_set=False, enter_set=True,desc="Target temperature for control")
-    P =    Float(0.04,auto_set=False, enter_set=True,desc="proportional gain for pid")
-    I = Float(0.04,auto_set=False, enter_set=True,desc="integral gain for pid")
+    P =    Float(0.05,auto_set=False, enter_set=True,desc="proportional gain for pid")
+    I = Float(0.01,auto_set=False, enter_set=True,desc="integral gain for pid")
     D = Float(0,auto_set=False, enter_set=True,desc="differential gain for pid")
     #update = Button(show_label=False)
     
@@ -83,7 +83,7 @@ class State(HasTraits):
         HGroup( Item(name='T',format_str="%.5f K",style='readonly'),
                 Item(name='R',format_str="%.1f Ohm",style='readonly'),
                 Item(name='H',format_str="%.4f uW",style='readonly')),
-        HGroup( Item(name='Tctrl_display',label='Control T',format_str="%.5f K",style='readonly'),
+        HGroup( Item(name='Tctrl_display',label='set T',format_str="%.5f K",style='readonly'),
                 Item(name="Tctrl",label='new T (K)',format_str="%.5f")),
                 label="Temperature",show_border=True),
         HGroup( Item('P'), Item('I'), Item('D'),label="PID parameters",show_border=True)
@@ -186,25 +186,30 @@ class AcquisitionThread(Thread):
         self.time = numpy.arange(100)
         self.setup_acquire_from_remote()
 
+        self.T_arr[:]=float(self.acquire_from_remote("T"))*1000
+        self.Heat_arr[:]=float(self.acquire_from_remote("HEAT"))*1e6
+        self.pidE_arr[:]=float(self.acquire_from_remote("PIDE"))*1e6
+
+
         self.display('Start')
                 
         while not self.wants_abort:
             # get state
-            T=self.acquire_from_remote("T")
-            Heat=self.acquire_from_remote("HEAT")
-            pidE=self.acquire_from_remote("PIDE")
-            Tctrl=self.acquire_from_remote("TCTRL")
-            R=self.acquire_from_remote("RES")
+            T=float(self.acquire_from_remote("T"))
+            Heat=float(self.acquire_from_remote("HEAT"))
+            pidE=float(self.acquire_from_remote("PIDE"))
+            Tctrl=float(self.acquire_from_remote("TCTRL"))
+            R=float(self.acquire_from_remote("RES"))
             #logstr(T)
             #self.display(T)
             self.state.T = float(T)
             self.state.R = float(R)
             self.state.H = float(Heat)
             self.state.Tctrl_display = float(Tctrl)
-            self.T_arr = numpy.delete(numpy.append(self.T_arr,T),0)
-            self.pidE_arr = numpy.delete(numpy.append(self.pidE_arr,pidE),0)
-            self.Heat_arr = numpy.delete(numpy.append(self.Heat_arr,Heat),0)
-            self.update_plots(self.time,self.T_arr,self.pidE_arr,self.Heat_arr)
+            self.T_arr = numpy.delete(numpy.append(self.T_arr,T*1e3),0)
+            self.pidE_arr = numpy.delete(numpy.append(self.pidE_arr,pidE*1e6),0)
+            self.Heat_arr = numpy.delete(numpy.append(self.Heat_arr,Heat*1e6),0)
+            self.update_plots(self.time,self.T_arr,self.Heat_arr,self.pidE_arr)
             sleep(UpdateInterval)
             
         #self.stop_remote()

@@ -32,7 +32,7 @@ class _MPLFigureEditor(Editor):
         panel.SetSizer(sizer)
         # matplotlib commands to create a canvas
         mpl_control = FigureCanvas(panel, -1, self.value)
-        sizer.Add(mpl_control, 1, wx.LEFT | wx.TOP | wx.GROW)
+        sizer.Add(mpl_control, 1, wx.RIGHT | wx.TOP | wx.GROW)
         toolbar = NavigationToolbar2Wx(mpl_control)
         sizer.Add(toolbar, 0, wx.EXPAND)
         self.value.canvas.SetMinSize((10,10))

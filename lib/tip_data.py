@@ -31,7 +31,9 @@ class DATA(object):
             
         def get_Range(self):
             return self.range
-
+    class HEATER(object):
+        def __init__(self,config):
+            self.Resistor = config.getfloat('Heater',"Resistor")
 
     def __init__(self,config):
         # tip variables
@@ -54,7 +56,7 @@ class DATA(object):
  
         # subclasses
         self.bridge = self.BRIDGE(config)
-        
+        self.heater = self.HEATER(config)
         # locks
         self.ctrl_lock = Lock()
 
@@ -76,9 +78,11 @@ class DATA(object):
     def set_PID(self,PID):
         self.ctrl_PID = PID
 
-    def set_Heat(self,heat):
+    def set_Heat(self,heat_volt):
+        
         lock = Lock()
         with lock:
+            heat=heat_volt*heat_volt/self.heater.Resistor
             self.last_Heat=heat
             self.Heat = numpy.delete(numpy.append(self.Heat,heat),0)
     def set_Temp(self,T):
