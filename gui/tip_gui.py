@@ -204,7 +204,7 @@ class AcquisitionThread(Thread):
             #self.display(T)
             self.state.T = float(T)
             self.state.R = float(R)
-            self.state.H = float(Heat)
+            self.state.H = float(Heat)*1e6
             self.state.Tctrl_display = float(Tctrl)
             self.T_arr = numpy.delete(numpy.append(self.T_arr,T*1e3),0)
             self.pidE_arr = numpy.delete(numpy.append(self.pidE_arr,pidE*1e6),0)

@@ -43,6 +43,8 @@ class Heater_Dev(object):
             pass
 
     def __init__(self,DATA):
+        
+        self.Heater_R = DATA.heater.Resistor
         if DATA.config.getboolean('debug','dummymode'):
             self.HDev = self.dummyheater()
             
@@ -66,10 +68,10 @@ class Heater_Dev(object):
 
     def set_Heat(self,value):
         # calculate Heat for Black Fridge (R=600Ohm)
-        Heater_R = DATA.config.getfloat('Heater',"Resistor")
+        
         if value < 0 :
             value = 0
-        OUT_Volt = math.sqrt(value*Heater_R)
+        OUT_Volt = math.sqrt(value*self.Heater_R)
         print "Set Heat to"+str(OUT_Volt)
         # sanity check
         if OUT_Volt > 0.999:

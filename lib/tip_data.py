@@ -50,7 +50,7 @@ class DATA(object):
         self.pidE = numpy.zeros(100)
         self.Heat = numpy.zeros(100)
         self.Temp = numpy.zeros(100)
-        self.ctrl_PID = (0.04,0.04,0)
+        self.ctrl_PID = (0.05,0.01,0)
         self.ctrl_T = 0
         self.config = ""
  
