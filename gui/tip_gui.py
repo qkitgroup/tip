@@ -116,7 +116,7 @@ class State(HasTraits):
         
     def update_PID(self):
         rc = remote_client()
-        rc.send("set PID %.2f %.2f %.2f"% (self.P,self.I,self.D))
+        rc.send("set PID %.5f %.5f %.5f"% (self.P,self.I,self.D))
         if not int(rc.recv().strip()) == 1:
             raise Error("communication error")
         rc.close()
