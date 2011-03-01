@@ -295,7 +295,7 @@ class ControlPanel(HasTraits):
         self.figure.axes[1].yaxis.set_major_locator(MaxNLocator(3))
         self.figure.axes[0].yaxis.set_major_locator(MaxNLocator(3))
         self.figure.axes[2].set_xlabel("time")
-
+        self.figure.subplots_adjust(left=0.2)
         wx.CallAfter(self.figure.canvas.draw)
 
 class MainWindowHandler(Handler):
@@ -319,6 +319,7 @@ class MainWindow(HasTraits):
     def _figure_default(self):
         figure = Figure()
         figure.subplots_adjust(wspace=0.2,hspace=0.2)
+        figure.subplots_adjust(left=0.2)
         #figure.add_axes([0.05, 0.04, 0.9, 0.92])
         axes_T = figure.add_subplot(311)
         

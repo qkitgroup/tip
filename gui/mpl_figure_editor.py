@@ -32,7 +32,7 @@ class _MPLFigureEditor(Editor):
         panel.SetSizer(sizer)
         # matplotlib commands to create a canvas
         mpl_control = FigureCanvas(panel, -1, self.value)
-        sizer.Add(mpl_control, 1, wx.RIGHT | wx.TOP | wx.GROW)
+        sizer.Add(mpl_control, 1, wx.RIGHT|wx.EXPAND )#| wx.TOP )#| wx.GROW|wx.ALIGN_RIGHT)
         toolbar = NavigationToolbar2Wx(mpl_control)
         sizer.Add(toolbar, 0, wx.EXPAND)
         self.value.canvas.SetMinSize((10,10))
@@ -56,14 +56,17 @@ if __name__ == "__main__":
         view = View(Item('figure', editor=MPLFigureEditor(),
                                 show_label=False),
                         width=400,
-                        height=300,
+                        height=400,
                         resizable=True)
 
         def __init__(self):
             super(Test, self).__init__()
             axes = self.figure.add_subplot(111)
-            t = linspace(0, 2*pi, 200)
+            self.figure.subplots_adjust(left=0.2)
+            t = linspace(0, 2*pi/1000, 200)
             axes.plot(sin(t)*(1+0.5*cos(11*t)), cos(t)*(1+0.5*cos(11*t)))
+            axes.set_ylabel("hallo")
+            
 
     Test().configure_traits()
 
