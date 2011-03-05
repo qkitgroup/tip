@@ -287,7 +287,7 @@ class ControlPanel(HasTraits):
         self.figure.axes[0].plot(xdata,ydata0)
 
         # axes.clear also removes the labels, set again.
-        self.figure.axes[2].set_ylabel("PID Error [uk]")
+        self.figure.axes[2].set_ylabel("PID Error [uK]")
         self.figure.axes[1].set_ylabel("Heat [uW]")
         self.figure.axes[0].set_ylabel("Temperature [mK]")
         # set the major tick number to three
