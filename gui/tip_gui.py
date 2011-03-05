@@ -43,30 +43,46 @@ class Bridge(HasTraits):
     """ Object to display on the conifiguration
     """
     Bridge = Str("AVS 47",label="Resistance Bridge")
-    BDelay = Float()
-    BChannel = Int()
-    BExcitation = Int()
-    BRange = Enum("2R","20R","200R","2K","20K","200K","2M")
+    Delay = Float()
+    Channel = Enum("0","1","2","3","4","5","6","7",)
+    Excitation = Enum("NONE", "3uV", "10uV", "30uV", "100uV", "300uV", "1mV", "3mV")
+    Range = Enum("2R","20R","200R","2K","20K","200K","2M")
+    AutoRange = Bool()
     #BRange = Dict(value={"2R":1})
     #print Range
     view = View(Group(
         Item('Bridge'),
-        Item('BDelay',label="Delay"),
-        Item('BExcitation',label="Excitation"),
-        Item('BRange',label="Range")
+        Item('Delay',label="Delay"),
+        Item('Excitation',label="Excitation"),
+        Item('Range',label="Range"),
+        Item('AutoRange',label="Autorange")
 	)
         )
-    def _BRange_changed(self):
-        #rms = np.sqrt(sum(a*a)/len(a))
+    def _Range_changed(self):
         range_map= {'NONE':0, '2R':1, '20R':2, '200R':3, '2K':4, '20K':5, '200K':6, '2M':7}
         rc = remote_client()  
         rc.send("set BRange "+str(range_map.get(self.BRange)))
+        #rc.send("set Bridge Range "+str(range_map.get(self.BRange)))
         if not int(rc.recv().strip()) == 1:
             raise Error("communication error")
         rc.close()
-        
-        #print self.BRange
-        
+
+    def _Excitation_changed(self):
+        exc_map= {"NONE":0, "3uV":1, "10uV":2, "30uV":3, "100uV":4, "300uV":5, "1mV":6, "3mV":7}
+        rc = remote_client()  
+        rc.send("set Bridge excitation "+str(exc_map.get(self.Excitation)))
+        if not int(rc.recv().strip()) == 1:
+            raise Error("communication error")
+        rc.close()
+
+    def _Channel_changed(self):
+        channel_map= {"0":0, "1":1, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7}
+        rc = remote_client()  
+        rc.send("set Bridge channel "+str(channel_map.get(self.Channel)))
+        if not int(rc.recv().strip()) == 1:
+            raise Error("communication error")
+        rc.close()
+    
 class State(HasTraits):
     T = Float(1)
     Tctrl_display = Float(0.00,desc="Target temperature for control")
@@ -77,6 +93,9 @@ class State(HasTraits):
     P =    Float(0.05,auto_set=False, enter_set=True,desc="proportional gain for pid")
     I = Float(0.01,auto_set=False, enter_set=True,desc="integral gain for pid")
     D = Float(0,auto_set=False, enter_set=True,desc="differential gain for pid")
+    P_disp = Float(0.00,desc="set P parameter")
+    I_disp = Float(0.00,desc="set I parameter")
+    D_disp = Float(0.00,desc="set D parameter")
     #update = Button(show_label=False)
     
     view = View(Group(Group(
@@ -86,8 +105,13 @@ class State(HasTraits):
         HGroup( Item(name='Tctrl_display',label='set T',format_str="%.5f K",style='readonly'),
                 Item(name="Tctrl",label='new T (K)',format_str="%.5f")),
                 label="Temperature",show_border=True),
-        HGroup( Item('P'), Item('I'), Item('D'),label="PID parameters",show_border=True)
-                ))
+        Group(
+        HGroup( Item(name='P_disp',label='P',format_str="%.5f",style='readonly'),
+                Item(name='I_disp',label='I',format_str="%.5f",style='readonly'),
+                Item(name='D_disp',label='D',format_str="%.5f",style='readonly')),
+        HGroup( Item('P'), Item('I'), Item('D')),label="PID parameters",show_border=True
+              )
+        ))
 
     def _update_fired(self):
         rc = remote_client()    
@@ -224,7 +248,7 @@ class ControlPanel(HasTraits):
         the right panel of the application, and it hosts the method for
         interaction between the objects and the GUI.
     """
-    configuration = Instance(Bridge,())
+    Bridge = Instance(Bridge,())
     
     state = Instance(State,())
     figure = Instance(Figure)
@@ -242,11 +266,11 @@ class ControlPanel(HasTraits):
                   label="Control", dock='tab',
                 ),
                 Group(
-                     Group(
-                    Item('configuration',style='custom',show_label=False),
-                    label="Configuration",),
-                label='Bridge', dock="tab",
-                ), 
+                    Group(
+                    Item('Bridge',style='custom',show_label=False),
+                    show_border=True,label='Bridge',
+                    ), label='Bridge', dock="tab",
+                ),
                 layout='tabbed'
             ),
         ),
