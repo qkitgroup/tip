@@ -287,9 +287,9 @@ class ControlPanel(HasTraits):
         self.figure.axes[0].plot(xdata,ydata0)
 
         # axes.clear also removes the labels, set again.
-        self.figure.axes[2].set_ylabel("PID Error")
-        self.figure.axes[1].set_ylabel("Heat")
-        self.figure.axes[0].set_ylabel("Temperature")
+        self.figure.axes[2].set_ylabel("PID Error [uk]")
+        self.figure.axes[1].set_ylabel("Heat [uW]")
+        self.figure.axes[0].set_ylabel("Temperature [mK]")
         # set the major tick number to three
         self.figure.axes[2].yaxis.set_major_locator(MaxNLocator(3))
         self.figure.axes[1].yaxis.set_major_locator(MaxNLocator(3))
@@ -325,9 +325,9 @@ class MainWindow(HasTraits):
         
         axes_Heat = figure.add_subplot(312,sharex=axes_T)
         axes_pidE = figure.add_subplot(313,sharex=axes_T)
-        axes_pidE.set_ylabel("PID Error")
-        axes_Heat.set_ylabel("Heat")
-        axes_T.set_ylabel("T")
+        axes_pidE.set_ylabel("PID Error [uK]")
+        axes_Heat.set_ylabel("Heat [uW]")
+        axes_T.set_ylabel("T [mK]")
 
         axes_pidE.yaxis.set_major_locator(MaxNLocator(3))
         axes_Heat.yaxis.set_major_locator(MaxNLocator(3))
