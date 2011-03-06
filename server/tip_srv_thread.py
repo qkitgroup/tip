@@ -50,6 +50,23 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 print BRANGE
                 self.data.bridge.set_Range(BRANGE)
                 self.wfile.write("1\n")
+            elif cmd == 'BRIDGE':
+                sub_cmd = cmds.pop(0)
+                if   sub_cmd == 'RANGE':
+                    self.wfile.write(str(self.data.bridge.set_Range(int(cmds.pop(0)))))
+                elif sub_cmd == 'RAN':
+                    self.wfile.write(str(self.data.bridge.set_Range(int(cmds.pop(0)))))
+                elif sub_cmd == 'EXC':
+                    self.wfile.write(str(self.data.bridge.set_Excitation(int(cmds.pop(0)))))
+                elif sub_cmd == 'EXCITATION':
+                    self.wfile.write(str(self.data.bridge.set_Excitation(int(cmds.pop(0)))))
+                elif sub_cmd == 'CHA':
+                    self.wfile.write(str(self.data.bridge.set_Channel(int(cmds.pop(0)))))
+                elif sub_cmd == 'CHANNEL':
+                    self.wfile.write(str(self.data.bridge.set_Channel(int(cmds.pop(0)))))
+                else:
+                    self.wfile.write("BRIDGE: Syntax error")
+            
             else:
                 pass
         except:
@@ -75,7 +92,22 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 self.wfile.write(str(self.data.get_last_Res()))
             elif cmd == 'BRANGE':
                 self.wfile.write(str(self.data.bridge.get_Range()))
-
+            elif cmd == 'BRIDGE':
+                sub_cmd = cmds.pop(0)
+                if   sub_cmd == 'RANGE':
+                    self.wfile.write(str(self.data.bridge.get_Range()))
+                elif sub_cmd == 'RAN':
+                    self.wfile.write(str(self.data.bridge.get_Range()))
+                elif sub_cmd == 'EXC':
+                    self.wfile.write(str(self.data.bridge.get_Excitation()))
+                elif sub_cmd == 'EXCITATION':
+                    self.wfile.write(str(self.data.bridge.get_Excitation()))
+                elif sub_cmd == 'CHA':
+                    self.wfile.write(str(self.data.bridge.get_Channel()))
+                elif sub_cmd == 'CHANNEL':
+                    self.wfile.write(str(self.data.bridge.get_Channel()))
+                else:
+                    self.wfile.write("BRIDGE: Syntax error")
             # send active state
             elif cmd == 'S':	
                 self.wfile.write(str(T))

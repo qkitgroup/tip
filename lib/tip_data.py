@@ -25,12 +25,24 @@ class DATA(object):
         def __init__(self,config):
             self.range = config.getint('RBridge','default_range')
             self.excitation = config.getint('RBridge','default_excitation')
+            self.channel = config.getint('RBridge','default_channel')
             
         def set_Range(self,Range):
-            self.range = Range
-            
+            self.range = Range            
         def get_Range(self):
             return self.range
+
+        def set_Excitation(self,Excitation):
+            self.excitation = Excitation
+        def get_Excitation(self):
+            return self.excitation
+        
+        def set_Channel(self,Channel):
+            self.channel = Channel
+            return(1)
+        def get_Channel(self):
+            return self.channel
+
     class HEATER(object):
         def __init__(self,config):
             self.Resistor = config.getfloat('Heater',"Resistor")

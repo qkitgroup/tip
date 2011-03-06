@@ -4,7 +4,7 @@
 import ConfigParser
 import lib.tip_pidcontrol as tip_pidcontrol
 import sys,time
-
+import argparse
 #from lib.tip_gui import *
 from lib.tip_dev import *
 
@@ -13,14 +13,20 @@ from lib.tip_data import DATA
 # server thread to spread information
 import server.tip_srv_thread as tip_srv
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="TIP Temperature Information Program HR@KIT 2011")
+
+    parser.add_argument('ConfigFile', nargs='?', default='settings.cfg',
+                        help='Configuration file name')
+    args=parser.parse_args()
+    
     Conf = ConfigParser.RawConfigParser()
-    Conf.read('settings.cfg')
+    Conf.read(args.ConfigFile)
     
     DATA = DATA(Conf)
     DATA.config = Conf
-    #DATA.config.read('settings.cfg')
     
     
 

@@ -99,11 +99,14 @@ class IO_worker(Thread):
     def run(self):
         #set initial values
         BRange = self.DATA.bridge.get_Range()
+        BExcitation = self.DATA.bridge.get_Excitation()
+        BChannel = self.DATA.bridge.get_Channel()
         while True:
             if not self.DATA.Running:
                 return
             
             # check if the range changed, this is something like an ISR
+            # but polled
             if BRange != self.DATA.bridge.get_Range():
                 BRange = self.DATA.bridge.get_Range()
                 # set the new range, AVS47 waits 3 secs
