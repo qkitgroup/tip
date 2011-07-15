@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-#TIP main version 0.1 written by HR@KIT Nov 2010
-
+#TIP main, version 0.2 written by HR@KIT Feb 2011
+# TIP Is not Precious
 import ConfigParser
 import lib.tip_pidcontrol as tip_pidcontrol
 import sys,time
 import argparse
-#from lib.tip_gui import *
+
 from lib.tip_dev import *
 
 from lib.tip_data import DATA
@@ -16,7 +16,7 @@ import server.tip_srv_thread as tip_srv
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="TIP Temperature Information Program HR@KIT 2011")
+        description="TIP Is not Precious // HR@KIT 2011")
 
     parser.add_argument('ConfigFile', nargs='?', default='settings.cfg',
                         help='Configuration file name')
@@ -27,8 +27,6 @@ if __name__ == "__main__":
     
     DATA = DATA(Conf)
     DATA.config = Conf
-    
-    
 
     PID = tip_pidcontrol.pidcontrol(DATA)
     DATA.PID = PID
@@ -40,10 +38,3 @@ if __name__ == "__main__":
     tipserv = tip_srv.tip_srv(DATA)
     tipserv.loop()
 
-"""    
-    app = wx.PySimpleApp(0)
-    mainFrame = AppFrame(None, -1, "",PID=PID,DATA=DATA)
-    app.SetTopWindow(mainFrame)
-    mainFrame.Show()
-    app.MainLoop()
-"""

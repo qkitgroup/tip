@@ -26,20 +26,31 @@ class DATA(object):
             self.range = config.getint('RBridge','default_range')
             self.excitation = config.getint('RBridge','default_excitation')
             self.channel = config.getint('RBridge','default_channel')
+            # management
+            self.bridge_lock = Lock()
+            self.tainted = False
             
         def set_Range(self,Range):
-            self.range = Range            
+            with self.bridge_lock:
+                self.tainted = True
+                self.range = Range
+                return(1)
         def get_Range(self):
             return self.range
 
         def set_Excitation(self,Excitation):
-            self.excitation = Excitation
+            with self.bridge_lock:
+                self.tainted = True
+                self.excitation = Excitation
+                return(1)
         def get_Excitation(self):
             return self.excitation
         
         def set_Channel(self,Channel):
-            self.channel = Channel
-            return(1)
+            with self.bridge_lock:
+                self.tainted = True
+                self.channel = Channel
+                return(1)
         def get_Channel(self):
             return self.channel
 

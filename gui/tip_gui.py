@@ -43,7 +43,7 @@ class Bridge(HasTraits):
     """ Object to display on the conifiguration
     """
     Bridge = Str("AVS 47",label="Resistance Bridge")
-    Delay = Float()
+    #Delay = Float()
     Channel = Enum("0","1","2","3","4","5","6","7",)
     Excitation = Enum("NONE", "3uV", "10uV", "30uV", "100uV", "300uV", "1mV", "3mV")
     Range = Enum("2R","20R","200R","2K","20K","200K","2M")
@@ -51,19 +51,20 @@ class Bridge(HasTraits):
     #BRange = Dict(value={"2R":1})
     #print Range
     view = View(Group(
-        Item('Bridge'),
-        Item('Delay',label="Delay"),
-        Item('Excitation',label="Excitation"),
+        Item('Bridge',style='readonly'),
+        #Item('Delay',label="Delay"),
+        Item('Channel',label="Channel"),
         Item('Range',label="Range"),
+        Item('Excitation',label="Excitation"),
         Item('AutoRange',label="Autorange")
 	)
         )
     def _Range_changed(self):
         range_map= {'NONE':0, '2R':1, '20R':2, '200R':3, '2K':4, '20K':5, '200K':6, '2M':7}
         rc = remote_client()  
-        rc.send("set BRange "+str(range_map.get(self.BRange)))
-        #rc.send("set Bridge Range "+str(range_map.get(self.BRange)))
-        if not int(rc.recv().strip()) == 1:
+        #rc.send("set BRange "+str(range_map.get(self.Range)))
+        rc.send("set Bridge Range "+str(range_map.get(self.Range)))
+        if not rc.recv().strip() == '1':
             raise Error("communication error")
         rc.close()
 
@@ -71,7 +72,7 @@ class Bridge(HasTraits):
         exc_map= {"NONE":0, "3uV":1, "10uV":2, "30uV":3, "100uV":4, "300uV":5, "1mV":6, "3mV":7}
         rc = remote_client()  
         rc.send("set Bridge excitation "+str(exc_map.get(self.Excitation)))
-        if not int(rc.recv().strip()) == 1:
+        if not rc.recv().strip() == '1':
             raise Error("communication error")
         rc.close()
 
@@ -79,7 +80,7 @@ class Bridge(HasTraits):
         channel_map= {"0":0, "1":1, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7}
         rc = remote_client()  
         rc.send("set Bridge channel "+str(channel_map.get(self.Channel)))
-        if not int(rc.recv().strip()) == 1:
+        if not rc.recv().strip() == '1':
             raise Error("communication error")
         rc.close()
     
