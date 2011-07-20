@@ -74,8 +74,8 @@ class Heater_Dev(object):
         OUT_Volt = math.sqrt(value*self.Heater_R)
         print "Set Heat to"+str(OUT_Volt)
         # sanity check
-        if OUT_Volt > 0.999:
-            OUT_Volt = 0.999
+        if OUT_Volt > 1.999:
+            OUT_Volt = 1.999
         self.HDev.set_output0(OUT_Volt)
         return OUT_Volt
 
