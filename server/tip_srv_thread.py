@@ -83,7 +83,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
             elif cmd == 'TCTRL':
                 self.wfile.write(str(self.data.get_ctrl_Temp()))
             elif cmd == 'PID':
-                self.wfile.write(str(self.data.get_PID()))
+                self.wfile.write(str(self.data.get_PID()[0])+' '+str(self.data.get_PID()[1])+' '+str(self.data.get_PID()[2]))
             elif cmd == 'HEAT':
                 self.wfile.write(str(self.data.get_last_Heat()))
             elif cmd == 'PIDE':
