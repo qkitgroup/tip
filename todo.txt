@@ -1,0 +1,4 @@
+TODO
+
+Add excitation in tip_dev.py to the run loop
+Add channel in tip_dev.py to the run loop 
