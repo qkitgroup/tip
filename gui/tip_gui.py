@@ -48,8 +48,8 @@ class Bridge(HasTraits):
     Excitation = Enum("NONE", "3uV", "10uV", "30uV", "100uV", "300uV", "1mV", "3mV")
     Range = Enum("2R","20R","200R","2K","20K","200K","2M")
     AutoRange = Bool()
-    #BRange = Dict(value={"2R":1})
-    #print Range
+    Update = Button("Update")
+    
     view = View(Group(
         Item('Bridge',style='readonly'),
         #Item('Delay',label="Delay"),
@@ -57,8 +57,41 @@ class Bridge(HasTraits):
         Item('Range',label="Range"),
         Item('Excitation',label="Excitation"),
         Item('AutoRange',label="Autorange")
-	)
+	),
+        Item("Update",label="Update all")
         )
+
+    def _Update_fired(self):
+        """ Callback of the update button.
+        """
+        range_map_r= {0:'NONE', 1:'2R', 2:'20R', 3:'200R', 4:'2K', 5:'20K', 6:'200K', 7:'2M'}
+        exc_map_r=  {0:"NONE", 1:"3uV", 2:"10uV", 3:"30uV", 4:"100uV", 5:"300uV", 6:"1mV", 7:"3mV"}
+        channel_map_r= {0:"0", 1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7"}
+        
+        rc = remote_client()
+        rc.send("get Bridge Range")
+        self.Range=range_map_r.get(int(rc.recv()))
+        
+        rc.send("get Bridge excitation")
+        self.Excitation=exc_map_r.get(int(rc.recv()))
+        
+        rc.send("get Bridge channel")
+        self.Channel = channel_map_r.get(int(rc.recv()))
+        rc.close()
+        
+    def _AutoRange_changed(self):
+        #range_map= {'NONE':0, '2R':1, '20R':2, '200R':3, '2K':4, '20K':5, '200K':6, '2M':7}
+        rc = remote_client()  
+        #rc.send("set BRange "+str(range_map.get(self.Range)))
+        if AutoRange:
+            rc.send("set Bridge Range "+str(10))
+        else:
+            # for now AutoRange is not really implemented ;-)
+            rc.send("set Bridge Range "+str(10))
+        if not rc.recv().strip() == '1':
+            raise Error("communication error")
+        rc.close()
+        
     def _Range_changed(self):
         range_map= {'NONE':0, '2R':1, '20R':2, '200R':3, '2K':4, '20K':5, '200K':6, '2M':7}
         rc = remote_client()  
@@ -89,6 +122,8 @@ class State(HasTraits):
     Tctrl_display = Float(0.00,desc="Target temperature for control")
     R = Float(1000000.0)
     H = Float(0)
+
+    pid_Update = Button("pid_Update")
     
     Tctrl = Float(0.00,auto_set=False, enter_set=True,desc="Target temperature for control")
     P =    Float(0.05,auto_set=False, enter_set=True,desc="proportional gain for pid")
@@ -97,7 +132,7 @@ class State(HasTraits):
     P_disp = Float(0.00,desc="set P parameter")
     I_disp = Float(0.00,desc="set I parameter")
     D_disp = Float(0.00,desc="set D parameter")
-    #update = Button(show_label=False)
+
     
     view = View(Group(Group(
         HGroup( Item(name='T',format_str="%.5f K",style='readonly'),
@@ -109,7 +144,8 @@ class State(HasTraits):
         Group(
         HGroup( Item(name='P_disp',label='P',format_str="%.5f",style='readonly'),
                 Item(name='I_disp',label='I',format_str="%.5f",style='readonly'),
-                Item(name='D_disp',label='D',format_str="%.5f",style='readonly')),
+                Item(name='D_disp',label='D',format_str="%.5f",style='readonly'),
+                Item(name='pid_Update',label='Update',show_label=False)),
         HGroup( Item('P'), Item('I'), Item('D')),label="PID parameters",show_border=True
               )
         ))
@@ -123,6 +159,20 @@ class State(HasTraits):
         if not int(rc.recv().strip()) == 1:
             raise Error("communication error")
         rc.close()
+
+    def _pid_Update_fired(self):
+
+        rc = remote_client()
+        
+        rc.send("GET PID")
+        pid_str=rc.recv().split()
+        rc.close()
+        self.P = float(pid_str[0])
+        self.I = float(pid_str[1])
+        self.D = float(pid_str[2])
+        self.P_disp = self.P
+        self.I_disp = self.I
+        self.D_disp = self.D
         
     def _Tctrl_changed(self):
         rc = remote_client()    
@@ -169,7 +219,7 @@ class remote_client(object):
         rdata = self.sock.recv(8192)
         string = rdata
         #arr= pickle.loads(string)
-        logstr(string)
+        #logstr(string)
         return string
     
     def close(self):
@@ -225,8 +275,7 @@ class AcquisitionThread(Thread):
             pidE=float(self.acquire_from_remote("PIDE"))
             Tctrl=float(self.acquire_from_remote("TCTRL"))
             R=float(self.acquire_from_remote("RES"))
-            #logstr(T)
-            #self.display(T)
+
             self.state.T = float(T)
             self.state.R = float(R)
             self.state.H = float(Heat)*1e6
@@ -296,7 +345,8 @@ class ControlPanel(HasTraits):
 
             self.acquisition_thread.update_plots = self.update_plots
 
-            self.acquisition_thread.start()    
+            self.acquisition_thread.start()
+
     def add_line(self, string):
         """ Adds a line to the textbox display.
         """
@@ -380,4 +430,3 @@ class MainWindow(HasTraits):
 
 if __name__ == '__main__':
     MainWindow().configure_traits()
-    
