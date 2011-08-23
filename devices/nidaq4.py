@@ -430,7 +430,7 @@ def sync_write_read(O_devchan,I_devchan,waveform,**kwargs):
 def set_output0(v_value):
 	if v_value > 2:
 		v_value=2.0
-	return write("Dev1/ao0",v_value,minv=0.0, maxv=2.0)
+	return write("Dev1/ao1",v_value,minv=0.0, maxv=2.0)
     
 if __name__ == '__main__':
     # some tests
