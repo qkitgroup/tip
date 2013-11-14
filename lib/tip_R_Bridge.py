@@ -20,37 +20,49 @@ class R_bridge(object):
             self.config.get('Calibration','Interpolation')
         )
         print "Done."
-        print "Open and setup Bridge, may take a couple of seconds..."        
-        # import bridge hardware class 
-        import devices.Picowatt_AVS47 as AVS
-        self.AVS = AVS
-
-        if not self.dummymode:
-            # init from config file
-            self.setup_device()
-            #sys.exit()
-            print "Done."
+        print "Open and setup Bridge, may take a couple of seconds..."
+        # import bridge hardware class
+        if self.config.get('RBridge','Name').strip() == 'PW_AVS47':
+            if not self.dummymode:
+                print "Initializing AVS47 ..."
+                # init from config file
+                self.setup_device_AVS47()
+                #sys.exit()
+                print "Done."
+            
+        elif self.config.get('RBridge','Name').strip() == 'SRS_SIM900':
+            
+            if not self.dummymode:
+                print "Initializing SIM921 ..."
+                # init from config file
+                self.setup_device_SIM921()
+                #sys.exit()
+                print "Done."
         else:
-            print "Bridge dummymode enabled: Done."
+            pass
+        print "Bridge enabled: Done."
         
         # make sure that we gracefully go down
         atexit.register(self.disconnect)
         
-    def setup_device(self):
+    def setup_device_AVS47(self):
+        import devices.Picowatt_AVS47 as AVS
+        
         if self.config.get('RBridge','Com_Method').strip() == 'Ethernet':
-            self.BR = self.AVS.Picowatt_AVS47(
+            self.BR = AVS.Picowatt_AVS47(
                 self.config.get('RBridge','Name'),
                 'GPIB::'+self.config.get('RBridge','GPIB_Addr').strip(),
                 ip=self.config.get('RBridge','IP'),
                 delay=self.config.getfloat('RBridge','delay'),
                 )
         else:
-            self.BR = self.AVS.Picowatt_AVS47(
+            pass
+        """
+            self.BR = AVS.Picowatt_AVS47(
                 self.config.get('RBridge','Name'),
                 'GPIB::'+self.config.get('RBridge','GPIB_Addr').strip(),
-                delay=self.config.getfloat('RBridge','delay'),
-                )
-            
+                delay=self.config.getfloat('RBridge','delay'))
+        """
         # basic setup
         self.BR._open()
         self.BR._set_remote()
@@ -62,6 +74,25 @@ class R_bridge(object):
                              self.config.getint('RBridge','default_excitation'),
                              self.config.getint('RBridge','default_range')
                              )
+        
+        
+
+        
+    def setup_device_SIM921(self):
+        import devices.SRS_SIM900 as SIM
+        """def __init__(self,ip= ,gpib="GPIB::0",SIM921_port=6,SIM925_port=8):"""
+        if self.config.get('RBridge','Com_Method').strip() == 'Ethernet':
+            self.BR = SIM.SIM900(
+                self.config.get('RBridge','Name'),
+                gpib='GPIB::'+self.config.get('RBridge','GPIB_Addr').strip(),
+                ip=self.config.get('RBridge','IP'),
+                delay=self.config.getfloat('RBridge','delay'),
+                SIM921_port=self.config.getint('RBridge','SIM921_port'), #6 Bridge
+                SIM925_port=self.config.getint('RBridge','SIM925_port'), #8 multiplexer         
+                )
+        else:
+            pass
+        
 
     def get_R(self):
         if not self.dummymode:

@@ -198,7 +198,7 @@ class State(HasTraits):
  
         
 class remote_client(object):
-    def __init__(self,host = "pi-us51", port = 9999):
+    def __init__(self,host = "pi-us27", port = 9999):
         self.setup(host,port)
         
     def setup(self,HOST,PORT):
