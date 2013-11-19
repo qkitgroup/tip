@@ -145,6 +145,18 @@ class DATA(object):
             ri.last_temp = self.get_Temp()
             ri.last_pidE = self.get_pidE()
             ri.last_heat = self.get_Heat()
-            return pickle.dumps(ri)		
+            return pickle.dumps(ri)
+        
+        
+        
+class GUI_DATA(object):
+    def __init__(self):
+        # tip variables
+        self.Running = True
+        self.wants_abort = False
+        self.debug = True
+        self.cycle_time = 0.5
+        
+
 if __name__ == "__main__":
     DATA = DATA()
