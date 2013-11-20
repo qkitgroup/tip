@@ -34,13 +34,16 @@ class H5_LOGFILE(object):
         dset      = self.log.create_dataset(log_item, 
                                             (1,),
                                             maxshape=(None,),
-                                            #compression = 'gzip',
+                                            compression = 'gzip',
+                                            chunks = (60,),
                                             dtype=log_item_type)
         dset_time = self.log.create_dataset(log_item+"_time",
                                             (1,),
                                             maxshape=(None,),
-                                            #compression = 'gzip',
-                                            dtype='=f8')        
+                                            compression = 'gzip',
+                                            chunks = (60,),
+                                            dtype='=f8')
+        
         return (dset, dset_time) 
         #setattr(self,log_item,dset)
         
@@ -50,7 +53,7 @@ if __name__ == "__main__":
     T_4K = log.new_sink('T_4K')
     log.new_sink('T_MC')
     log.new_sink('T_1K')
-    for i in xrange(200):
+    for i in xrange(2000):
         log.append(T_4K,1223*i)
     
     print T_4K[1][23]
