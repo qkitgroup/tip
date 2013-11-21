@@ -2,10 +2,10 @@
 #tip gui version 0.1 written by HR@KIT 2011
 
 # traids stuff
-from enthought.traits.api import *
-from enthought.traits.ui.api import View, Item, Group, \
+from traits.api import *
+from traitsui.api import View, Item, Group, \
         VSplit,HSplit, Handler,VGroup,HGroup
-from enthought.traits.ui.menu import NoButtons
+from traitsui.menu import NoButtons
 
 from mpl_figure_editor import MPLFigureEditor
 # clear
@@ -198,7 +198,7 @@ class State(HasTraits):
  
         
 class remote_client(object):
-    def __init__(self,host = "pi-us27", port = 9999):
+    def __init__(self,host = "pi-us61", port = 9999):
         self.setup(host,port)
         
     def setup(self,HOST,PORT):
