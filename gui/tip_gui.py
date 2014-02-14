@@ -7,23 +7,34 @@ from traitsui.api import View, Item, Group, \
         VSplit,HSplit, Handler,VGroup,HGroup
 from traitsui.menu import NoButtons
 
-from mpl_figure_editor import MPLFigureEditor
+#from mpl_figure_editor import MPLFigureEditor
 # clear
-from matplotlib.figure import Figure
-from matplotlib.ticker import MaxNLocator
+#from matplotlib.figure import Figure
+#from matplotlib.ticker import MaxNLocator
 from scipy import *
 from threading import Thread
 from time import sleep
 import numpy
+
+from enthought.chaco.api import Plot, ArrayPlotData
+from chaco.tools.api import PanTool, ZoomTool, DragZoom
+from enthought.enable.component_editor import ComponentEditor
+from enthought.chaco.chaco_plot_editor import ChacoPlotItem
 
 import socket
 try:
     import cPickle as pickle
 except:
     import pickle
+    
+#edit
+from enthought.chaco.api import Plot, ArrayPlotData
+from chaco.tools.api import PanTool, ZoomTool, DragZoom
+from enthought.enable.component_editor import ComponentEditor
+#edit over
 
 # try to get rid of the following
-import wx
+#import wx
 
 UpdateInterval = 2
 DEBUG = True
@@ -301,7 +312,10 @@ class ControlPanel(HasTraits):
     Bridge = Instance(Bridge,())
     
     state = Instance(State,())
-    figure = Instance(Figure)
+    TPlot = Instance(Plot)
+    HeatPlot = Instance(Plot)
+    PID_EPLot = Instance(Plot)
+    #figure = Instance(Figure)
     
     start_stop_acquisition = Button("Start/Stop")
     results_string =  String()
@@ -353,25 +367,46 @@ class ControlPanel(HasTraits):
         self.results_string = (string + "\n" + self.results_string)[0:1000]
         
     def update_plots(self,xdata,ydata0,ydata1,ydata2):
-        # this is the plots,time, T, Heat, PID_E
-        self.figure.axes[2].clear()
-        self.figure.axes[2].plot(xdata,ydata2)
-        self.figure.axes[1].clear()
-        self.figure.axes[1].plot(xdata,ydata1)
-        self.figure.axes[0].clear()
-        self.figure.axes[0].plot(xdata,ydata0)
-
-        # axes.clear also removes the labels, set again.
-        self.figure.axes[2].set_ylabel("PID Error [uK]")
-        self.figure.axes[1].set_ylabel("Heat [uW]")
-        self.figure.axes[0].set_ylabel("Temperature [mK]")
-        # set the major tick number to three
-        self.figure.axes[2].yaxis.set_major_locator(MaxNLocator(3))
-        self.figure.axes[1].yaxis.set_major_locator(MaxNLocator(3))
-        self.figure.axes[0].yaxis.set_major_locator(MaxNLocator(3))
-        self.figure.axes[2].set_xlabel("time")
-        self.figure.subplots_adjust(left=0.2)
-        wx.CallAfter(self.figure.canvas.draw)
+        
+        Tdata = ArrayPlotData(x = xdata, y = ydata0)
+        Heatdata = ArrayPlotData(x = xdata, y = ydata1)
+        PID_Edata = ArrayPlotData(x= xdata,y = ydata2)
+        
+        TPlot = Plot(Tdata)
+        plotHeat = Plot(Heatdata)
+        plotPID_E = Plot(PID_Edata)
+        
+        TPlot.plot(("x", "y"), type="line", color="red")
+        TPlot.y_axis.title = 'T/mK'
+        TPlot.x_axis.title = 'time'
+        
+        HeatPlot.plot(("x", "y"), type="line", color="red")
+        HeatPlot.y_axis.title = 'Heat/uW'
+        HeatPlot.x_axis.title = 'time'
+        
+        PID_EPlot.plot(("x", "y"), type="line", color="red")
+        PID_EPlot.y_axis.title = 'PID Erros/uK'
+        PID_EPlot.x_axis.title = 'time'
+        
+#        # this is the plots,time, T, Heat, PID_E
+#        self.figure.axes[2].clear()
+#        self.figure.axes[2].plot(xdata,ydata2)
+#        self.figure.axes[1].clear()
+#        self.figure.axes[1].plot(xdata,ydata1)
+#        self.figure.axes[0].clear()
+#        self.figure.axes[0].plot(xdata,ydata0)
+#
+#        # axes.clear also removes the labels, set again.
+#        self.figure.axes[2].set_ylabel("PID Error [uK]")
+#        self.figure.axes[1].set_ylabel("Heat [uW]")
+#        self.figure.axes[0].set_ylabel("Temperature [mK]")
+#        # set the major tick number to three
+#        self.figure.axes[2].yaxis.set_major_locator(MaxNLocator(3))
+#        self.figure.axes[1].yaxis.set_major_locator(MaxNLocator(3))
+#        self.figure.axes[0].yaxis.set_major_locator(MaxNLocator(3))
+#        self.figure.axes[2].set_xlabel("time")
+#        self.figure.subplots_adjust(left=0.2)
+#        wx.CallAfter(self.figure.canvas.draw)
 
 class MainWindowHandler(Handler):
     def close(self, info, is_OK):
@@ -388,40 +423,67 @@ class MainWindow(HasTraits):
     """ The main window, here go the instructions to create and destroy
         the application.
     """
-    figure = Instance(Figure)
+    TPlot = Instance(Plot)
+    HeatPlot = Instance(Plot)
+    PID_EPlot = Instance(Plot)
+    #figure = Instance(Figure)
     panel = Instance(ControlPanel)
 
-    def _figure_default(self):
-        figure = Figure()
-        figure.subplots_adjust(wspace=0.2,hspace=0.2)
-        figure.subplots_adjust(left=0.2)
-        #figure.add_axes([0.05, 0.04, 0.9, 0.92])
-        axes_T = figure.add_subplot(311)
+    def _TPlot_default(self):
         
-        axes_Heat = figure.add_subplot(312,sharex=axes_T)
-        axes_pidE = figure.add_subplot(313,sharex=axes_T)
-        axes_pidE.set_ylabel("PID Error [uK]")
-        axes_Heat.set_ylabel("Heat [uW]")
-        axes_T.set_ylabel("T [mK]")
-
-        axes_pidE.yaxis.set_major_locator(MaxNLocator(3))
-        axes_Heat.yaxis.set_major_locator(MaxNLocator(3))
-        axes_T.yaxis.set_major_locator(MaxNLocator(3))
+        TPlot = Plot(ArrayPlotData(x = [1,2,3], y = [1,2,3]))
+        TPlot.plot(("x", "y"), type="line", color="red")
+        TPlot.y_axis.title = 'T/mK'
+        TPlot.x_axis.title = 'time'
         
-        #self.figure.axes[0].yaxis.set_major_locator(MaxNLocator(3))
         
-        axes_pidE.set_xlabel("time")
-        return figure
+#        figure = Figure()
+#        figure.subplots_adjust(wspace=0.2,hspace=0.2)
+#        figure.subplots_adjust(left=0.2)
+#        #figure.add_axes([0.05, 0.04, 0.9, 0.92])
+#        axes_T = figure.add_subplot(311)
+#        
+#        axes_Heat = figure.add_subplot(312,sharex=axes_T)
+#        axes_pidE = figure.add_subplot(313,sharex=axes_T)
+#        axes_pidE.set_ylabel("PID Error [uK]")
+#        axes_Heat.set_ylabel("Heat [uW]")
+#        axes_T.set_ylabel("T [mK]")
+#
+#        axes_pidE.yaxis.set_major_locator(MaxNLocator(3))
+#        axes_Heat.yaxis.set_major_locator(MaxNLocator(3))
+#        axes_T.yaxis.set_major_locator(MaxNLocator(3))
+#        
+#        #self.figure.axes[0].yaxis.set_major_locator(MaxNLocator(3))
+#        
+#        axes_pidE.set_xlabel("time")
+        return TPlot
+        
+    def _HeatPlot_default(self):
+        HeatPlot = Plot(ArrayPlotData(x = [1,2,3], y = [1,4,3]))
+        HeatPlot.plot(("x", "y"), type="line", color="red")
+        HeatPlot.y_axis.title = 'Heat/uW'
+        HeatPlot.x_axis.title = 'time'
+        return HeatPlot
+            
+    def _PID_EPlot_default(self):
+        PID_EPlot = Plot(ArrayPlotData(x = [1,2,3], y = [1,5,3]))
+        PID_EPlot.plot(("x", "y"), type="line", color="red")
+        PID_EPlot.y_axis.title = 'PID Erros/uK'
+        PID_EPlot.x_axis.title = 'time'
+        return PID_EPlot
+            
 
     def _panel_default(self):
-        return ControlPanel(figure=self.figure)
+        return ControlPanel(TPlot=self.TPlot, HeatPlot = self.HeatPlot, PID_EPlot = self.PID_EPlot)
     
-    view = View(HSplit( Item('figure',  editor=MPLFigureEditor(), dock='vertical'),
+    view = View(HSplit( VSplit(Item('TPlot', editor=ComponentEditor(), show_label=False),
+                        Item('HeatPlot' ,editor=ComponentEditor(), show_label=False),
+                        Item('PID_EPlot', editor=ComponentEditor(), show_label=False)),
                         Item('panel', style="custom"),
                         show_labels=False, 
                        ),
                 resizable=True, 
-                height=0.6, width=0.6,
+                height=0.8, width=0.6,
                 handler=MainWindowHandler(),
                 title='TIP Temperature Information Program (GUI frontend)',
                 buttons=NoButtons
