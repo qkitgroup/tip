@@ -20,7 +20,17 @@ class DATA(object):
         last_Temp=0
         last_pidE=0
         last_Heat=0
-        
+
+    class LOCALHOST(object):
+        def __init__(self,config):
+            self.name = config.get('LOCALHOST','name')
+            self.ip   = config.get('LOCALHOST','ip')
+            self.port = config.getint('LOCALHOST','port')
+    class REMOTEHOST(object):
+        def __init__(self,config):
+            self.name = config.get('REMOTEHOST','name')
+            self.ip   = config.get('REMOTEHOST','ip')
+            self.port = config.getint('REMOTEHOST','port')
     class BRIDGE(object):
         def __init__(self,config):
             self.range = config.getint('RBridge','default_range')
@@ -80,6 +90,8 @@ class DATA(object):
         # subclasses
         self.bridge = self.BRIDGE(config)
         self.heater = self.HEATER(config)
+        self.localhost  = self.LOCALHOST(config)
+        self.remotehost = self.REMOTEHOST(config)
         # locks
         self.ctrl_lock = Lock()
 

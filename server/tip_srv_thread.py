@@ -175,8 +175,9 @@ class tip_srv(object):
         self.data = DATA
         # Port 0 means to select an arbitrary unused port
         #HOST, PORT = "localhost", 9999
-        HOST, PORT = "pi-us27", 9999
-        
+        #HOST, PORT = "pi-us27", 9999
+        HOST = self.data.localhost.name
+        PORT = self.data.localhost.port
         # the ThreadedTCPServer object, loaded with our request handler
         self.server = THServer((HOST, PORT), ThreadedTCPRequestHandler,self.data)
         ip, port = self.server.server_address
