@@ -234,6 +234,9 @@ class AcquisitionThread(Thread):
     """ Acquisition loop. This is the worker thread that retrieves info ...
     """
     wants_abort = False
+    
+    
+    
     def setup_acquire_from_remote(self):
         self.rc=remote_client()
     def acquire_from_remote(self,cmd):
@@ -314,7 +317,10 @@ class ControlPanel(HasTraits):
     start_stop_acquisition = Button("Start/Stop")
     results_string =  String()
     acquisition_thread = Instance(AcquisitionThread)
-    view = View(VSplit(
+    view = View(Group(HSplit(VSplit(Item('TPlot', editor=ComponentEditor(), show_label=False),
+                        Item('HeatPlot' ,editor=ComponentEditor(), show_label=False),
+                        Item('PID_EPlot', editor=ComponentEditor(), show_label=False)),
+        VSplit(
         Group(Item('state',style='custom',show_label=False,label='State')),
         
         Group(
@@ -332,7 +338,7 @@ class ControlPanel(HasTraits):
                 layout='tabbed'
             ),
         ),
-        )
+        )))
 
     def _start_stop_acquisition_fired(self):
         """ Callback of the "start stop acquisition" button. This starts
@@ -350,9 +356,9 @@ class ControlPanel(HasTraits):
             #self.acquisition_thread.pidE_arr = self.data.pidE_arr
             #self.acquisition_thread.Heat_arr = self.data.Heat_arr
             self.acquisition_thread.state = self.state
-
+            
             self.acquisition_thread.update_plots = self.update_plots
-
+    
             self.acquisition_thread.start()
 
     def add_line(self, string):
@@ -364,23 +370,28 @@ class ControlPanel(HasTraits):
         
         Tdata = ArrayPlotData(x = xdata, y = ydata0)
         Heatdata = ArrayPlotData(x = xdata, y = ydata1)
-        PID_Edata = ArrayPlotData(x= xdata,y = ydata2)
+        PID_Edata = ArrayPlotData(x = xdata,y = ydata2)
+      
+
+        self.TPlot = Plot(Tdata)
+        self.HeatPlot = Plot(Heatdata)
+        self.PID_EPlot = Plot(PID_Edata)                
         
-        TPlot = Plot(Tdata)
-        HeatPlot = Plot(Heatdata)
-        PID_EPlot = Plot(PID_Edata)
+        self.TPlot.plot(("x", "y"), type="line", color="red")
+        self.TPlot.y_axis.title = 'T [mK]'
+        self.TPlot.x_axis.title = 'time'
         
-        TPlot.plot(("x", "y"), type="line", color="red")
-        TPlot.y_axis.title = 'T [mK]'
-        TPlot.x_axis.title = 'time'
+        self.HeatPlot.plot(("x", "y"), type="line", color="red")
+        self.HeatPlot.y_axis.title = 'Heat [uW]'
+        self.HeatPlot.x_axis.title = 'time'
         
-        HeatPlot.plot(("x", "y"), type="line", color="red")
-        HeatPlot.y_axis.title = 'Heat [uW]'
-        HeatPlot.x_axis.title = 'time'
+        self.PID_EPlot.plot(("x", "y"), type="line", color="red")
+        self.PID_EPlot.y_axis.title = 'PID Error [uK]'
+        self.PID_EPlot.x_axis.title = 'time'
         
-        PID_EPlot.plot(("x", "y"), type="line", color="red")
-        PID_EPlot.y_axis.title = 'PID Error [uK]'
-        PID_EPlot.x_axis.title = 'time'
+        self.TPlot.request_redraw()
+        self.HeatPlot.request_redraw()
+        self.PID_EPlot.request_redraw()
 
 
 class MainWindowHandler(Handler):
@@ -403,24 +414,29 @@ class MainWindow(HasTraits):
     PID_EPlot = Instance(Plot)
     #figure = Instance(Figure)
     panel = Instance(ControlPanel)
-
+    
+    #TPlot = ControlPanel.update_plots.TPlot
+    #TPlot.plot(("x", "y"), type="line", color="red")
+    #TPlot.y_axis.title = 'T [mK]'
+    #TPlot.x_axis.title = 'time'
+    
     def _TPlot_default(self):
         
-        TPlot = Plot(ArrayPlotData(x = [1,2,3], y = [1,2,3]))
+        TPlot = Plot(ArrayPlotData(x = [0,50,100], y = [10,20,30]))
         TPlot.plot(("x", "y"), type="line", color="red")
         TPlot.y_axis.title = 'T [mK]'
         TPlot.x_axis.title = 'time'
         return TPlot
         
     def _HeatPlot_default(self):
-        HeatPlot = Plot(ArrayPlotData(x = [1,2,3], y = [1,4,3]))
+        HeatPlot = Plot(ArrayPlotData(x = [1,2,3], y = [3,2,1]))
         HeatPlot.plot(("x", "y"), type="line", color="red")
         HeatPlot.y_axis.title = 'Heat [uW]'
         HeatPlot.x_axis.title = 'time'
         return HeatPlot
             
     def _PID_EPlot_default(self):
-        PID_EPlot = Plot(ArrayPlotData(x = [1,2,3], y = [1,5,3]))
+        PID_EPlot = Plot(ArrayPlotData(x = [1,2,3], y = [1,3,1]))
         PID_EPlot.plot(("x", "y"), type="line", color="red")
         PID_EPlot.y_axis.title = 'PID Error [uK]'
         PID_EPlot.x_axis.title = 'time'
@@ -430,9 +446,7 @@ class MainWindow(HasTraits):
     def _panel_default(self):
         return ControlPanel(TPlot=self.TPlot, HeatPlot = self.HeatPlot, PID_EPlot = self.PID_EPlot)
     
-    view = View(HSplit( VSplit(Item('TPlot', editor=ComponentEditor(), show_label=False),
-                        Item('HeatPlot' ,editor=ComponentEditor(), show_label=False),
-                        Item('PID_EPlot', editor=ComponentEditor(), show_label=False)),
+    view = View(HSplit( 
                         Item('panel', style="custom"),
                         show_labels=False, 
                        ),
