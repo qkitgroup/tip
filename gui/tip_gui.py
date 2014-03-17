@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #tip gui version 0.1 written by HR@KIT 2011
 
 # traids stuff
@@ -7,10 +8,6 @@ from traitsui.api import View, Item, Group, \
         VSplit,HSplit, Handler,VGroup,HGroup
 from traitsui.menu import NoButtons
 
-#from mpl_figure_editor import MPLFigureEditor
-# clear
-#from matplotlib.figure import Figure
-#from matplotlib.ticker import MaxNLocator
 from scipy import *
 from threading import Thread
 from time import sleep
@@ -309,35 +306,77 @@ class ControlPanel(HasTraits):
     Bridge = Instance(Bridge,())
     
     state = Instance(State,())
-    TPlot = Instance(Plot)
-    HeatPlot = Instance(Plot)
-    PID_EPLot = Instance(Plot)
-    #figure = Instance(Figure)
+    
+    time = Array
+    T_arr = Array
+    Heat_arr = Array
+    pidE_arr = Array
     
     start_stop_acquisition = Button("Start/Stop")
     results_string =  String()
     acquisition_thread = Instance(AcquisitionThread)
-    view = View(Group(HSplit(VSplit(Item('TPlot', editor=ComponentEditor(), show_label=False),
-                        Item('HeatPlot' ,editor=ComponentEditor(), show_label=False),
-                        Item('PID_EPlot', editor=ComponentEditor(), show_label=False)),
-        VSplit(
-        Group(Item('state',style='custom',show_label=False,label='State')),
-        
-        Group(
-                Group(
-                  Item('start_stop_acquisition', show_label=False ),
-                  Item('results_string',show_label=False,springy=True, style='custom' ),
-                  label="Control", dock='tab',
-                ),
-                Group(
+    view = View(
+        Group(HSplit(
+            VSplit(
+                ChacoPlotItem("time", "T_arr",
+                               show_label=False,
+                               resizable=True,
+                               x_label="time / s",
+                               y_label="T / mK",
+                               #x_bounds=(0,100),
+                               x_auto=True,
+                               #y_bounds=(0,1),
+                               y_auto=True,
+                               color="blue",
+                               bgcolor="white",
+                               border_visible=True,
+                               border_width=2,
+                               title='Temperature / mK',
+                               padding_bg_color="lightgrey"),
+                ChacoPlotItem("time", "Heat_arr",
+                               show_label=False,
+                               resizable=True,
+                               x_label="time / s",
+                               y_label="Heat / uW",
+                               x_auto=True,
+                               y_auto=True,
+                               color="blue",
+                               bgcolor="white",
+                               border_visible=True,
+                               border_width=2,
+                               title='Heat / uW',
+                               padding_bg_color="lightgrey"),
+                ChacoPlotItem("time", "pidE_arr",
+                               show_label=False,
+                               resizable=True,
+                               x_label="time / s",
+                               y_label="Error / uK",
+                               x_auto=True,
+                               y_auto=True,
+                               color="blue",
+                               bgcolor="white",
+                               border_visible=True,
+                               border_width=2,
+                               title='PID Error / uK',
+                               padding_bg_color="lightgrey")),
+            VSplit(
+            Group(Item('state',style='custom',show_label=False,label='State')),
+            
+            Group(
                     Group(
-                    Item('Bridge',style='custom',show_label=False),
-                    show_border=True,label='Bridge',
-                    ), label='Bridge', dock="tab",
+                    Item('start_stop_acquisition', show_label=False ),
+                    Item('results_string',show_label=False,springy=True, style='custom' ),
+                    label="Control", dock='tab',
+                    ),
+                    Group(
+                        Group(
+                        Item('Bridge',style='custom',show_label=False),
+                        show_border=True,label='Bridge',
+                        ), label='Bridge', dock="tab",
+                    ),
+                    layout='tabbed'
                 ),
-                layout='tabbed'
             ),
-        ),
         )))
 
     def _start_stop_acquisition_fired(self):
@@ -368,30 +407,23 @@ class ControlPanel(HasTraits):
         
     def update_plots(self,xdata,ydata0,ydata1,ydata2):
         
-        Tdata = ArrayPlotData(x = xdata, y = ydata0)
-        Heatdata = ArrayPlotData(x = xdata, y = ydata1)
-        PID_Edata = ArrayPlotData(x = xdata,y = ydata2)
+        self.time = xdata
+        self.T_arr = ydata0
+        self.Heat_arr = ydata1
+        self.pidE_arr = ydata2
+        
+    def _time_default(self): 
+        return numpy.arange(100)
+        
+    def _T_arr_default(self): 
+        return numpy.zeros(100)
+        
+    def _Heat_arr_default(self): 
+        return numpy.zeros(100)
+        
+    def _pidE_arr_default(self): 
+        return numpy.zeros(100)
       
-
-        self.TPlot = Plot(Tdata)
-        self.HeatPlot = Plot(Heatdata)
-        self.PID_EPlot = Plot(PID_Edata)                
-        
-        self.TPlot.plot(("x", "y"), type="line", color="red")
-        self.TPlot.y_axis.title = 'T [mK]'
-        self.TPlot.x_axis.title = 'time'
-        
-        self.HeatPlot.plot(("x", "y"), type="line", color="red")
-        self.HeatPlot.y_axis.title = 'Heat [uW]'
-        self.HeatPlot.x_axis.title = 'time'
-        
-        self.PID_EPlot.plot(("x", "y"), type="line", color="red")
-        self.PID_EPlot.y_axis.title = 'PID Error [uK]'
-        self.PID_EPlot.x_axis.title = 'time'
-        
-        self.TPlot.request_redraw()
-        self.HeatPlot.request_redraw()
-        self.PID_EPlot.request_redraw()
 
 
 class MainWindowHandler(Handler):
@@ -409,49 +441,17 @@ class MainWindow(HasTraits):
     """ The main window, here go the instructions to create and destroy
         the application.
     """
-    TPlot = Instance(Plot)
-    HeatPlot = Instance(Plot)
-    PID_EPlot = Instance(Plot)
-    #figure = Instance(Figure)
     panel = Instance(ControlPanel)
     
-    #TPlot = ControlPanel.update_plots.TPlot
-    #TPlot.plot(("x", "y"), type="line", color="red")
-    #TPlot.y_axis.title = 'T [mK]'
-    #TPlot.x_axis.title = 'time'
-    
-    def _TPlot_default(self):
-        
-        TPlot = Plot(ArrayPlotData(x = [0,50,100], y = [10,20,30]))
-        TPlot.plot(("x", "y"), type="line", color="red")
-        TPlot.y_axis.title = 'T [mK]'
-        TPlot.x_axis.title = 'time'
-        return TPlot
-        
-    def _HeatPlot_default(self):
-        HeatPlot = Plot(ArrayPlotData(x = [1,2,3], y = [3,2,1]))
-        HeatPlot.plot(("x", "y"), type="line", color="red")
-        HeatPlot.y_axis.title = 'Heat [uW]'
-        HeatPlot.x_axis.title = 'time'
-        return HeatPlot
-            
-    def _PID_EPlot_default(self):
-        PID_EPlot = Plot(ArrayPlotData(x = [1,2,3], y = [1,3,1]))
-        PID_EPlot.plot(("x", "y"), type="line", color="red")
-        PID_EPlot.y_axis.title = 'PID Error [uK]'
-        PID_EPlot.x_axis.title = 'time'
-        return PID_EPlot
-            
-
     def _panel_default(self):
-        return ControlPanel(TPlot=self.TPlot, HeatPlot = self.HeatPlot, PID_EPlot = self.PID_EPlot)
+ 	return ControlPanel()
     
     view = View(HSplit( 
                         Item('panel', style="custom"),
                         show_labels=False, 
                        ),
                 resizable=True, 
-                height=0.8, width=0.6,
+                height=0.8, width=0.8,
                 handler=MainWindowHandler(),
                 title='TIP Temperature Information Program (GUI frontend)',
                 buttons=NoButtons
