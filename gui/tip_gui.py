@@ -355,7 +355,7 @@ class ControlPanel(HasTraits):
                                y_auto=True,
                                color="blue",
                                bgcolor="white",
-                               border_visible=True,
+                               border_visible=False,
                                border_width=2,
                                title='PID Error / uK',
                                padding_bg_color="lightgrey")),
@@ -411,7 +411,7 @@ class ControlPanel(HasTraits):
         self.T_arr = ydata0
         self.Heat_arr = ydata1
         self.pidE_arr = ydata2
-        
+    '''    
     def _time_default(self): 
         return numpy.arange(100)
         
@@ -420,9 +420,10 @@ class ControlPanel(HasTraits):
         
     def _Heat_arr_default(self): 
         return numpy.zeros(100)
-        
+     
     def _pidE_arr_default(self): 
         return numpy.zeros(100)
+    '''
       
 
 

@@ -9,6 +9,8 @@ Interface SIM921 resistance bridge. HR@KIT2013, 2014
 import sys
 import visa_prologix as visa
 
+from threading import Lock
+
 import time
 """
 exci={0:-1, 3:0, 10:1, 30:2, 100:3, 300:4, 1000:5, 3000:6, 10000:7, 30000:8}
@@ -32,6 +34,8 @@ class SIM900(object):
 		self.SIM921_port = SIM921_port
 		self.SIM925_port = SIM925_port
 		self.SIM928_port = SIM928_port
+                #  mutex locks
+                self.ctrl_lock = Lock()
 
 		print "params",ip,gpib,delay,SIM921_port,SIM925_port,SIM928_port
 	def error(self,str):
@@ -43,6 +47,8 @@ class SIM900(object):
 		try:
 			# commands to mainframe
 			self.SIM.write('main_esc')
+			# flush output queue of SIM900
+			self.SIM.write('FLOQ')
 			if init:
 				self.SIM.write('*CLS')
 				self.SIM.write('*RST')
@@ -56,6 +62,7 @@ class SIM900(object):
 		self.SIM.write('main_esc')
 	
 	def get_value_from_SIM900(self,port,cmd):
+	     with self.ctrl_lock:
 		self.SIM_prolog(port)
 		val = self.SIM.ask(str(cmd))
 		self.SIM_epilog()
@@ -94,7 +101,7 @@ class SIM900(object):
                port = self.SIM928_port
                cmd = "VOLT "+str(voltage)+"; VOLT?"
                return float(self.get_value_from_SIM900(port,cmd))
-        def set_output0(OUT_Volt): # HEATER interface
+        def set_output0(self,OUT_Volt): # HEATER interface
             return self.set_Voltage(OUT_Volt)
         def set_output_ON(self):
                port = self.SIM928_port

@@ -16,7 +16,7 @@ import server.tip_srv_thread as tip_srv
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="TIP Is not Precious // HR@KIT 2011")
+        description="TIP Is not Perfect // HR@KIT 2011")
 
     parser.add_argument('ConfigFile', nargs='?', default='settings.cfg',
                         help='Configuration file name')

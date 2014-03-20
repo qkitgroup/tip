@@ -88,7 +88,8 @@ class R_bridge(object):
                 ip=self.config.get('RBridge','IP'),
                 delay=self.config.getfloat('RBridge','delay'),
                 SIM921_port=self.config.getint('RBridge','SIM921_port'), #6 Bridge
-                SIM925_port=self.config.getint('RBridge','SIM925_port'), #8 multiplexer         
+                SIM925_port=self.config.getint('RBridge','SIM925_port'), #8 multiplexer
+                SIM928_port=self.config.getint('RBridge','SIM928_port')         
                 )
         else:
             pass
@@ -99,7 +100,7 @@ class R_bridge(object):
             #return self.BR._get_testR(init_R=10000)
             #R = self.BR._get_adc()
             R = self.BR._get_ave() # two averages ....
-            #print R
+            #print 'Resistor:', R
             return float(R)
         else:
             return random.random()*100+10000

@@ -57,16 +57,19 @@ class Heater_Dev(object):
                 self.HDev = self.dummyheater()
         elif DATA.config.get('Heater',"Output_device").strip() == "NI-DAQ":
             try:
+                print 'HEATER set to nidaq'
                 import devices.nidaq4 as nidaq
                 self.HDev = nidaq
             except:
                 print("NI-DAQ not found, using dummy heater.")
                 self.HDev = self.dummyheater()
-        elif DATA.config.get('Heater',"Output_device").strip() == "SRS-SIM928":
+        elif DATA.config.get('Heater',"Output_device").strip() == "SRS_SIM928":
             try:
+                print 'HEATER set to SRS_SIM928'
                 # we assume, SIM921 is our bridge
                 if DATA.config.get('RBridge','Name').strip() == 'SRS_SIM900':
                    self.HDev = DATA.RBR
+                   print "SIM928: setting output to zero:",self.HDev.set_output0(0)
                    print "Switching on SIM928: ",self.HDev.set_output_ON()
                 else:
                    raise "NOT SIM921/SIM928/SIM900"
@@ -106,7 +109,8 @@ class IO_worker(Thread):
         #
         # we save the bridge object reference in the DATA class for
         # later use, e.g. for the SIM928 Voltage source (heater)
-        self.DATA.RBR = self.RBR.RB
+        print dir(self.RBR)
+        self.DATA.RBR = self.RBR.BR
         self.HTR = Heater_Dev(self.DATA)
         
         #self.curr = Current_Dev()
