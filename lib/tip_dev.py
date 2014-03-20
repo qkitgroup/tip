@@ -62,6 +62,17 @@ class Heater_Dev(object):
             except:
                 print("NI-DAQ not found, using dummy heater.")
                 self.HDev = self.dummyheater()
+        elif DATA.config.get('Heater',"Output_device").strip() == "SRS-SIM928":
+            try:
+                # we assume, SIM921 is our bridge
+                if DATA.config.get('RBridge','Name').strip() == 'SRS_SIM900':
+                   self.HDev = DATA.RBR
+                   print "Switching on SIM928: ",self.HDev.set_output_ON()
+                else:
+                   raise "NOT SIM921/SIM928/SIM900"
+            except:
+                print("SIM928 not found, using dummy heater.")
+                self.HDev = self.dummyheater()
         else:
             pass
 
@@ -92,6 +103,10 @@ class IO_worker(Thread):
         #time.sleep(2)
 
         self.RBR = tip_R_Bridge.R_bridge(self.DATA)
+        #
+        # we save the bridge object reference in the DATA class for
+        # later use, e.g. for the SIM928 Voltage source (heater)
+        self.DATA.RBR = self.RBR.RB
         self.HTR = Heater_Dev(self.DATA)
         
         #self.curr = Current_Dev()
