@@ -24,7 +24,7 @@ class SIM900(object):
 	             gpib="GPIB::0",
 	             delay = 0.2, 
 	             SIM921_port=6,
-	             SIM925_port=8
+	             SIM925_port=8,
                      SIM928_port=2):
 		
 		
