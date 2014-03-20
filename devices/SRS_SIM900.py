@@ -3,8 +3,8 @@
 """
 SIM900 (Frame)
 SIM921/SIM925(MUX)
-SIM
-Interface SIM921 resistance bridge. HR@KIT2013
+SIM928 (Voltage Source)
+Interface SIM921 resistance bridge. HR@KIT2013, 2014
 """
 import sys
 import visa_prologix as visa
@@ -24,14 +24,16 @@ class SIM900(object):
 	             gpib="GPIB::0",
 	             delay = 0.2, 
 	             SIM921_port=6,
-	             SIM925_port=8):
+	             SIM925_port=8
+                     SIM928_port=2):
 		
 		
 		self.SIM=visa.instrument(gpib,ip=ip,delay=delay)
 		self.SIM921_port = SIM921_port
 		self.SIM925_port = SIM925_port
-		
-		print "params",ip,gpib,delay,SIM921_port,SIM925_port
+		self.SIM928_port = SIM928_port
+
+		print "params",ip,gpib,delay,SIM921_port,SIM925_port,SIM928_port
 	def error(self,str):
 		print(str)
 	
@@ -80,11 +82,34 @@ class SIM900(object):
 		port  = self.SIM925_port
 		cmd = "CHAN?"
 		return int(self.get_value_from_SIM900(port,cmd))
+        ########################################################
+        # commands for the SIM298 isolated voltage source
+        # (likely to be used as a heater ;-) )
+        ########################################################
+        def get_Voltage(self):
+                port = self.SIM928_port
+                cmd = "VOLT?"
+                return float(self.get_value_from_SIM900(port,cmd))
+        def set_Voltage(self,voltage):
+               port = self.SIM928_port
+               cmd = "VOLT "+str(voltage)+"; VOLT?"
+               return float(self.get_value_from_SIM900(port,cmd))
+        def set_output0(OUT_Volt): # HEATER interface
+            return self.set_Voltage(OUT_Volt)
+        def set_output_ON(self):
+               port = self.SIM928_port
+               cmd = "OPON; EXON?"
+               return self.get_value_from_SIM900(port,cmd)
+        def set_output_OFF(self):
+               port = self.SIM928_port
+               cmd = "OPOF; EXON?"
+               return self.get_value_from_SIM900(port,cmd)
 
 if __name__ == "__main__":
 	# port 6 is the port to the SRS SIM921 bridge, port 8 is the SIM925 multiplexer
 	SIM=SIM900("SIM900") 
 	print SIM._get_IDN(8)
+        print SIM._get_IDN(2)
 	print SIM._get_Channel()
 	print SIM.get_Rval()
 	print SIM._get_ave()
