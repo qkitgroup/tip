@@ -263,7 +263,7 @@ class AcquisitionThread(Thread):
         self.T_arr =numpy.zeros(100)
         self.pidE_arr=numpy.zeros(100)
         self.Heat_arr = numpy.zeros(100)
-        self.time = numpy.arange(100)
+        self.time = numpy.arange(100,0,-1)
         self.setup_acquire_from_remote()
 
         self.T_arr[:]=float(self.acquire_from_remote("T"))*1000
@@ -332,7 +332,7 @@ class ControlPanel(HasTraits):
                                border_visible=True,
                                border_width=2,
                                title='Temperature / mK',
-                               padding_bg_color="lightgrey"),
+                               padding_bg_color="white",padding=-10),
                 ChacoPlotItem("time", "Heat_arr",
                                show_label=False,
                                resizable=True,
@@ -355,10 +355,11 @@ class ControlPanel(HasTraits):
                                y_auto=True,
                                color="blue",
                                bgcolor="white",
-                               border_visible=False,
+                               border_visible=True,
                                border_width=2,
                                title='PID Error / uK',
-                               padding_bg_color="lightgrey")),
+                               padding_bg_color="white",
+                               )),
             VSplit(
             Group(Item('state',style='custom',show_label=False,label='State')),
             
