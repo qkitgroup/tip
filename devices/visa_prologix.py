@@ -278,7 +278,7 @@ class instrument(object):
 
 # do some checking ...
 if __name__ == "__main__":
-   ls=instrument("GPIB::20",ip="172.22.197.181",delay=1)
+   ls=instrument("GPIB::00",ip="129.13.93.65",delay=1)
    #ls._set_read_timeout(timeout=3)
 
    #   ls.write("*IDN?")

@@ -19,6 +19,9 @@ from enable.component_editor import ComponentEditor
 from chaco.chaco_plot_editor import ChacoPlotItem
 
 import socket
+import argparse
+import ConfigParser
+
 try:
     import cPickle as pickle
 except:
@@ -27,7 +30,7 @@ except:
 UpdateInterval = 2
 DEBUG = True
 
-REMOTEHOST = 'pi-us71'
+REMOTEHOST = 'pi-us74'
 REMOTEPORT = 9999
 
 def logstr(logstring):
@@ -461,4 +464,17 @@ class MainWindow(HasTraits):
                 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="TIP Is not Perfect // HR@KIT 2011")
+
+    parser.add_argument('ConfigFile', nargs='?', default='settings_local.cfg',
+                        help='Configuration file name')
+    args=parser.parse_args()
+
+    Conf = ConfigParser.RawConfigParser()
+    Conf.read(args.ConfigFile)
+    global REMOTEHOST
+    global REMOTEPORT
+    REMOTEHOST = Conf.get('REMOTEHOST','name')
+    REMOTEPORT = Conf.getint('REMOTEHOST','port')
     MainWindow().configure_traits()

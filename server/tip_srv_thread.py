@@ -133,7 +133,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 
         if not self.checkaddress(self.request.getpeername()):
            "if the address is not valid, we close the thread"
-            return
+           return
         self.data = self.server.data
         #print  "connect from host: ",self.server.socket.getpeername()
         
