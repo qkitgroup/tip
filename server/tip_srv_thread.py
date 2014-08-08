@@ -124,7 +124,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
     def checkaddress(self,(ip,port)):
         #logging.info("Client connect from %s %s" % str(ip), str(port))
         print "Got request from peer:", ip, port," checking address..." 
-        if ip=="129.13.93.XXX":
+        if ip=="129.13.92.191":
            print "Closing connection to",ip
            return False
         else:

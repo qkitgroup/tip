@@ -90,6 +90,7 @@ class Heater_Dev(object):
         # sanity check
         if OUT_Volt > 1.999:
             OUT_Volt = 1.999
+        OUT_Volt=OUT_Volt/10.
         self.HDev.set_output0(OUT_Volt)
         return OUT_Volt
 
