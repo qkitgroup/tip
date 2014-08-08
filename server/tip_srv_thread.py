@@ -29,6 +29,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 #    def __init__(self,data):
 #	SocketServer.StreamRequestHandler.__init__(self)
 #	self.data = data
+  
 
     def set_handler(self,cmds):
         try:
@@ -122,12 +123,19 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 
     def checkaddress(self,(ip,port)):
         #logging.info("Client connect from %s %s" % str(ip), str(port))
-        print ip, port
-
+        print "Got request from peer:", ip, port," checking address..." 
+        if ip=="129.13.93.XXX":
+           print "Closing connection to",ip
+           return False
+        else:
+           return True
     def handle(self):
-        self.checkaddress(self.request.getpeername())
-        self.data = self.server.data
 
+        if not self.checkaddress(self.request.getpeername()):
+           "if the address is not valid, we close the thread"
+            return
+        self.data = self.server.data
+        #print  "connect from host: ",self.server.socket.getpeername()
         
             
         # This while loop tackles the incoming calls per connection
@@ -176,7 +184,8 @@ class tip_srv(object):
         # Port 0 means to select an arbitrary unused port
         #HOST, PORT = "localhost", 9999
         #HOST, PORT = "pi-us27", 9999
-        HOST = self.data.localhost.name
+        #HOST = self.data.localhost.name # we open now to both local and remote
+        HOST = "0.0.0.0"
         PORT = self.data.localhost.port
         # the ThreadedTCPServer object, loaded with our request handler
         self.server = THServer((HOST, PORT), ThreadedTCPRequestHandler,self.data)
@@ -195,6 +204,7 @@ class tip_srv(object):
     def loop(self):
         # simple 10ms event loop
         while(True):
+            # print self.server.socket.getpeername()
             #print wants_abort
             if self.data.get_wants_abort():
                 self.server.shutdown()
