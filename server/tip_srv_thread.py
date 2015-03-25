@@ -124,10 +124,12 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
     def checkaddress(self,(ip,port)):
         #logging.info("Client connect from %s %s" % str(ip), str(port))
         print "Got request from peer:", ip, port," checking address..." 
-        if ip=="129.13.92.191":
+        #if ip=="129.13.92.191":
+        if ip not in self.data.localhost.valid_IPs:
            print "Closing connection to",ip
            return False
         else:
+           print "Accepting connection from", ip
            return True
     def handle(self):
 
@@ -181,9 +183,6 @@ class THServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 class tip_srv(object):
     def __init__(self,DATA):
         self.data = DATA
-        # Port 0 means to select an arbitrary unused port
-        #HOST, PORT = "localhost", 9999
-        #HOST, PORT = "pi-us27", 9999
         #HOST = self.data.localhost.name # we open now to both local and remote
         HOST = "0.0.0.0"
         PORT = self.data.localhost.port

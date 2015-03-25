@@ -26,6 +26,7 @@ class DATA(object):
             self.name = config.get('LOCALHOST','name')
             self.ip   = config.get('LOCALHOST','ip')
             self.port = config.getint('LOCALHOST','port')
+            self.valid_IPs = config.get('LOCALHOST','valid_IPs').split(",") 
     class REMOTEHOST(object):
         def __init__(self,config):
             self.name = config.get('REMOTEHOST','name')
