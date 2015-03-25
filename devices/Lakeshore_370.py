@@ -31,8 +31,8 @@ class Lakeshore_370(object):
     def __init__(self,
                  name,
                  ip="129.13.93.80",
-                 gpib="GPIB::0",
-                 delay = 0.2,
+                 gpib="GPIB::12",
+                 delay = 0.1,
                    reset=False, 
                    **kwargs
                ):
@@ -40,7 +40,8 @@ class Lakeshore_370(object):
         self._visa = visa.instrument(gpib,ip=ip,delay=delay)
         
         self._channels = kwargs.get('channels', (1, 2, 5, 6, 7, 8))
-        self.set_scanner_channel
+        #self.set_scanner_channel
+        self.channel = self._get_Channel()
         
         self.R_format_map = {
             1: '2 mOhm',
@@ -141,7 +142,7 @@ class Lakeshore_370(object):
 
  
 
-    def get_IDN(self):
+    def _get_IDN(self):
         return self.__ask('*IDN?')
         
     def get_common_mode_reduction(self):
@@ -176,16 +177,10 @@ class Lakeshore_370(object):
 
     def get_Temp(self, channel):
         ans = float(self.__ask('RDGK? %s' % channel))
-        if self._logger != None:
-          try: self._logger('kelvin', channel, ans)
-          except: logging.exception('Could not log kelvin%s', channel)
         return ans
         
     def get_Res(self, channel):
         ans = float(self.__ask('RDGR? %s' % channel))
-        if self._logger != None:
-          try: self._logger('resistance', channel, ans)
-          except: logging.exception('Could not log resistance%s', channel)
         return ans
         
     def get_resistance_range(self, channel):
@@ -338,6 +333,12 @@ class Lakeshore_370(object):
         return float(ans.split(',')[6])
 
     # functions added for TIP
+    def _get_Channel(self):
+        return self.get_scanner_channel()
+    def _set_Channel(self,channel):
+        self.channel = channel
+        return self.set_scanner_channel(channel)
+        
     def _get_ave(self):
         # just a proxy in the moment
         return self.get_Res(self.channel)
@@ -345,7 +346,7 @@ class Lakeshore_370(object):
     def get_T(self):
         return self.get_Temp(self.channel)
         
-    def get_Rval(self, channel):
+    def get_Rval(self):
         return self.get_Res(self.channel)
         
     def set_output0(self,OUT_Volt): # HEATER interface
@@ -355,18 +356,26 @@ class Lakeshore_370(object):
             return self.set_Voltage(OUT_Volt)
             
     def set_Heat(self,power):
-        self.__write('MOUT %.2F' % (power))
+        self.__write('MOUT %.8f' % (power))
     def get_Heat(self):
         return float(self.__ask('MOUT?'))
-        
+    
     def setup_device(self):
         pass
         
         
             
 if __name__ == "__main__":
-    LS=Lakeshore_370("SIM900")
-    print LS._get_IDN(8)
+    LS=Lakeshore_370("LS370")
+    #print LS._get_IDN()
+    #print LS._set_Channel(8)
     print LS._get_Channel()
-    print LS.get_Rval()
-    print LS._get_ave()
+    #print LS.get_Rval()
+    #print LS._get_ave()
+    print LS.get_T()
+    
+    print LS.set_Heat(1e-8)
+    print LS.get_Heat()
+    print LS.set_Heat(0)
+    print LS.get_Heat()
+
