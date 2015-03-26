@@ -43,7 +43,7 @@ class Heater_Dev(object):
             pass
 
     def __init__(self,DATA):
-        
+        self.DATA =DATA
         self.Heater_R = DATA.heater.Resistor
         if DATA.config.getboolean('debug','dummymode'):
             self.HDev = self.dummyheater()
@@ -76,23 +76,37 @@ class Heater_Dev(object):
             except:
                 print("SIM928 not found, using dummy heater.")
                 self.HDev = self.dummyheater()
+        elif DATA.config.get('Heater',"Output_device").strip() == "Lakeshore_370":
+            try:
+                print 'HEATER set to Lakeshore 370'
+                #import devices.nidaq4 as nidaq
+                self.HDev = DATA.RBR
+            except:
+                print("Lakeshore 370 not found, using dummy heater.")
+                self.HDev = self.dummyheater()
         else:
             pass
 
 
     def set_Heat(self,value):
-        # calculate Heat for Black Fridge (R=600Ohm)
-        
-        if value < 0 :
-            value = 0
-        OUT_Volt = math.sqrt(value*self.Heater_R)
-        print "Set Heat voltage to "+str(OUT_Volt)
-        # sanity check
-        if OUT_Volt > 1.999:
-            OUT_Volt = 1.999
-        OUT_Volt=OUT_Volt/10.
-        self.HDev.set_output0(OUT_Volt)
-        return OUT_Volt
+        # the Lakeshore 370 has its own heater:
+        if self.DATA.config.get('Heater',"Output_device").strip() == "Lakeshore_370":
+            if value < 0 : value = 0
+            self.HDev.set_Heat(value)
+            return value
+    
+        else:
+            # calculate Heat for Black Fridge (R=600Ohm)
+            if value < 0 :
+                value = 0
+            OUT_Volt = math.sqrt(value*self.Heater_R)
+            print "Set Heat voltage to "+str(OUT_Volt)
+            # sanity check
+            if OUT_Volt > 1.999:
+                OUT_Volt = 1.999
+            OUT_Volt=OUT_Volt/10.
+            self.HDev.set_output0(OUT_Volt)
+            return OUT_Volt
 
     def set_Heat_High_res(self,value):
         self.HDev.set_output1(value)
@@ -110,7 +124,7 @@ class IO_worker(Thread):
         #
         # we save the bridge object reference in the DATA class for
         # later use, e.g. for the SIM928 Voltage source (heater)
-        print dir(self.RBR)
+        #print dir(self.RBR)
         self.DATA.RBR = self.RBR.BR
         self.HTR = Heater_Dev(self.DATA)
         
@@ -135,21 +149,34 @@ class IO_worker(Thread):
                     print "Range change failed"
             
             #update the values in the storage
-            R = self.RBR.get_R()
-            self.DATA.set_last_Res(R)
-            T = self.RBR.get_T_from_R(R)
-            self.DATA.set_Temp(T)
-            ## for do not heat to much the mixing chamber
-            if T > 0.7:
-                self.HTR.set_Heat(0)
-                self.DATA.set_ctrl_Temp(0)
+            if self.DATA.config.get('RBridge','Name').strip() == 'Lakeshore_370':
+                T = self.RBR.get_T()
+                self.DATA.set_Temp(T)
+                R = self.RBR.get_R()
+                self.DATA.set_last_Res(R)
+            else:
+                R = self.RBR.get_R()
+                self.DATA.set_last_Res(R)
+                T = self.RBR.get_T_from_R(R)
+                self.DATA.set_Temp(T)
+            ## 
+            ## Sanity check for automatic scripts
+            ## do not heat too much the mixing chamber
+            if self.DATA.config.getboolean('Heater',"Thermostage"):
+                if T > 2.0:
+                    self.HTR.set_Heat(0)
+                    self.DATA.set_ctrl_Temp(0)
+            else:
+                if T > 0.8:
+                    self.HTR.set_Heat(0)
+                    self.DATA.set_ctrl_Temp(0)
                 
             NHW,error = self.DATA.PID.update_Heat(T)
             # set the new heating power from pid
             HT=self.HTR.set_Heat(NHW)
             self.DATA.set_Heat(HT)
             if self.DATA.debug:
-            	print "T=%.2fmK R=%.2fOhm Heat %0.4f(V) %.4f(uW)" % (T*1000,R,HT,HT**2/480*1e6)
+                print "T=%.2fmK R=%.2fOhm Heat %0.4f(V) %.4f(uW)" % (T*1000,R,HT,HT**2/480*1e6)
             self.DATA.set_pidE(error)
             
             # wait for the next turn

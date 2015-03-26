@@ -356,11 +356,16 @@ class Lakeshore_370(object):
             return self.set_Voltage(OUT_Volt)
             
     def set_Heat(self,power):
-        self.__write('MOUT %.8f' % (power))
+        self.__write('MOUT %.8F' % (power))
     def get_Heat(self):
         return float(self.__ask('MOUT?'))
-    
-    def setup_device(self):
+    def get_Range(self): 
+        return self.get_resistance_range(self.channel)
+    def get_Excitation(self):
+        return get_excitation_range(self.channel)
+    def get_Channel(self): 
+        return self._get_Channel()
+    def setup_device(self): 
         pass
         
         
@@ -374,7 +379,7 @@ if __name__ == "__main__":
     #print LS._get_ave()
     print LS.get_T()
     
-    print LS.set_Heat(1e-8)
+    print LS.set_Heat(1e-7)
     print LS.get_Heat()
     print LS.set_Heat(0)
     print LS.get_Heat()

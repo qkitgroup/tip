@@ -13,13 +13,14 @@ class R_bridge(object):
         # import calibration class
         
         # import cal setting from settings.cfg
-        self.CP = TE.TIPEich(
-            self.config.get('Calibration','Name'),
-            self.config.get('Calibration','FName'),
-            self.config.get('Calibration','FOrder'),
-            self.config.get('Calibration','Interpolation')
-        )
-        print "Done."
+        if self.config.getboolean('Calibration','Calibrate'):
+            self.CP = TE.TIPEich(
+                self.config.get('Calibration','Name'),
+                self.config.get('Calibration','FName'),
+                self.config.get('Calibration','FOrder'),
+                self.config.get('Calibration','Interpolation')
+            )
+            print "Calibration file loaded."
         print "Open and setup Bridge, may take a couple of seconds..."
         # import bridge hardware class
         if self.config.get('RBridge','Name').strip() == 'PW_AVS47':
@@ -38,9 +39,18 @@ class R_bridge(object):
                 self.setup_device_SIM921()
                 #sys.exit()
                 print "Done."
+                
+        elif self.config.get('RBridge','Name').strip() == 'Lakeshore_370':
+            if not self.dummymode:
+                print "Initializing Lakeshore 370..."
+                # init from config file
+                self.setup_device_LS370()
+                #sys.exit()
+                print "Done."
+
         else:
-            pass
-        print "Bridge enabled: Done."
+            print 'Warning:no bridge enabled!'
+        #print "Bridge enabled: Done."
         
         # make sure that we gracefully go down
         atexit.register(self.disconnect)
@@ -93,6 +103,22 @@ class R_bridge(object):
                 )
         else:
             pass
+            
+    def setup_device_LS370(self):
+        import devices.Lakeshore_370 as LS370
+        """def __init__(self,ip= ,gpib="GPIB::0"):"""
+        if self.config.get('RBridge','Com_Method').strip() == 'Ethernet':
+            self.BR = LS370.Lakeshore_370(
+                self.config.get('RBridge','Name'),
+                gpib='GPIB::'+self.config.get('RBridge','GPIB_Addr').strip(),
+                ip=self.config.get('RBridge','IP'),
+                delay=self.config.getfloat('RBridge','delay')
+                )
+            print 'LS enabled'
+        else:
+            print 'Lakeshore 370 not setup'
+            pass
+
         
 
     def get_R(self):
@@ -109,7 +135,11 @@ class R_bridge(object):
         return self.CP.getT_from_R(R)
     def get_T(self):
         if not self.dummymode:
-            return self.get_T_from_R(self.get_R())
+            # the LS370 does the interpolation by itself
+            if self.config.get('RBridge','Name').strip() == 'Lakeshore_370':
+                return self.BR.get_T()
+            else:
+                return self.get_T_from_R(self.get_R())
         else:
             # in dummymode we get 100mK + some random mK
             return random.random()/100+0.1
