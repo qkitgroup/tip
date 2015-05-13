@@ -14,9 +14,9 @@ import socket
 from PyQt4.QtCore import QObject, pyqtSignal
 
 class DATA(object):
-    REMOTEHOST = ""
+    REMOTEHOST = "129.13.93.18"
     REMOTEPORT = 9999
-    UpdateInterval = 0.1
+    UpdateInterval = 1
     DEBUG = False
     wants_abort = True
 

@@ -157,7 +157,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #print T
         self.T_field.setValue(T)
         self.R_field.setValue(R)
-        self.H_field.setValue(Heat)
+        self.H_field.setValue(Heat*1e6)
         #self.newT_SpinBox.setValue(Tctrl)
         
 # Main entry to program.  Sets up the main app and create a new window.
