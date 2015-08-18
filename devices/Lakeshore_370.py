@@ -176,12 +176,24 @@ class Lakeshore_370(object):
         self.get_scanner_channel()
 
     def get_Temp(self, channel):
-        ans = float(self.__ask('RDGK? %s' % channel))
+        try:
+            ans = float(self.__ask('RDGK? %s' % channel))
+        except ValueError:
+            print "LS: get_res value error, try again"
+            ans = float(self.__ask('RDGK? %s' % channel))
         return ans
         
     def get_Res(self, channel):
-        ans = float(self.__ask('RDGR? %s' % channel))
-        return ans
+        try:
+            ans = self.__ask('RDGR? %s' % channel)
+            #print "#%s#" % (ans)
+            return float(ans)
+        except ValueError:
+            print "LS: get_res value error, try again"
+            ans = self.__ask('RDGR? %s' % channel)
+            #print "#%s#" % (ans)
+            return float(ans)
+
         
     def get_resistance_range(self, channel):
         ans = self.__ask('RDGRNG? %s' % channel)
