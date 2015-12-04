@@ -106,7 +106,8 @@ class instrument(object):
         cmd+=self.term_char
         #self._set_read_after_write(False)
         self.sock.send(cmd)
-        time.sleep(self.delay)
+        #print " -- "+str(cmd).rstrip()
+        #time.sleep(self.delay) # the delay is now in _set_read!
         
     def _send_recv(self,cmd,**kwargs):
         bufflen=kwargs.get("bufflen",self.chunk_size)
@@ -139,6 +140,7 @@ class instrument(object):
         
     def _set_read(self):
         self._send("++read eoi")
+        time.sleep(self.delay)
         
     def _set_saveconfig(self,On=False):
         # should not be used very frequently

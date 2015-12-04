@@ -2,25 +2,15 @@
 import random
 import time, sys
 import atexit
-import tip_eich as TE
+import numpy as np
 
 class R_bridge(object):
     "select a Bridge, and get resistance values from it"
     def __init__(self,DATA):
         self.config = DATA.config
+        self.DATA = DATA
         self.dummymode = self.config.getboolean('debug','dummymode')
-        
-        # import calibration class
-        
-        # import cal setting from settings.cfg
-        if self.config.getboolean('Calibration','Calibrate'):
-            self.CP = TE.TIPEich(
-                self.config.get('Calibration','Name'),
-                self.config.get('Calibration','FName'),
-                self.config.get('Calibration','FOrder'),
-                self.config.get('Calibration','Interpolation')
-            )
-            print "Calibration file loaded."
+
         print "Open and setup Bridge, may take a couple of seconds..."
         # import bridge hardware class
         if self.config.get('RBridge','Name').strip() == 'PW_AVS47':
@@ -39,7 +29,8 @@ class R_bridge(object):
                 self.setup_device_SIM921()
                 #sys.exit()
                 print "Done."
-                
+            else:
+                self.BR = None
         elif self.config.get('RBridge','Name').strip() == 'Lakeshore_370':
             if not self.dummymode:
                 print "Initializing Lakeshore 370..."
@@ -47,10 +38,13 @@ class R_bridge(object):
                 self.setup_device_LS370()
                 #sys.exit()
                 print "Done."
-
+        elif self.config.get('RBridge','Name').strip() == 'Dummy':
+            from devices.dummy import DummyDevice
+            self.BR = DummyDevice()
+            print "Dummy bridge init"
         else:
             print 'Warning:no bridge enabled!'
-        #print "Bridge enabled: Done."
+        print "Bridge enabled: Done."
         
         # make sure that we gracefully go down
         atexit.register(self.disconnect)
@@ -103,7 +97,7 @@ class R_bridge(object):
                 )
         else:
             pass
-            
+        
     def setup_device_LS370(self):
         import devices.Lakeshore_370 as LS370
         """def __init__(self,ip= ,gpib="GPIB::0"):"""
@@ -119,32 +113,46 @@ class R_bridge(object):
             print 'Lakeshore 370 not setup'
             pass
 
-        
-
     def get_R(self):
         if not self.dummymode:
-            #return self.BR._get_testR(init_R=10000)
             #R = self.BR._get_adc()
             R = self.BR._get_ave() # two averages ....
-            #print 'Resistor:', R
             return float(R)
         else:
             return random.random()*100+10000
 
-    def get_T_from_R(self, R):
-        return self.CP.getT_from_R(R)
+    # def get_T_from_R(self, R):
+        # #if self.DATA.bridge.tainted:
+        # #    return np.nan
+        # #else:
+        # #    return self.CP[self.DATA.bridge.get_Channel()].getT_from_R(R)
+        # for i in range(20):
+            # if not self.DATA.bridge.tainted:
+                # return self.CP[self.DATA.bridge.get_Channel()].getT_from_R(R)
+            # time.sleep(1)
+            # print "DATA is tainted."
+        # print "Within 10 seconds, tainted did not turn false, returning data anyway..."
+        # return self.CP[self.DATA.bridge.get_Channel()].getT_from_R(R)
     def get_T(self):
         if not self.dummymode:
             # the LS370 does the interpolation by itself
             if self.config.get('RBridge','Name').strip() == 'Lakeshore_370':
                 return self.BR.get_T()
             else:
-                return self.get_T_from_R(self.get_R())
+                raise "Get T only implemented for Lakeshore 370"
         else:
             # in dummymode we get 100mK + some random mK
             return random.random()/100+0.1
     def set_Range(self,Range):
         return self.BR._set_range(Range)
+        
+    def set_Channel(self,Channel): #Channel is a TEMPERATURE Object
+        print "-> %s:             waiting %.1fs"%(Channel.channel,Channel.settling_time)
+        self.BR._set_Excitation(-1) #-1 is excitation off for SIM900
+        self.BR._set_Channel(Channel.channel)
+        self.BR._set_Range(Channel.range)
+        self.BR._set_Excitation(Channel.excitation)
+        return self.BR._get_Channel()==Channel.channel
         
     def disconnect(self):
         if not self.dummymode:

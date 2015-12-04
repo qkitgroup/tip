@@ -6,7 +6,9 @@ Created on Tue Mar 31 21:59:44 2015
 """
 from threading import Thread
 from time import sleep
-#import numpy
+
+from cPickle import loads
+import numpy as np
 
 import socket
 #import argparse
@@ -55,7 +57,7 @@ class remote_client(object):
         
     def recv(self):
         # Receive data from the server and shut down
-        rdata = self.sock.recv(8192)
+        rdata = self.sock.recv(819200)
         string = rdata
         #arr= pickle.loads(string)
         #logstr(string)
@@ -67,10 +69,8 @@ class remote_client(object):
 class AcquisitionThread(Thread,QObject):
     """ Acquisition loop. This is the worker thread that retrieves info ...
     """
-    T_sig = pyqtSignal(float)
-    H_sig = pyqtSignal(float)
-    E_sig = pyqtSignal(float)
-    R_sig = pyqtSignal(float)
+    update_sig = pyqtSignal()
+    
     def __init__(self,DATA):
         Thread.__init__(self)
         QObject.__init__(self)
@@ -81,8 +81,9 @@ class AcquisitionThread(Thread,QObject):
     def setup_acquire_from_remote(self):
         self.rc=remote_client(self.data)
         
-    def acquire_from_remote(self,cmd):
-        self.rc.send("get "+cmd)
+    def acquire_from_remote(self,cmd,delay=0):
+        self.rc.send(cmd)
+        sleep(delay)
         return self.rc.recv()
 
     def update_remote(self,cmd):
@@ -113,23 +114,30 @@ class AcquisitionThread(Thread,QObject):
         #self.T_arr[:]=float(self.acquire_from_remote("T"))*1000
         #self.Heat_arr[:]=float(self.acquire_from_remote("HEAT"))*1e6
         #self.pidE_arr[:]=float(self.acquire_from_remote("PIDE"))*1e6
-        R=0
-        Heat =0
 
         self.display('Start')
+        
+        #axnames = loads(self.acquire_from_remote("get/therm/names"),delay=.4)
+        
                 
         while not self.data.wants_abort:
             # get state
-            T=float(self.acquire_from_remote("T"))
-            Heat=float(self.acquire_from_remote("HEAT"))
-            pidE=float(self.acquire_from_remote("PIDE"))
-            R=float(self.acquire_from_remote("RES"))
-
-            self.T_sig.emit(T)
-            self.H_sig.emit(Heat)
-            self.E_sig.emit(pidE)
-            self.R_sig.emit(R)
-            sleep(self.data.UpdateInterval)
+            try:
+                newT = loads(self.acquire_from_remote("get/therm/:/temp/hist",delay=1.8))
+                newtimes = loads(self.acquire_from_remote("get/therm/:/time/hist",delay=1.8))
+                for i in range(len(self.data.times)):
+                    self.data.T[i] = np.append(self.data.T[i],newT[i])
+                    self.data.times[i] = np.append(self.data.times[i],newtimes[i])
+                    self.data.T[i]= self.data.T[i][np.unique(self.data.times[i],return_index=True)[1]]
+                    self.data.times[i] = self.data.times[i][np.unique(self.data.times[i],return_index=True)[1]]
+                    self.data.T[i]= self.data.T[i][np.where(self.data.times[i]!=0)]
+                    self.data.times[i] = self.data.times[i][np.where(self.data.times[i]!=0)]
+                    
+                self.update_sig.emit()
+                
+                sleep(self.data.UpdateInterval)
+            except pickle.UnpicklingError:
+                pass
             
         #self.stop_remote()
         self.display('Connection stopped')
@@ -156,7 +164,7 @@ class Bridge(object):
         Item('Range',label="Range"),
         Item('Excitation',label="Excitation"),
         Item('AutoRange',label="Autorange")
-	),
+    ),
         Item("Update",label="Update all")
         )
 
