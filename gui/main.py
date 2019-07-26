@@ -1,14 +1,18 @@
 import sys
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+#from PyQt4.QtCore import *
+#from PyQt4.QtGui import *
+from PyQt5.QtCore import * #Qt, QObject
+from PyQt5.QtWidgets import * # QApplication
+
+
 from time import sleep
 
 from tip_gui_lib import DATA, AcquisitionThread, remote_client
 from tip_gui_cover import Ui_MainWindow
 
 import argparse
-import ConfigParser
+import configparser
 import numpy
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -171,11 +175,11 @@ def main(argv):
                         help='Configuration file name')
     args=parser.parse_args()
 
-    data.Conf = ConfigParser.RawConfigParser()
+    data.Conf = configparser.RawConfigParser()
     data.Conf.read(args.ConfigFile)
 
     # create Qt application
-    app = QApplication(argv,True)
+    app = QApplication(argv)
     # create main window
     wnd = MainWindow(data) # classname
     wnd.show()

@@ -11,8 +11,8 @@ from time import sleep
 import socket
 #import argparse
 #import ConfigParser
-from PyQt4.QtCore import QObject, pyqtSignal
-
+#from PyQt4.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import  QObject, pyqtSignal
 class DATA(object):
     REMOTEHOST = "129.13.93.74"
     REMOTEPORT = 9999
@@ -102,7 +102,7 @@ class AcquisitionThread(Thread,QObject):
             pass
         self.processing_job.start()
     def display(self,message):
-        print message
+        print (message)
 
     def run(self):
         """ Runs the acquisition loop.
