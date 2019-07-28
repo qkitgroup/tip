@@ -35,7 +35,7 @@ class remote_client(object):
 		#print len(string),
 		#arr= pickle.loads(string)
 		#print arr
-		print string
+		print (string)
 	def close(self):
 		self.sock.close()
 

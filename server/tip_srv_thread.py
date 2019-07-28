@@ -5,7 +5,7 @@
 
 import socket
 import threading
-import SocketServer
+import socketserver
 import time
 import sys
 import logging
@@ -15,7 +15,7 @@ try:
 except:
 	import pickle
 
-from string import split
+#from string import split
 
 DEBUG = False 
 def logstr(logstring):
@@ -25,13 +25,12 @@ def logstr(logstring):
 #global wants_abort
 wants_abort = False
 
-class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
+class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 #    def __init__(self,data):
 #   SocketServer.StreamRequestHandler.__init__(self)
 #   self.data = data
   
-
- 	def set_handler(self,cmds):
+	def set_handler(self,cmds):
 		try:
 			logstr(cmds)   
 			if "PID".find(cmds[1]) == 0:
@@ -83,12 +82,12 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 					self.wfile.write("Please specify Range or Excitation as integer value. Your request was "+"/".join(cmds))
 					return
 
-			else:
+				else:
 					pass
 		except:
-			print "set_handler exception..."
+			print ("set_handler exception...")
 			raise
-  
+
 	def get_handler(self,cmds):
 		try:
 			logstr(cmds)   
@@ -162,25 +161,27 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 			else:
 					pass
 		except:
-			print "get_handler exception..."
+			print ("get_handler exception...")
 			raise
 
-	def checkaddress(self,(ip,port)):
+	def checkaddress(self,ip_port):
+		ip,port = ip_port
 		#logging.info("Client connect from %s %s" % str(ip), str(port))
-		print "Got request from peer:", ip, port," checking address..." 
+		print ("Got request from peer: %s %d "%( ip, port))
+		print ("checking address ...")
 		'''
 		if ip=="129.13.92.191":
-		   print "Closing connection to",ip
-		   return False
+			print "Closing connection to",ip
+			return False
 		else:
-		   return True
+			return True
 		'''
 		return True   #Jochen
 	def handle(self):
 		
 		if not self.checkaddress(self.request.getpeername()):
-		   "if the address is not valid, we close the thread"
-		   return
+			"if the address is not valid, we close the thread"
+			return
 		self.data = self.server.data
 		#print  "connect from host: ",self.server.socket.getpeername()
 		
@@ -213,18 +214,20 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 					self.data.set_wants_abort()
 					wants_abort = True
 					break
-				
+
 				else:
-					self.wfile.write("Invalid syntax, either 'set' or 'get'\n")     
+					self.wfile.write("Invalid syntax, either 'set' or 'get'\n")
+
 			except KeyboardInterrupt:
 				self.data.set_wants_abort()
 				wants_abort = True
 				break
 
-class THServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+
+class THServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	def __init__(self, address, handler, data):
 			self.data = data
-			SocketServer.TCPServer.__init__(self, address, handler)
+			socketserver.TCPServer.__init__(self, address, handler)
 			logging.info("Starting server")
 
 
@@ -252,7 +255,7 @@ class tip_srv(object):
 		# server.shutdown()
 
 	def loop(self):
-		# simple 10ms event loop
+		# simple 100ms event loop
 		while(True):
 			# print self.server.socket.getpeername()
 			#print wants_abort
@@ -263,9 +266,11 @@ class tip_srv(object):
 					break
 					#time.sleep(0.1)
 					return False
+				time.sleep(0.1)
+
 			except KeyboardInterrupt:
 				self.data.set_wants_abort()
-				print "Shutting down..."
+				print ("Shutting down...")
 
 
 if __name__ == "__main__":

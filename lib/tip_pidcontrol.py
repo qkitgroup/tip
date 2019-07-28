@@ -58,6 +58,6 @@ class pidcontrol(object):
         iTerm = self.data.get_PID()[1] * self.iState; #calculate the integral term
         dTerm = self.data.get_PID()[2] * ( reading - self.dState)
         self.dState = reading
-        print "P:%.5f I:%.5f D:%.5f terms"%(pTerm,iTerm,dTerm)
-        print "I:%.5f D:%.5f states"%(self.iState,self.dState)
+        print( "P:%.5f I:%.5f D:%.5f terms"%(pTerm,iTerm,dTerm))
+        print( "I:%.5f D:%.5f states"%(self.iState,self.dState))
         return pTerm + iTerm - dTerm

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #TIP main, version 0.2 written by HR@KIT Feb 2011
 # TIP Is not Precious
-import ConfigParser
+import configparser
 import lib.tip_pidcontrol as tip_pidcontrol
 import sys,time
 import argparse
@@ -18,11 +18,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="TIP Is not Perfect // HR@KIT 2011")
 
-    parser.add_argument('ConfigFile', nargs='?', default='settings.cfg',
+    parser.add_argument('ConfigFile', nargs='?', default='settings_local.cfg',
                         help='Configuration file name')
     args=parser.parse_args()
     
-    Conf = ConfigParser.RawConfigParser()
+    Conf = configparser.RawConfigParser(inline_comment_prefixes=';')
     Conf.read(args.ConfigFile)
     
     DATA = DATA(Conf)

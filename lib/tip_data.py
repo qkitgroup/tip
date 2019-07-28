@@ -4,14 +4,14 @@
 # make the _whole_ thing thread safe.
 
 import numpy
-import thread
+#import thread
 from time import time
-from threading import Lock
+from threading import Lock, Thread
 try:
 	import cPickle as pickle
 except:
 	import pickle
-import tip_eich as TE
+import lib.tip_eich as TE
 
 # DATA exchange class, also holds global variables for
 # Thread management
@@ -55,7 +55,7 @@ class DATA(object):
 					config.get('T_Channel_%i'%chindex,'FOrder'),
 					config.get('T_Channel_%i'%chindex,'Interpolation')
 				)
-				print "Channel %i loaded"%self.channel
+				print ("Channel %i loaded"%self.channel)
 			
 			def set_Range(self,Range):
 				with self.bridge_lock:
@@ -142,8 +142,8 @@ class DATA(object):
 			self.bridge_lock = Lock()
 			self.tainted = True
 			self.channel = 0
-			
-			self.channels = [self.TEMPERATURE(config,CH) for CH in numpy.array(config.get('T_Channels','Channels').split(","),dtype=numpy.int) ]
+			#self.channels = [self.TEMPERATURE(config,CH) for CH in numpy.array(config.get('T_Channels','Channels').split(","),dtype=numpy.int) ]
+			self.channels = [self.TEMPERATURE(config,int(CH)) for CH in config.get('T_Channels','Channels').split(",")]
 			self.chmap = {self.channels[i].channel : i for i in range(len(self.channels))}
 			self.Control_Channel = self.channels[numpy.where(numpy.array(config.get('T_Channels','Channels').split(","),dtype=numpy.int) == config.getint('T_Channels','Control_Channel') )[0][0]]
 	

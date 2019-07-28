@@ -11,40 +11,40 @@ class R_bridge(object):
         self.DATA = DATA
         self.dummymode = self.config.getboolean('debug','dummymode')
 
-        print "Open and setup Bridge, may take a couple of seconds..."
+        print ("Open and setup Bridge, may take a couple of seconds...")
         # import bridge hardware class
         if self.config.get('RBridge','Name').strip() == 'PW_AVS47':
             if not self.dummymode:
-                print "Initializing AVS47 ..."
+                print ("Initializing AVS47 ...")
                 # init from config file
                 self.setup_device_AVS47()
                 #sys.exit()
-                print "Done."
+                print ("Done.")
             
         elif self.config.get('RBridge','Name').strip() == 'SRS_SIM900':
             
             if not self.dummymode:
-                print "Initializing SIM921 ..."
+                print ("Initializing SIM921 ...")
                 # init from config file
                 self.setup_device_SIM921()
                 #sys.exit()
-                print "Done."
+                print ("Done.")
             else:
                 self.BR = None
         elif self.config.get('RBridge','Name').strip() == 'Lakeshore_370':
             if not self.dummymode:
-                print "Initializing Lakeshore 370..."
+                print ("Initializing Lakeshore 370...")
                 # init from config file
                 self.setup_device_LS370()
                 #sys.exit()
-                print "Done."
+                print ("Done.")
         elif self.config.get('RBridge','Name').strip() == 'Dummy':
-            from devices.dummy import DummyDevice
-            self.BR = DummyDevice()
-            print "Dummy bridge init"
+            from devices.DummyDevice import DummyDevice
+            self.BR = DummyDevice("DummMe")
+            print ("Dummy bridge init")
         else:
-            print 'Warning:no bridge enabled!'
-        print "Bridge enabled: Done."
+            print ('Warning:no bridge enabled!')
+        print ("Bridge enabled: Done.")
         
         # make sure that we gracefully go down
         atexit.register(self.disconnect)
@@ -108,9 +108,9 @@ class R_bridge(object):
                 ip=self.config.get('RBridge','IP'),
                 delay=self.config.getfloat('RBridge','delay')
                 )
-            print 'LS enabled'
+            print ('LS enabled')
         else:
-            print 'Lakeshore 370 not setup'
+            print ('Lakeshore 370 not setup')
             pass
 
     def get_R(self):
@@ -147,15 +147,18 @@ class R_bridge(object):
         return self.BR._set_range(Range)
         
     def set_Channel(self,Channel): #Channel is a TEMPERATURE Object
-        print "-> %s:             waiting %.1fs"%(Channel.channel,Channel.settling_time)
+        print ("-> %s:             waiting %.1fs"%(Channel.channel,Channel.settling_time))
         self.BR._set_Excitation(-1) #-1 is excitation off for SIM900
         self.BR._set_Channel(Channel.channel)
         self.BR._set_Range(Channel.range)
         self.BR._set_Excitation(Channel.excitation)
         return self.BR._get_Channel()==Channel.channel
-        
+
+    def get_Channel(self):
+        return self.BR._get_Channel()
+
     def disconnect(self):
         if not self.dummymode:
-            print "disconnecting the bridge ..."
+            print ("disconnecting the bridge ...")
             self.BR._set_local()
             self.BR._close() 

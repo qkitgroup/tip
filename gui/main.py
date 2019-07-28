@@ -1,5 +1,7 @@
+# tip regulation gui / HR@KIT 2011 -
 import sys
 
+# make it pyqt5 only ...
 #from PyQt4.QtCore import *
 #from PyQt4.QtGui import *
 from PyQt5.QtCore import * #Qt, QObject
@@ -40,15 +42,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
     def _setup_signal_slots(self):
         
-        
-        QObject.connect(self.newT_SpinBox,SIGNAL("valueChanged(double)"),self._update_newT)
-        
-        QObject.connect(self.P_SpinBox,SIGNAL("valueChanged(double)"),self._update_P)
-        QObject.connect(self.I_SpinBox,SIGNAL("valueChanged(double)"),self._update_I)
-        QObject.connect(self.D_SpinBox,SIGNAL("valueChanged(double)"),self._update_D)
-        
-        QObject.connect(self.Start,SIGNAL("released()"),self._start_aquisition)    
-        QObject.connect(self.Quit,SIGNAL("released()"),self._quit_tip_gui)
+        self.newT_SpinBox.valueChanged.connect(self._update_newT)
+        #QObject.connect(self.newT_SpinBox,SIGNAL("valueChanged(double)"),self._update_newT)
+        self.P_SpinBox.valueChanged.connect(self._update_P)
+
+        #QObject.connect(self.P_SpinBox,SIGNAL("valueChanged(double)"),self._update_P)
+        self.I_SpinBox.valueChanged.connect(self._update_I)
+        #QObject.connect(self.I_SpinBox,SIGNAL("valueChanged(double)"),self._update_I)
+        self.D_SpinBox.valueChanged.connect(self._update_D)
+        #QObject.connect(self.D_SpinBox,SIGNAL("valueChanged(double)"),self._update_D)
+
+        self.Start.released.connect(self._start_aquisition)        
+        #QObject.connect(self.Start,SIGNAL("released()"),self._start_aquisition)
+        self.Quit.released.connect(self._quit_tip_gui)
+        #QObject.connect(self.Quit,SIGNAL("released()"),self._quit_tip_gui)
     
     
     def _setup_views(self):
@@ -175,7 +182,7 @@ def main(argv):
                         help='Configuration file name')
     args=parser.parse_args()
 
-    data.Conf = configparser.RawConfigParser()
+    data.Conf = configparser.RawConfigParser(inline_comment_prefixes=';')
     data.Conf.read(args.ConfigFile)
 
     # create Qt application
@@ -185,7 +192,8 @@ def main(argv):
     wnd.show()
     
     # Connect signal for app finish
-    app.connect(app, SIGNAL("lastWindowClosed()"), app, SLOT("quit()"))
+    app.lastWindowClosed.connect(quit)
+    #app.connect(app, SIGNAL("lastWindowClosed()"), app, SLOT("quit()"))
     
     # Start the app up
     sys.exit(app.exec_())

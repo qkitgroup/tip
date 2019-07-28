@@ -137,6 +137,6 @@ if __name__ == "__main__":
 	
 	R=890000
 	Therm0 = TIPEich("Coldplate","RuOx_LT_thermometer.txt",order="RT",type="linear")
-	print "linear interpolation:", Therm0.getT_from_R(R)
+	print ("linear interpolation:", Therm0.getT_from_R(R))
 	Therm1 = TIPEich("Coldplate","RuOx_LT_thermometer.txt",order="RT",type="spline")
-	print "qubic spline:", Therm1.getT_from_R(R)
+	print ("qubic spline:", Therm1.getT_from_R(R))

@@ -8,13 +8,13 @@ from threading import Thread
 from time import sleep
 #import numpy
 
+# v this will go!
+from cPickle import loads
 import socket
-#import argparse
-#import ConfigParser
-#from PyQt4.QtCore import QObject, pyqtSignal
+
 from PyQt5.QtCore import  QObject, pyqtSignal
 class DATA(object):
-    REMOTEHOST = "129.13.93.74"
+    REMOTEHOST = "localhost"
     REMOTEPORT = 9999
     UpdateInterval = 1
     DEBUG = False
@@ -35,8 +35,11 @@ class Error(Exception):
 class remote_client(object):
     def __init__(self,DATA):
         self.data = DATA
-        host = DATA.REMOTEHOST
-        port = DATA.REMOTEPORT
+        self.config = DATA.Conf
+        #host = DATA.REMOTEHOST
+        #port = DATA.REMOTEPORT
+        host = self.config.get('REMOTEHOST','ip').strip()
+        port = int(self.config.get('REMOTEHOST','port').strip())
         self.setup(host,port)
         
     def setup(self,HOST,PORT):
