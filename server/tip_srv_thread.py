@@ -14,10 +14,11 @@ try:
 	import cPickle as pickle
 except:
 	import pickle
+import json
 
 #from string import split
 
-DEBUG = False 
+DEBUG = True 
 def logstr(logstring):
 	if DEBUG:
 		print(str(logstring))
@@ -26,81 +27,86 @@ def logstr(logstring):
 wants_abort = False
 
 class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
-#    def __init__(self,data):
-#   SocketServer.StreamRequestHandler.__init__(self)
-#   self.data = data
-  
+
+	
+	def wo(self,message):
+		# write the message to the comm channel (out)
+		self.wfile.write(str(message).encode())
+
 	def set_handler(self,cmds):
 		try:
 			logstr(cmds)   
 			if "PID".find(cmds[1]) == 0:
 				if len(cmds) != 4:
-					self.wfile.write("SET/PID/Option/Value has depth 4, your command has depth %i"%len(cmds))
+					self.wo("SET/PID/Option/Value has depth 4, your command has depth %i"%len(cmds))
 					return
 				elif "TCTRL".find(cmds[2])==0:
 					self.data.set_ctrl_Temp(float(cmds[3]))
-					self.wfile.write("1\n")		
+					self.wo("1\n")		
 				elif cmds[2] == "P":
 					self.data.set_P(float(cmds[3]))
-					self.wfile.write("1\n")
+					self.wo("1\n")
 				elif cmds[2] == "I":
 					self.data.set_I(float(cmds[3]))
-					self.wfile.write("1\n")
+					self.wo("1\n")
 				elif cmds[2] == "D":
 					self.data.set_D(float(cmds[3]))
-					self.wfile.write("1\n")
+					self.wo("1\n")
 				else:
-					self.wfile.write("Sub command after SET/PID/? not known...")
+					self.wo("Sub command after SET/PID/? not known...")
 				return
 			
 			elif "THERMOMETER".find(cmds[1]) == 0:
 				if len(cmds) != 5:
-					self.wfile.write("SET/TERM/Channel/Range/Value has depth 5, your command has depth %i"%len(cmds))
+					self.wo("SET/TERM/Channel/Range/Value has depth 5, your command has depth %i"%len(cmds))
 					return
 				elif cmds[2] == "":
 					term = self.data.bridge.Control_Channel.channel
 				elif cmds[2] == ":":
-					self.wfile.write("Channel wildcard ':' not allowed in set mode.")
+					self.wo("Channel wildcard ':' not allowed in set mode.")
 					return
 				else:
 					try:
 						term = int(cmds[2])
 					except ValueError:
-						self.wfile.write("Channel not recognized. Your request was "+"/".join(cmds))
+						self.wo("Channel not recognized. Your request was "+"/".join(cmds))
 						return
 				try:
 					if "RANGE".find(cmds[3]) == 0:
 						self.data.bridge.channels[self.data.bridge.chmap[term]].set_Range(int(cmds[4]))
-						self.wfile.write("1\n")
+						self.wo("1\n")
 					elif "EXCITATION".find(cmds[3]) == 0:
 						self.data.bridge.channels[self.data.bridge.chmap[term]].set_Excitation(int(cmds[4]))
-						self.wfile.write("1\n")
+						self.wo("1\n")
 					else:
-						self.wfile.write("Only Range and Excitation are settable in SET/THERMOMETER/X/. Set Control Temp with SET/PID/TCTRL/")
+						self.wo("Only Range and Excitation are settable in SET/THERMOMETER/X/. Set Control Temp with SET/PID/TCTRL/")
 						return
 				except ValueError:
-					self.wfile.write("Please specify Range or Excitation as integer value. Your request was "+"/".join(cmds))
+					self.wo("Please specify Range or Excitation as integer value. Your request was "+"/".join(cmds))
 					return
 
 				else:
 					pass
-		except:
-			print ("set_handler exception...")
-			raise
+		except Exception as e:
+			print ("set_handler exception... " + str(e))
+			#raise e
 
 	def get_handler(self,cmds):
 		try:
-			logstr(cmds)   
-			
+			logstr(cmds)
+						
 			if "PID".find(cmds[1]) == 0:
-				if len(cmds == 2) or "TCTRL".find(cmds[2])==0:	self.wfile.write(str(self.data.get_ctrl_Temp()))
-				elif cmds[2] == "P":							self.wfile.write(str(self.data.get_PID()[0]))
-				elif cmds[2] == "I":							self.wfile.write(str(self.data.get_PID()[1]))
-				elif cmds[2] == "D":							self.wfile.write(str(self.data.get_PID()[2]))
-				elif "HEAT".find(cmds[2])==0:					self.wfile.write(str(self.data.get_last_Heat()[0]))
-				elif "ERROR".find(cmds[2])==0:					self.wfile.write(str(self.data.get_last_pidE()[0]))
-				elif "ALL".find(cmds[2])==0:					self.wfile.write(pickle.dumps(self.data.get_all_pid()))
-				else:											self.wfile.write("Sub command after GET/PID/? not known...")
+				if len(cmds) == 2 or "TCTRL".find(cmds[2])==0:	self.wo(str(self.data.get_ctrl_Temp()))
+				elif cmds[2] == "P":							self.wo(str(self.data.get_PID()[0]))
+				elif cmds[2] == "I":							self.wo(str(self.data.get_PID()[1]))
+				elif cmds[2] == "D":							self.wo(str(self.data.get_PID()[2]))
+				elif "HEAT".find(cmds[2])==0:					self.wo(str(self.data.get_last_Heat()[0]))
+				elif "ERROR".find(cmds[2])==0:					self.wo(str(self.data.get_last_pidE()[0]))
+				elif "ALL".find(cmds[2])==0:
+					print(json.dumps([T.get_Temp() for T in self.data.bridge.channels]))				
+					#self.wo(pickle.dumps(self.data.get_all_pid()))
+					self.wo("")
+				else:											self.wo("Sub command after GET/PID/? not known...")
 				return
 			
 			elif "THERMOMETER".find(cmds[1]) == 0:
@@ -112,7 +118,7 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 					try:
 						term = int(cmds[2])
 					except ValueError:
-						self.wfile.write(' '.join('%i'%T.channel for T in self.data.bridge.channels)) # return all available channels
+						self.wo(' '.join('%i'%T.channel for T in self.data.bridge.channels)) # return all available channels
 						return
 				try: sub_cmd = cmds[3]
 				except IndexError: sub_cmd = "TEMP"  #DEFAULT
@@ -120,49 +126,51 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 				
 				if "TEMPERATURE".find(sub_cmd) == 0:
 					try:
-						if "HISTORY".find(cmds[4]) == 0:
-							if term == -1:	self.wfile.write(pickle.dumps([T.get_Temp() for T in self.data.bridge.channels]))
-							else:			self.wfile.write(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Temp() ))		
+						if "HISTORY".find(cmds[3]) == 0:
+							if term == -1:	self.wo(pickle.dumps([T.get_Temp() for T in self.data.bridge.channels]))
+							else:			self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Temp() ))		
 							return
 					finally:					
-						if term == -1:		self.wfile.write(' '.join(["%f"%T.get_last_Temp() for T in self.data.bridge.channels]))
-						else:				self.wfile.write(self.data.bridge.channels[self.data.bridge.chmap[term]].get_last_Temp() )
+						if term == -1:		self.wo(' '.join(["%f"%T.get_last_Temp() for T in self.data.bridge.channels]))
+						else:				
+							self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_last_Temp())
+							print(self.data.bridge.channels[self.data.bridge.chmap[term]].get_last_Temp())
 				elif "ALL".find(sub_cmd) == 0:
-					if term == -1:			self.wfile.write(pickle.dumps([T.get_all() for T in self.data.bridge.channels]))
-					else:					self.wfile.write(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_all()))
+					if term == -1:			self.wo(pickle.dumps([T.get_all() for T in self.data.bridge.channels]))
+					else:					self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_all()))
 				elif "AGE".find(sub_cmd) == 0:
 					try:
-						if "HISTORY".find(cmds[4]) == 0:
-							if term == -1:	self.wfile.write(pickle.dumps([time.time()-T.get_timestamps() for T in self.data.bridge.channels]))
-							else:			self.wfile.write(pickle.dumps(time.time()-self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps() ))		
+						if "HISTORY".find(cmds[3]) == 0:
+							if term == -1:	self.wo(pickle.dumps([time.time()-T.get_timestamps() for T in self.data.bridge.channels]))
+							else:			self.wo(pickle.dumps(time.time()-self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps() ))		
 							return
 					finally:					
-						if term == -1:		self.wfile.write(' '.join(["%f"%T.get_age() for T in self.data.bridge.channels]))
-						else:				self.wfile.write(self.data.bridge.channels[self.data.bridge.chmap[term]].get_age() )
+						if term == -1:		self.wo(' '.join(["%f"%T.get_age() for T in self.data.bridge.channels]))
+						else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_age() )
 				elif "TIME".find(sub_cmd) == 0:
 					try:
-						if "HISTORY".find(cmds[4]) == 0:
-							if term == -1:	self.wfile.write(pickle.dumps([T.get_timestamps() for T in self.data.bridge.channels]))
-							else:			self.wfile.write(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps() ))		
+						if "HISTORY".find(cmds[3]) == 0:
+							if term == -1:	self.wo(pickle.dumps([T.get_timestamps() for T in self.data.bridge.channels]))
+							else:			self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps() ))		
 							return
 					finally:					
-						if term == -1:		self.wfile.write(' '.join(["%f"%T.get_timestamps()[-1] for T in self.data.bridge.channels]))
-						else:				self.wfile.write(self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps()[-1] )
+						if term == -1:		self.wo(' '.join(["%f"%T.get_timestamps()[-1] for T in self.data.bridge.channels]))
+						else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps()[-1] )
 				elif "RANGE".find(sub_cmd) == 0:
-					if term == -1:		self.wfile.write(' '.join(["%i"%T.get_Range() for T in self.data.bridge.channels]))
-					else:				self.wfile.write(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Range() )
+					if term == -1:		self.wo(' '.join(["%i"%T.get_Range() for T in self.data.bridge.channels]))
+					else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Range() )
 				elif "EXCITATION".find(sub_cmd) == 0:
-					if term == -1:		self.wfile.write(' '.join(["%i"%T.get_Excitation() for T in self.data.bridge.channels]))
-					else:				self.wfile.write(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Excitation() )
+					if term == -1:		self.wo(' '.join(["%i"%T.get_Excitation() for T in self.data.bridge.channels]))
+					else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Excitation() )
 				else:
-					self.wfile.write("Sub command after GET/TEMPERATURE/? not known...")
+					self.wo("Sub command after GET/TEMPERATURE/? not known...")
 					return
 
 			else:
 					pass
-		except:
-			print ("get_handler exception...")
-			raise
+		except Exception as e:
+			print ("get_handler exception..." + str(e))
+			#raise e
 
 	def checkaddress(self,ip_port):
 		ip,port = ip_port
@@ -176,7 +184,7 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 		else:
 			return True
 		'''
-		return True   #Jochen
+		return True   
 	def handle(self):
 		
 		if not self.checkaddress(self.request.getpeername()):
@@ -187,11 +195,11 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 		
 		
 		# This while loop tackles the incoming calls per connection
-		while(True):
+		while(not self.data.get_wants_abort()):
 			try:
-				cmd = self.rfile.readline().strip()
+				cmd = (self.rfile.readline()).decode().strip()
 				if not cmd: break
-								
+				print(cmd)	
 				cmds= cmd.upper().split("/")
 				
 				if "GET".find(cmds[0]) == 0: #Any abbreviation of GET would be fine (G for instance)
@@ -205,23 +213,30 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 					#print "%s: %s" % (cur_thread.getName(), data)
 					#response = pickle.dumps(numpy.arange(0,10),protocol=2)
 					#self.request.send(response)
-					self.wfile.write(response)
+					self.wo(response)
 					#elif cmd == "PY":
 					#    exec(pycmd.remove('py '))
 
 				elif cmd == "EXIT":
-					self.wfile.write("tip is going down\n")
+					self.wo("tip is going down\n")
 					self.data.set_wants_abort()
 					wants_abort = True
 					break
 
 				else:
-					self.wfile.write("Invalid syntax, either 'set' or 'get'\n")
+					self.wo("Invalid syntax, either 'set' or 'get'\n")
 
 			except KeyboardInterrupt:
+				print ("handler keyboard exception")
 				self.data.set_wants_abort()
 				wants_abort = True
 				break
+			except Exception as e:
+				print(str(e))
+				self.data.set_wants_abort()
+				wants_abort = True
+				break
+
 
 
 class THServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -235,9 +250,6 @@ class tip_srv(object):
 	def __init__(self,DATA):
 		self.data = DATA
 		# Port 0 means to select an arbitrary unused port
-		#HOST, PORT = "localhost", 9999
-		#HOST, PORT = "pi-us27", 9999
-		#HOST = self.data.localhost.name # we open now to both local and remote
 		HOST = "0.0.0.0"
 		PORT = self.data.localhost.port
 		# the ThreadedTCPServer object, loaded with our request handler
@@ -251,8 +263,7 @@ class tip_srv(object):
 		#server_thread.daemon_threads=True
 		server_thread.setDaemon(True)
 		server_thread.start()
-		print( "Server loop running in thread: " + server_thread.getName())        
-		# server.shutdown()
+		print( "Server loop running in thread: " + server_thread.getName())
 
 	def loop(self):
 		# simple 100ms event loop
@@ -261,16 +272,16 @@ class tip_srv(object):
 			#print wants_abort
 			try:
 				if self.data.get_wants_abort():
+					print("\n############################ Received TIP server shutdown signal ############################")
 					self.server.shutdown()
-					print("TIP server shutdown ############################")
 					break
-					#time.sleep(0.1)
 					return False
 				time.sleep(0.1)
 
 			except KeyboardInterrupt:
 				self.data.set_wants_abort()
-				print ("Shutting down...")
+				print ("\n###### Keybord Interrupt: Shutting down TIP ...")
+				break
 
 
 if __name__ == "__main__":

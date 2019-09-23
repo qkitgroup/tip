@@ -143,9 +143,12 @@ class DATA(object):
 			self.tainted = True
 			self.channel = 0
 			#self.channels = [self.TEMPERATURE(config,CH) for CH in numpy.array(config.get('T_Channels','Channels').split(","),dtype=numpy.int) ]
-			self.channels = [self.TEMPERATURE(config,int(CH)) for CH in config.get('T_Channels','Channels').split(",")]
+			self.channels = [self.TEMPERATURE(config,int(CH)) for CH in 
+							config.get('T_Channels','Channels').split(",")]
 			self.chmap = {self.channels[i].channel : i for i in range(len(self.channels))}
-			self.Control_Channel = self.channels[numpy.where(numpy.array(config.get('T_Channels','Channels').split(","),dtype=numpy.int) == config.getint('T_Channels','Control_Channel') )[0][0]]
+			self.Control_Channel = self.channels[numpy.where(numpy.array(
+				config.get('T_Channels','Channels').split(","),dtype=numpy.int) == 
+				config.getint('T_Channels','Control_Channel') )[0][0]]
 	
 		def get_channel(self):
 			return self.channel

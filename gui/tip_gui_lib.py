@@ -9,7 +9,7 @@ from time import sleep
 #import numpy
 
 # v this will go!
-from cPickle import loads
+from pickle import loads
 import socket
 
 from PyQt5.QtCore import  QObject, pyqtSignal

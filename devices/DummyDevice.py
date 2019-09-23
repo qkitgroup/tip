@@ -28,7 +28,19 @@ class DummyDevice(object):
     def _get_IDN(self,port):
         return "Dummy Bridge v0"
         
-        
+    def get_measured_value(self,params):
+        """ This is the main function for TIP 2 
+        params is a object describing the measurement
+        containing for instance (resistance bridge):
+            channel
+            excitation
+            range
+            integration time
+        and returns the measured value
+        """
+        return 0
+
+
     def get_Rval(self):
         return random.random()*100+10000
         
