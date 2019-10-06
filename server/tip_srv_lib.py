@@ -1,12 +1,18 @@
-from tip_data import DATA as data
-success = "1"
-fail    = "0"
+#
+# This file mainly handles external requests
+# rewritten from scratch for TIP 2.0 HR@KIT 2019
+#
 
-def parse_request(reqest):
+
+from lib.tip_read_config import convert_string_to_value
+import json
+import sys
+
+def parse_request(config, reqest):
     """ This method parses the request sting 
         and returns a result string 
         Syntax:
-        The general syntax is
+        The general syntax is (case insensitive)
 
         'CMD'/'SUB CMD'/'Z'/'ZZ'/...
         where 
@@ -17,373 +23,150 @@ def parse_request(reqest):
         VERSION as in [V|VERSION]
             -> returns the version of TIP
 
+        CONFIG  as in [C]CONFIG]
         EXIT as in [E|EXIT]
             -> sends an exit request to the server (quit) 
 
+        We directly modify the dynamical config with params
         'SUB CMD' can be the subcommand:
-        TCTRL as in [TCTRL]
-            
             -> in the set mode:
             The temperature control has the following structure:
-            SET/TCTRL/CHANNEL/PARAMETER/VALUE
+            SET/INSTRUMENT/PARAMETER/VALUE
             CHANNEL is the named channel given in the config file
             if CHANNEL is ommitted ('//') then the default channel is assumed
-            
-            SET/TCTRL/-CHANNEL-/T/-value-      -> sets the target temperature
-            SET/TCTRL/-CHANNEL-/HDEV/-value-   -> sets the target heater given in the config file
-            SET/TCTRL/-CHANNEL-/P/-value-      -> sets the P value 
-            SET/TCTRL/-CHANNEL-/I/-value-      -> sets the I value
-            SET/TCTRL/-CHANNEL-/D/-value-      -> sets the D value
-            
-            -> in the get mode:
-            GET/TCTRL/CHANNEL/PARAMETER
-            CHANNEL is the named channel given in the config file
-            if CHANNEL is ommitted ('//') then the default channel is assumed
-            GET/TCTRL/-CHANNEL-/T              -> returns the target temperature
-            GET/TCTRL/-CHANNEL-/HDEV           -> returns the target heater
-            GET/TCTRL/-CHANNEL-/P              -> returns the target P
-            GET/TCTRL/-CHANNEL-/I              -> returns the target I
-            GET/TCTRL/-CHANNEL-/D              -> returns the target D
-
-        THERM as in [T|cis(THERM)] # cis = case in-sensitive: 
-
-            GET/SETS THERMOMETER specific values:
-            where CHANNEL is a named channel given in the config file
-
-            SET/TERM/-CHANNEL-/E
-            SET/TERM/-CHANNEL-/R
-
-            GET/TERM/-CHANNEL-/T
-            GET/TERM/-CHANNEL-/R
     """
     "tokenize the request string"
-    cmds = cmd.upper().split("/")
+    print(request)
+    cmds = request.strip('/').lower().split("/")
     "remove heading or trailing white spaces"
     cmds = [cmd.strip() for cmd in cmds]
-
     cmd = cmds.pop(0)
-    if 'G' in  cmd[0] or 'GET' in cmd:
+
+    if 'g' in  cmd[0] or 'get' in cmd:
         return get_handler(cmds)
-    elif 'S' in cmd[0] or 'SET' in cmd:
+    elif 's' in cmd[0] or 'set' in cmd:
         return set_handler(cmds)
-    elif 'V' in cmd[0] or 'VERSION' in cmd:
-        return version_handler(cmds)
-    elif cmd == "0":
-        return debug_handler(cmds)
-    elif 'EXIT' in cmd:
-        return exit_handler(cmds)
+    elif 'v' in cmd[0] or 'version' in cmd:
+        return (config['system']['version'])
+    elif 'c' in cmd[0] or 'config' in cmd:
+        return(json.dumps(config,indent=2,sort_keys=True))
+    elif 'exit' in cmd:
+        return exit_handler(config)
     else:
-        return invalid_syntax_handler(cmd,cmds)
+        return ("invalid syntax : "+reqest)
 
 
-def set_handler(cmds):
-    logstr(cmds)
-    try:
-        cmd = cmds.pop(0)
-    except IndexError:
-        return "Error: No subcommand given!"
-    if "TCTRL" in cmd:
-        return tctrl_set_handler(cmds)
-    elif 'T' in cmd[0] or "THERM" in cmd:
-        return therm_set_handler(cmds)
-    else:
-        return "Error: Subcommand not recognized! "+cmd
 
-
-		
 def get_handler(cmds):
-    "/GET/CMD"
-    logstr(cmds)
+    "/GET/[instrument|device]/"
     try:
         cmd = cmds.pop(0)
     except IndexError:
-        return "Error: No subcommand given!"
-    if "TCTRL" in cmd:
-        return tctrl_get_handler(cmds)
-    elif 'T' in cmd[0] or "THERM" in cmd:
-        return therm_get_handler(cmds)
+        return "Error: No instrument or device given!"
+    except Exception as e:
+        print ("get_handler exception..." + str(e))
+        raise (e)
+
+    if cmd in config.keys():
+        return (get_param_handler(config[cmd],cmds))
+    elif ':' in cmd[0]:
+        return json.dumps(list(config.keys()))
     else:
-        return "Error: Subcommand not recognized! "+cmd
+        return ("Error: Subcommand not recognized! "+cmd)
 
-	
-			
-			elif "THERMOMETER".find(cmds[1]) == 0:
-				if cmds[2] == "":
-					term = self.data.bridge.Control_Channel.channel
-				elif cmds[2] == ":":
-					term = -1
-				else:
-					try:
-						term = int(cmds[2])
-					except ValueError:
-						self.wo(' '.join('%i'%T.channel for T in self.data.bridge.channels)) # return all available channels
-						return
-				try: sub_cmd = cmds[3]
-				except IndexError: sub_cmd = "TEMP"  #DEFAULT
-				if sub_cmd == "": sub_cmd = "TEMP"
-				
-				if "TEMPERATURE".find(sub_cmd) == 0:
-					try:
-						if "HISTORY".find(cmds[3]) == 0:
-							if term == -1:	self.wo(pickle.dumps([T.get_Temp() for T in self.data.bridge.channels]))
-							else:			self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Temp() ))		
-							return
-					finally:					
-						if term == -1:		self.wo(' '.join(["%f"%T.get_last_Temp() for T in self.data.bridge.channels]))
-						else:				
-							self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_last_Temp())
-							print(self.data.bridge.channels[self.data.bridge.chmap[term]].get_last_Temp())
-				elif "ALL".find(sub_cmd) == 0:
-					if term == -1:			self.wo(pickle.dumps([T.get_all() for T in self.data.bridge.channels]))
-					else:					self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_all()))
-				elif "AGE".find(sub_cmd) == 0:
-					try:
-						if "HISTORY".find(cmds[3]) == 0:
-							if term == -1:	self.wo(pickle.dumps([time.time()-T.get_timestamps() for T in self.data.bridge.channels]))
-							else:			self.wo(pickle.dumps(time.time()-self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps() ))		
-							return
-					finally:					
-						if term == -1:		self.wo(' '.join(["%f"%T.get_age() for T in self.data.bridge.channels]))
-						else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_age() )
-				elif "TIME".find(sub_cmd) == 0:
-					try:
-						if "HISTORY".find(cmds[3]) == 0:
-							if term == -1:	self.wo(pickle.dumps([T.get_timestamps() for T in self.data.bridge.channels]))
-							else:			self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps() ))		
-							return
-					finally:					
-						if term == -1:		self.wo(' '.join(["%f"%T.get_timestamps()[-1] for T in self.data.bridge.channels]))
-						else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps()[-1] )
-				elif "RANGE".find(sub_cmd) == 0:
-					if term == -1:		self.wo(' '.join(["%i"%T.get_Range() for T in self.data.bridge.channels]))
-					else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Range() )
-				elif "EXCITATION".find(sub_cmd) == 0:
-					if term == -1:		self.wo(' '.join(["%i"%T.get_Excitation() for T in self.data.bridge.channels]))
-					else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Excitation() )
-				else:
-					self.wo("Sub command after GET/TEMPERATURE/? not known...")
-					return
-
-			else:
-					pass
-		except Exception as e:
-			print ("get_handler exception..." + str(e))
-			#raise e
-
-def exit_handler(cmds):
-    reply = "tip is going down\n"
-    data.set_wants_abort()
-    wants_abort = True
-
-def debug_handler(cmds):
-    return cmds
-    #cur_thread = threading.currentThread()
-    #response = "%s: %s" % (cur_thread.getName(), data)
-    #self.wo(response)
-der version_handler(cmds):
-    return str(2)
-
-def invalid_syntax_handler(cmd,cmds):
-    reply = cmd + " " + cmds+ ":\n Invalid syntax, either 'set/...' or 'get/...'\n"
-
-def tctrl_set_handler(cmds):
-    "/TCTRL/-channel-/-value-"
-    try:
-        chan = cmds.pop(0)
-    except IndexError:
-        return "Error TCTRL: No CHANNEL given!"
-    try:
-        cmd = cmds.pop(0)
-    except IndexError:
-        return "Error TCTRL: No PARAMETER given!"
-    try:
-        value = cmds.pop(0)
-    except IndexError:
-        return "Error TCTRL: No VALUE given!"
-    try: 
-        if   'T' in cmd[0]:
-            return data.set_ctrl_Temp(float(value))
-        elif 'HDEV' in cmd:
-            return data.set_ctrl_heater_device(value)
-        elif 'P' in cmd[0]:
-            return self.data.set_P(float(value))
-        elif 'I' in cmd[0]:
-            return self.data.set_I(float(value))
-        elif 'D' in cmd[0]:
-            return self.data.set_D(float(value))
-        else:
-            return "Error TCTRL: Parameter not recognized! "+cmd
-    except ValueError as e:
-        #.....
-        raise e
-
-def tctrl_get_handler(cmds)
-
-    "/TCTRL/-channel-/-value-"
-    try:
-        chan = cmds.pop(0)
-    except IndexError:
-        return "Error TCTRL: No CHANNEL given!"
-    try:
-        cmd = cmds.pop(0)
-    except IndexError:
-        return "Error TCTRL: No PARAMETER given!"
-    try: 
-        if   'T' in cmd[0]:
-            return str(data.get_ctrl_Temp())
-        elif 'HDEV' in cmd:
-            return data.set_ctrl_heater_device(value)
-        elif 'P' in cmd[0]:
-            return str(data.get_PID()[0]))
-        elif 'I' in cmd[0]:
-            return str(data.get_PID()[1]))
-        elif 'D' in cmd[0]:
-            return str(data.get_PID()[2]))
-        elif 'H' in cmd[0] or 'HEAT' in cmd:
-            return str(data.get_last_Heat()[0])
-        elif 'E' in cmd[0] or 'ERROR' in cmd:
-            return str(data.get_last_pidE()[0])
-        elif 'A' in cmd[0] or 'ALL' in cmd:
-            #print(json.dumps([T.get_Temp() for T in self.data.bridge.channels]))				
-			#self.wo(pickle.dumps(self.data.get_all_pid()))
-            return ""
-        else:
-            return "Error TCTRL: Parameter not recognized! "+cmd
-    except ValueError as e:
-        #.....
-        raise e
     
-
-def therm_set_handler(cmds):
-    " handles Thermometer request  
-    "/THERM/-channel-/-param-/-value-"
-    try:
-        chan = cmds.pop(0)
-    except IndexError:
-        return "Error THERM: No CHANNEL given!"
+def set_handler(cmds):
+    "/set/[instrument|device]"
     try:
         cmd = cmds.pop(0)
     except IndexError:
-        return "Error THERM: No PARAMETER given!"
-    try:
-        value = cmds.pop(0)
-    except IndexError:
-        return "Error THERM: No VALUE given!"
-    try:
-        if "" in chan:
-            term = self.data.bridge.Control_Channel.channel
-        elif ":" in chan:
-            return "Channel wildcard ':' not allowed in set mode."
-        elif chan in [list_of_thermomenters]
-            therm = chan 
-        else:
-            return "Thermometer "+chan+" not found or no active thermometer"
+        return "Error: No instrument or device given!"
     except Exception as e:
-        print(e)
-        return "Thermometer "+chan+" not found or no active thermometer"
+        print ("set_handler exception..." + str(e))
+        raise (e)
 
-        try:
-            if 'R' in cmd[0] or 'RANGE' in cmd:
-                # FIXME: this syntax is going to change 
-                self.data.bridge.channels[self.data.bridge.chmap[term]].set_Range(int(value))
-                return success
-            elif 'E' in cmd[0] or 'EXCITATION' in cmd:
-                # FIXME: this syntax is going to change 
-                self.data.bridge.channels[self.data.bridge.chmap[term]].set_Excitation(int(value))
-                return success
-            else:
-				return "Only Range and Excitation are settable in SET/THERMOMETER/X/. Set Control Temp with SET/TCTRL/-CHANNEL-/"
-        except ValueError:
-					return "Please specify Range or Excitation as integer value."
+    if cmd in config.keys():
+        return (set_param_handler(config[cmd],cmds))
+    else:
+        return ("Error: instrument or device not recognized not recognized! "+cmd)
 
 
-def therm_get_handler(cmds):
 
-    " handles Thermometer request  
-    "/THERM/-channel-/-param-/"
+def get_param_handler(section,params):
+    print (params)
     try:
-        chan = cmds.pop(0)
+        param = params.pop(0)
     except IndexError:
-        return "Error THERM: No CHANNEL given!"
-    try:
-        cmd = cmds.pop(0)
-    except IndexError:
-        return "Error THERM: No PARAMETER given!"
-        
-    try:
-        if "" in chan:
-            term = self.data.bridge.Control_Channel.channel
-        elif ":" in chan:
-            return "Channel wildcard ':' not allowed in set mode."
-        elif chan in [list_of_thermomenters]
-            therm = chan 
-        else:
-            return "Thermometer "+chan+" not found or no active thermometer"
+        return ("Error: No parameter given!")
     except Exception as e:
-        print(e)
-        return "Thermometer "+chan+" not found or no active thermometer"
+        print ("get_param_handler exception..." + str(e))
+        raise(e)
 
-        try:
+    if param in section.keys():
+        return (section[param])
+    elif ':' in param[0]:
+        #return (json.dumps(list(section.keys())))
+        return (json.dumps(section,indent=2,sort_keys=True))
+    else:
+        return ("Error: parameter not recognized! "+param)
 
-    		elif "THERMOMETER".find(cmds[1]) == 0:
-				if cmds[2] == "":
-					term = self.data.bridge.Control_Channel.channel
-				elif cmds[2] == ":":
-					term = -1
-				else:
-					try:
-						term = int(cmds[2])
-					except ValueError:
-						self.wo(' '.join('%i'%T.channel for T in self.data.bridge.channels)) # return all available channels
-						return
-				try: sub_cmd = cmds[3]
-				except IndexError: sub_cmd = "TEMP"  #DEFAULT
-				if sub_cmd == "": sub_cmd = "TEMP"
-				
-				if "TEMPERATURE".find(sub_cmd) == 0:
-					try:
-						if "HISTORY".find(cmds[3]) == 0:
-							if term == -1:	self.wo(pickle.dumps([T.get_Temp() for T in self.data.bridge.channels]))
-							else:			self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Temp() ))		
-							return
-					finally:					
-						if term == -1:		self.wo(' '.join(["%f"%T.get_last_Temp() for T in self.data.bridge.channels]))
-						else:				
-							self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_last_Temp())
-							print(self.data.bridge.channels[self.data.bridge.chmap[term]].get_last_Temp())
-				elif "ALL".find(sub_cmd) == 0:
-					if term == -1:			self.wo(pickle.dumps([T.get_all() for T in self.data.bridge.channels]))
-					else:					self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_all()))
-				elif "AGE".find(sub_cmd) == 0:
-					try:
-						if "HISTORY".find(cmds[3]) == 0:
-							if term == -1:	self.wo(pickle.dumps([time.time()-T.get_timestamps() for T in self.data.bridge.channels]))
-							else:			self.wo(pickle.dumps(time.time()-self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps() ))		
-							return
-					finally:					
-						if term == -1:		self.wo(' '.join(["%f"%T.get_age() for T in self.data.bridge.channels]))
-						else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_age() )
-				elif "TIME".find(sub_cmd) == 0:
-					try:
-						if "HISTORY".find(cmds[3]) == 0:
-							if term == -1:	self.wo(pickle.dumps([T.get_timestamps() for T in self.data.bridge.channels]))
-							else:			self.wo(pickle.dumps(self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps() ))		
-							return
-					finally:					
-						if term == -1:		self.wo(' '.join(["%f"%T.get_timestamps()[-1] for T in self.data.bridge.channels]))
-						else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_timestamps()[-1] )
-				elif "RANGE".find(sub_cmd) == 0:
-					if term == -1:		self.wo(' '.join(["%i"%T.get_Range() for T in self.data.bridge.channels]))
-					else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Range() )
-				elif "EXCITATION".find(sub_cmd) == 0:
-					if term == -1:		self.wo(' '.join(["%i"%T.get_Excitation() for T in self.data.bridge.channels]))
-					else:				self.wo(self.data.bridge.channels[self.data.bridge.chmap[term]].get_Excitation() )
-				else:
-					self.wo("Sub command after GET/TEMPERATURE/? not known...")
-					return
+def set_param_handler(section,params):
+    print (params)
+    try:
+        param = params.pop(0)
+    except IndexError:
+        return ("Error: No  parameter given!")
+    except Exception as e:
+        print ("set_param_handler exception..." + str(e))
+        raise(e)
+    
+    try:
+        value = params.pop(0)
+    except IndexError:
+        return ("Error: No  value given!")
+    except Exception as e:
+        print ("set_param_handler exception..." + str(e))
+        raise(e)
+    value = convert_string_to_value(param,value)
 
-			else:
-					pass
-		except Exception as e:
-			print ("get_handler exception..." + str(e))
-			#raise e
+    if param in section.keys():
+        section[param] = value
+        return (section[param])
+    else:
+        return ("Error: parameter not recognized! "+param)
+
+def exit_handler(config):
+    
+    reply = "received shutdown command: TIP is going down\n"
+    config['system']['abort'] = True
+    sys.exit()
+    return(reply)
+
+
+if __name__  ==  "__main__":
+    from lib.tip_read_config import load_config, convert_to_dict
+
+    config = convert_to_dict(load_config())
+    request = "GET/mxc/active"
+    print (parse_request(config, request))
+
+    request = "/get/mxc/:"
+    print(parse_request(config, request))
+ 
+    request = "s/mxc/active/1"
+    print(parse_request(config, request))
+
+    request = "s/mxc/control_default_heat/123.54"
+    print(parse_request(config, request))
+
+    request = "/g/mxc/:"
+    print(parse_request(config, request))
+
+    request = "version"
+    print(parse_request(config, request))
+    
+    #request = "exit"
+    #print(parse_request(config, request))
+
+    #request = "config"
+    #print(parse_request(config, request))
