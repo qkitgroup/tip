@@ -15,12 +15,13 @@ def _int(s): return int(float(s))
 #
 # mapping of parameter types
 # 
-types_dict = {  'active':_boolean,'control_active':_boolean,
+types_dict = {  'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
                 'control_channel':_int,
                 'scan_interval':float, 'device_integration_time':float, 'delay':float,
                 'control_resistor':float, 'control_default_heat':float,
                 'control_p':float, 'control_i':float, 'control_d':float,
+                'version':float,
                 'type':str, 'device':str, 'description':str, 'com_method':str, 'ip':str, 'url':str,
                 'control_device':str,
                 'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
@@ -44,10 +45,10 @@ def convert_to_dict(cp_conf): # config parser results
         version = cp_conf['system'].getfloat("settings_version",0)
         if version < 2.0:
             print ("ERROR: No settings version specified or settings file outdated: EXIT")
-            raise
+            raise Exception
     else:
         print ("ERROR: No 'system' specified or settings file outdated: EXIT")
-        raise
+        raise Exception
 
     config = {}
     for inst in cp_conf.sections():
@@ -64,8 +65,11 @@ def convert_to_dict(cp_conf): # config parser results
                 params[param] = cp_conf[inst].get(param,"")
             
         config[inst] = params
-    # add an system internal area
-    config['system'] = {}
+    # add an system internal area with a few defaults
+    config['system'] = {
+            'version': 1.5,
+            'abort': False,
+    }
     return config
 
 
