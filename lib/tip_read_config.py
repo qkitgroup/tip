@@ -40,6 +40,15 @@ def convert_to_dict(cp_conf): # config parser results
     """ converts  a config parser configuration to dict of dicts 
         would probably be faster if we would use dictionaries instead of lists.
     """
+    if 'system' in cp_conf.sections():
+        version = cp_conf['system'].getfloat("settings_version",0)
+        if version < 2.0:
+            print ("ERROR: No settings version specified or settings file outdated: EXIT")
+            raise
+    else:
+        print ("ERROR: No 'system' specified or settings file outdated: EXIT")
+        raise
+
     config = {}
     for inst in cp_conf.sections():
         #print(inst)
