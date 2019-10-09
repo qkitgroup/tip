@@ -1,10 +1,73 @@
 # read and sort config, initialize instruments, thermomenters and other objects
 # HR@KIT/20019
 #  
-from lib.tip_data import DATA
-import configparser
+import collections
 import json
+from threading import Lock
+import configparser
 import pprint
+
+
+
+# 
+# thread save dictionary class
+#
+class SettingsDict(collections.MutableMapping):
+    """A dictionary that applies an arbitrary key-altering
+       function before accessing the keys"""
+
+    def __init__(self, *args, **kwargs):
+        self.store = dict()
+        self.update(dict(*args, **kwargs))  # use the free update to set keys
+        self.setings_lock = Lock()
+
+    def __getitem__(self, key):
+        with self.setings_lock:
+            return self.store[key]
+
+    def __setitem__(self, key, value):
+        with self.setings_lock:
+            self.store[key] = value
+
+    def __delitem__(self, key):
+        with self.setings_lock:
+            del self.store[key]
+
+    def __iter__(self):
+        with self.setings_lock:
+            return iter(self.store)
+
+    def __len__(self):
+        with self.setings_lock:
+            return len(self.store)
+
+    def keys(self):
+        with self.setings_lock:
+            return self.store.keys()
+
+    def items(self):
+        with self.setings_lock:
+            return self.store.items()
+
+    def values(self):
+        with self.setings_lock:
+            return self.store.values()
+
+    def dump_json(self):
+        with config.setings_lock:
+            return json.dumps(self.store,indent=2,sort_keys=True)
+    
+# 
+# global config, thread save
+# 
+
+config  = SettingsDict()
+
+#
+# global device_instances
+# 
+
+device_instances = SettingsDict()
 
 #
 # helper functons to convert string values into something useful
@@ -15,7 +78,7 @@ def _int(s): return int(float(s))
 #
 # mapping of parameter types
 # 
-types_dict = {  'active':_boolean,'control_active':_boolean,'abort':_boolean,
+_types_dict = {  'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
                 'control_channel':_int,
                 'scan_interval':float, 'device_integration_time':float, 'delay':float,
@@ -50,18 +113,17 @@ def convert_to_dict(cp_conf): # config parser results
         print ("ERROR: No 'system' specified or settings file outdated: EXIT")
         raise Exception
 
-    config = {}
+    
     for inst in cp_conf.sections():
-        #print(inst)
         params = {}
         for param in cp_conf[inst].keys():
-            if types_dict.get(param,str) == _boolean:
+            if _types_dict.get(param,str) == _boolean:
                 params[param] = cp_conf[inst].getboolean(param,False)
-            if types_dict.get(param,str) == _int:
+            if _types_dict.get(param,str) == _int:
                 params[param] = cp_conf[inst].getint(param,-1)
-            if types_dict.get(param,str) == float:
+            if _types_dict.get(param,str) == float:
                 params[param] = cp_conf[inst].getfloat(param,-1.0)
-            if types_dict.get(param,str) == str:
+            if _types_dict.get(param,str) == str:
                 params[param] = cp_conf[inst].get(param,"")
             
         config[inst] = params
@@ -74,7 +136,7 @@ def convert_to_dict(cp_conf): # config parser results
 
 
 def convert_string_to_value(param, value):
-        return types_dict.get(param,str)(value)
+        return _types_dict.get(param,str)(value)
 
 def update_active_devices(config):
     #
@@ -103,12 +165,13 @@ def update_active_devices(config):
             if config[inst].get("active",False):
                 AT.append(inst)
 
-def dump_json(config):
-    return json.dumps(config,indent=4,sort_keys=True)
+
+
+
 
 if __name__ == "__main__":
 
-    config = convert_to_dict(load_config())
-    DATA = DATA(config)
+    config = convert_to_dict(load_config(settings_file="settings.cfg"))
     update_active_devices(config)
-    print (dump_json(config))
+    #print (dump_json(config)
+    print (json.dumps(config.store,indent=2,sort_keys=True))

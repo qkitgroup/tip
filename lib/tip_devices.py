@@ -3,20 +3,23 @@
 # thermomenter, data loging, etc.
 # written for TIP 2.0 by HR@KIT 2019 
 
-
+from lib.tip_config import config, device_instances, _types_dict
+from lib.tip_eich import TIPEich
+from lib.tip_pidcontrol import pidcontrol
 
 class device(object):
 
     def __init__(self,name):
         self.name  = name 
-        self.backend = "" # Backend is the device backend, e.g. a resistance bridge
-        self.schedule_periode = 3
+        self.backend = 0 # Backend is the device backend, e.g. a resistance bridge
+        #self.schedule_periode = 3
         self.schedule_priority = 1
         self._execute_func = self._hollow_func
         self.scheduler = None
-        self.abort = False
+        #self.abort = False
 
     def _hollow_func(self):
+        # dummy 
         print ("dummy func executed ...")
         time.sleep(2)
         return
@@ -28,23 +31,103 @@ class device(object):
         which means that the total preiode is schedule_periode+duration_of(execute_func).
         """
         print("\nexec schedule() for " + self.name)
-        print(self.name +" "+str(self.schedule_periode))
-        print(self.name +" "+str(self.backend))
-        if self.abort : return 
+        print(self.name +" "+str(config['name']['interval']))
+
+
+        if not config[self.name]['active']: return
         self._execute_func()
         # if abort is changed while _execute_func() is running, it would need another cycle, thus: 
-        if self.abort : return  
+        if not config[self.name]['active']: return  
         # recursive hook into the scheduler queue:
-        self.scheduler.enter(self.schedule_periode, 
+        self.scheduler.enter(config['name']['interval'], 
             self.schedule_priority, 
             self.schedule)
 
+class backend(device):
+    def __init__(self,name):
+        super(backend, self).__init__(name)
+        config[name]['last_error'] = ""
+        _types_dict['last_error'] = str
+
+ 
+    def _execute_func():
+        print("func <- executed!")
+        print(self.name)
+        
+
 class thermometer(device):
-    pass
+    def __init__(self,name):
+        super(thermometer, self).__init__(name)
+
+        #
+        # update the configuration with temperature specific items
+        # 
+        config[name]['temperature'] = 0
+        config[name]['control_temperature'] = 0
+        config[name]['resistance'] = 0
+        config[name]['heating_power'] = 0
+        config[name]['heating_voltage'] = 0
+        config[name]['heating_current'] = 0
+        config[name]['sys_error'] = ""
+
+        #
+        # make the item types known
+        # 
+
+        _types_dict['temperature'] = float
+        _types_dict['control_temperature'] = float
+        _types_dict['resistance'] = float
+        _types_dict['heating_power'] = float
+        _types_dict['heating_voltage'] = float
+        _types_dict['heating_current'] = float
+        _types_dict['sys_error'] = str
+
+        #
+        # create a calibration object for the thermomenter
+        #
+
+        self.calibration = TIPEich(
+            config[name]['calibration_description'],
+            config[name]['calibration_file'],
+            config[name]['calibration_file_order'],
+            config[name]['calibration_interpolation'])
+
+        #
+        # create a pid controller for the thermomenter
+        #
+
+        self.control = pidcontrol(name)
+
+        #
+        # Fixme missing: backend(R-Bridge), heater
+        #
+
+ 
+    def _execute_func(self):
+        " This function gets periodically called by the scheduler "
+        
+        print("func <- executed!")
+        print(self.name)
+        
+        self.backend.set_channel(     config[self.name]['device_channel'])
+        self.backend.set_excitation(  config[self.name]['device_excitation'])
+        self.backend.set_integration( config[self.name]['device_integration_time'])
+        
+        R = self.backend.get_resistance()
+
+        T = self.calibration.getT_from_R(config[self.name]['resistance'])
+
+        config[self.name]['resistance']  = R
+        config[self.name]['temperature'] = T
+
+        if config[self.name]['control_active']:
+            new_heat_value = self.control.get_new_heat_value(T)
+            self.heater.set_heat(new_heat_value)
+            config[self.name]['heating_power'] = new_heat_value
 
 
-
-""" Helper classes """
+""" 
+" Helper classes "
 class resistance_bridge(object):
     "these parameters are set every time the bridge is called"
     return_type =  0  # {0:"resistance",1:"phase"}
@@ -54,12 +137,12 @@ class resistance_bridge(object):
     integration_time = 0
 
 class temperature_calibration(object):
-    """ These parameters are called every time the TIPeich is called
+    " These parameters are called every time the TIPeich is called
         When the calibration_file_name is "" and the 
         interpolation type is "" the value is simply returned.
         This is useful when the resistance bridge is returning an 
         already calibrated temperature.
-    """
+    "
     thermometer_name = ""
     # the calibration file is searched in the "calibrations" folder and nowhere else
     calibration_file_name = ""
@@ -248,7 +331,7 @@ def setup_device_AVS47(self):
     
 def setup_device_SIM921(self):
     import devices.SRS_SIM900 as SIM
-    """def __init__(self,ip= ,gpib="GPIB::0",SIM921_port=6,SIM925_port=8):"""
+    "def __init__(self,ip= ,gpib="GPIB::0",SIM921_port=6,SIM925_port=8):"
     if self.config.get('RBridge','Com_Method').strip() == 'Ethernet':
         BR = SIM.SIM900(
             self.config.get('RBridge','Name'),
@@ -266,7 +349,7 @@ def setup_device_SIM921(self):
     
 def setup_device_LS370(self):
     import devices.Lakeshore_370 as LS370
-    """def __init__(self,ip= ,gpib="GPIB::0"):"""
+    "def __init__(self,ip= ,gpib="GPIB::0"):"
     if self.config.get('RBridge','Com_Method').strip() == 'Ethernet':
         BR = LS370.Lakeshore_370(
             self.config.get('RBridge','Name'),
@@ -296,3 +379,4 @@ def setup_device_LS370(self):
             print ("disconnecting the bridge ...")
             self.BR._set_local()
             self.BR._close() 
+"""
