@@ -2,13 +2,12 @@
 # This file mainly handles external requests
 # rewritten from scratch for TIP 2.0 HR@KIT 2019
 #
-
-
-from lib.tip_read_config import convert_string_to_value
-import json
 import sys
+import json
+from lib.tip_config import config, convert_string_to_value
 
-def parse_request(config, reqest):
+
+def parse_request(request):
     """ This method parses the request sting 
         and returns a result string 
         Syntax:
@@ -86,7 +85,10 @@ def set_handler(cmds):
         raise (e)
 
     if cmd in config.keys():
-        return (set_param_handler(config[cmd],cmds))
+        if cmd in ['system']:
+            return ("ERROR: Section readonly! "+cmd)
+        else:
+            return (set_param_handler(config[cmd],cmds))
     else:
         return ("Error: instrument or device not recognized not recognized! "+cmd)
 
@@ -111,7 +113,7 @@ def get_param_handler(section,params):
         return ("Error: parameter not recognized! "+param)
 
 def set_param_handler(section,params):
-    print (params)
+    #print (params)
     try:
         param = params.pop(0)
     except IndexError:
@@ -144,26 +146,26 @@ def exit_handler(config):
 
 
 if __name__  ==  "__main__":
-    from lib.tip_read_config import load_config, convert_to_dict
+    from lib.tip_config import config, load_config, convert_to_dict
 
     config = convert_to_dict(load_config())
     request = "GET/mxc/active"
-    print (parse_request(config, request))
+    print (parse_request(request))
 
     request = "/get/mxc/:"
-    print(parse_request(config, request))
+    print(parse_request(request))
  
     request = "s/mxc/active/1"
-    print(parse_request(config, request))
+    print(parse_request(request))
 
     request = "s/mxc/control_default_heat/123.54"
-    print(parse_request(config, request))
+    print(parse_request(request))
 
     request = "/g/mxc/:"
-    print(parse_request(config, request))
+    print(parse_request(request))
 
     request = "version"
-    print(parse_request(config, request))
+    print(parse_request(request))
     
     #request = "exit"
     #print(parse_request(config, request))
