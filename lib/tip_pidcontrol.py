@@ -1,44 +1,27 @@
-# pidcontrol for TIP  version 0.2 written by HR@KIT 2011
+# pidcontrol for TIP  version 0.3 written by HR@KIT 2011 - 2019
 #
-# TODO (urgent) make everything thread safe.
+# changelog:
+# 0.3 code cleanup for TIP 2.0
+
+from lib.tip_config import config, _types_dict
 
 class pidcontrol(object):
-    def __init__(self,data):
-        
-        self.data = data
-        self.hold = False
-        
-        self.target_temperature = 0.01
-        
-        #P = data.ctrl_pid[0]  # 0.00004  # proportional gain
-        #I = data.ctrl_pid[1]  # 0.00004  integral gain
-        #D = data.ctrl_pid[2]  # 0.00001 derivative gain
+    def __init__(self,name):
+        self.name = name
+
+        config[self.name]['control_error'] = 0
+        _types_dict['control_error'] = float
 
         self.dState = 0 # Last position input
         self.iState = 0 # Integrator state
         
         self.iMax  = 0.1  # Maximum allowable integrator state
         self.iMin  = -0.001  # Minimum allowable integrator state
-
-    def set_P(self, P):
-        self.data.ctrl_PID[0] = P
-    def set_I(self,I):
-        self.data.ctrl_PID[1] = I
-    def set_D(self,D):
-        self.data.ctrl_PID[2] = D
-    def set_hold(self,state=False):
-        self.hold = state
-        
-    def set_target_temperature(self,T_set):
-        self.target_temperature = T_set
-        
-    def update_Rate(self,measured_rate):
-        error = self.target_temperature-measured_rate
-        return self.updatePID(error,measured_rate)
-
-    def update_Heat(self,measured_Temperature):
-        error = self.data.get_ctrl_Temp()-measured_Temperature
-        return self.updatePID(error,measured_Temperature),error
+ 
+    def get_new_heat_value(self,measured_Temperature):
+        error = config[self.name]['control_temperature'] - measured_Temperature
+        config[self.name]['control_error'] = error
+        return self.updatePID(error,measured_Temperature)
         
     def updatePID(self,error,reading):
         "PID algorithm "
@@ -46,7 +29,7 @@ class pidcontrol(object):
         dTerm = 0
         iTerm = 0
         #calculate the proportional term
-        pTerm = self.data.get_PID()[0] * error
+        pTerm = config[self.name]['control_p'] * error
         
         #calculate the integral state with appropriate limiting
         self.iState += error
@@ -55,8 +38,8 @@ class pidcontrol(object):
         if self.iState < self.iMin:
             self.iState = self.iMin
         
-        iTerm = self.data.get_PID()[1] * self.iState; #calculate the integral term
-        dTerm = self.data.get_PID()[2] * ( reading - self.dState)
+        iTerm = config[self.name]['control_i'] * self.iState  #calculate the integral term
+        dTerm = config[self.name]['control_d'] * ( reading - self.dState)
         self.dState = reading
         print( "P:%.5f I:%.5f D:%.5f terms"%(pTerm,iTerm,dTerm))
         print( "I:%.5f D:%.5f states"%(self.iState,self.dState))

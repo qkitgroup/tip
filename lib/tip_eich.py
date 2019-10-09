@@ -6,13 +6,14 @@
 # 2010 HR@KIT
 # Fixme: poly-fit is far from complete (not included)
 #=================================================#
+#Note: Huuuhu Ugly code! (HR/2019)
 
 from numpy import *
 from scipy.interpolate import *
 import re
 import os
 
-class TIPEich:
+class TIPEich(object):
 	""" Class for all thermometers
 	Object takes following parameters:
 	- name of thermomenter
