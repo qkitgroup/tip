@@ -19,12 +19,17 @@ class driver(object):
     def get_idn(self):
         return( "Dummy HEater  ... v0" )
         
-    def get_heat(self):
+    def get_heater_power(self):
         # random number
         return random.random()*100+10000
-    def set_heat(self,value):
+    def set_heater_power(self,value):
         pass
- 
+
+    def get_heater_channel(self):
+        return 0
+    def set_heater_channel(self,value):
+        pass
+
     def set_local(self):pass
     def close(self):pass
 

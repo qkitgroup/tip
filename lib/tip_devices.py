@@ -105,7 +105,7 @@ class thermometer(device):
  
     def _execute_func(self):
         " This function gets periodically called by the scheduler "
-        
+
         print("func <- executed!")
         print(self.name)
         
@@ -122,7 +122,10 @@ class thermometer(device):
 
         if config[self.name]['control_active']:
             new_heat_value = self.control.get_new_heat_value(T)
-            self.heater.set_heat(new_heat_value)
+
+            self.heater.set_heater_channel(config[self.name]['control_channel'])
+            self.heater.set_heater_value(new_heat_value)
+            
             config[self.name]['heating_power'] = new_heat_value
 
 
