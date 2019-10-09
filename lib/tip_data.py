@@ -1,46 +1,44 @@
 #!/usr/bin/env python
-# TIP DATA class version 0.2 written by HR@KIT Dec 2011
+# TIP DATA class version 0.5 written by HR@KIT Dec 2011/2019
 # to do
 # make the _whole_ thing thread safe.
 
-import numpy
+#import numpy
 #import thread
 from time import time
 from threading import Lock, Thread
-try:
-	import cPickle as pickle
-except:
-	import pickle
-import lib.tip_eich as TE
+#try:
+#	import cPickle as pickle
+#except:
+#	import pickle
+#import lib.tip_eich as TE
 
 # DATA exchange class, also holds global variables for
 # Thread management
 
+
+
+global config
+
+
+
+
+"""
 class DATA(object):
+
+	
 	class remote_info(object):
 		last_Temp=0
 		last_pidE=0
 		last_Heat=0
-		last_Temps = []
-
-	class LOCALHOST(object):
-		def __init__(self,config):
-			self.name = config.get('LOCALHOST','name')
-			self.ip	  = config.get('LOCALHOST','ip')
-			self.port = config.getint('LOCALHOST','port')
-	class REMOTEHOST(object):
-		def __init__(self,config):
-			self.name = config.get('REMOTEHOST','name')
-			self.ip	  = config.get('REMOTEHOST','ip')
-			self.port = config.getint('REMOTEHOST','port')
-	
+		last_Temps = []	
 	
 	class BRIDGE(object):
 		class TEMPERATURE(object):
 			def __init__(self,config,chindex):
 				self.channel = chindex
-				self.range = config.getint('T_Channel_%i'%chindex,'range')
-				self.excitation = config.getint('T_Channel_%i'%chindex,'excitation')
+				self.range = config.get('T_Channel_%i'%chindex,'range')
+				self.excitation = config.get('T_Channel_%i'%chindex,'excitation')
 				self.scan_interval = config.getfloat('T_Channel_%i'%chindex,'scan_interval')
 				self.settling_time = config.getfloat('T_Channel_%i'%chindex,'settling_time')
 				self.Temp = numpy.zeros(100)
@@ -142,13 +140,15 @@ class DATA(object):
 			self.bridge_lock = Lock()
 			self.tainted = True
 			self.channel = 0
+
 			#self.channels = [self.TEMPERATURE(config,CH) for CH in numpy.array(config.get('T_Channels','Channels').split(","),dtype=numpy.int) ]
-			self.channels = [self.TEMPERATURE(config,int(CH)) for CH in 
-							config.get('T_Channels','Channels').split(",")]
-			self.chmap = {self.channels[i].channel : i for i in range(len(self.channels))}
-			self.Control_Channel = self.channels[numpy.where(numpy.array(
-				config.get('T_Channels','Channels').split(","),dtype=numpy.int) == 
-				config.getint('T_Channels','Control_Channel') )[0][0]]
+			
+			#self.channels = [self.TEMPERATURE(config,int(CH)) for CH in 
+			#				config.get('T_Channels','Channels').split(",")]
+			#self.chmap = {self.channels[i].channel : i for i in range(len(self.channels))}
+			#self.Control_Channel = self.channels[numpy.where(numpy.array(
+			#	config.get('T_Channels','Channels').split(","),dtype=numpy.int) == 
+			#	config.getint('T_Channels','Control_Channel') )[0][0]]
 	
 		def get_channel(self):
 			return self.channel
@@ -161,33 +161,41 @@ class DATA(object):
 		def __init__(self,config):
 			self.Resistor = config.getfloat('Heater',"Resistor")
 
-	def __init__(self,config):
+	def __init__(self,conf):
+
+		self.conf = conf
 		# tip variables
 		self.Running = True
 		self.wants_abort = False
 		self.debug = True
-		self.cycle_time = config.getfloat('tip','cycle_time')
+		#self.cycle_time = config.getfloat('tip','cycle_time')
 
 		self.last_pidE=0
 		self.last_Rate=0
 		self.last_Heat=0
 		self.last_Temp=0
 		self.last_Res=0
-		self.pidE = numpy.zeros(100)
-		self.Heat = numpy.zeros(100)
-		self.Temp = numpy.zeros(100)
+		#self.pidE = numpy.zeros(100)
+		#self.Heat = numpy.zeros(100)
+		#self.Temp = numpy.zeros(100)
 		self.ctrl_PID = (0.05,0.01,0)
 		self.ctrl_T = 0
 		self.config = ""
  
 		# subclasses
-		self.bridge = self.BRIDGE(config)
-		self.heater = self.HEATER(config)
-		self.localhost	= self.LOCALHOST(config)
-		self.remotehost = self.REMOTEHOST(config)
+		#self.bridge = self.BRIDGE(config)
+		#self.heater = self.HEATER(config)
+		
+		#self.localhost	= self.LOCALHOST(config)
+		#self.remotehost = self.REMOTEHOST(config)
 		# locks
 		self.ctrl_lock = Lock()
 
+		self.defined_instruments  = []
+		self.defined_thermometers = []
+		self.active_instruments  = []
+		self.active_thermometers = []
+			 
 	def get_wants_abort(self):
 		return self.wants_abort
 	def set_wants_abort(self):
@@ -275,7 +283,7 @@ class GUI_DATA(object):
 		self.wants_abort = False
 		self.debug = True
 		self.cycle_time = 0.5
-		
+"""
 
 if __name__ == "__main__":
 	DATA = DATA()
