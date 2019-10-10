@@ -5,8 +5,8 @@
 import sched,time
 import threading
 
-from .tip_devices import device,thermometer
-       
+from lib.tip_devices import device,thermometer
+from lib.tip_config import config
 
 
 class tip_scheduler(object):
@@ -16,8 +16,6 @@ class tip_scheduler(object):
         self.schedulers={}
         self.scheduler_threads = []
         self.devices = {}
-
-
 
     def add_device(self,device):
         " function to add a device to be scheduled "
@@ -33,14 +31,13 @@ class tip_scheduler(object):
             self.schedulers[device.backend] = scheduler
         
         device.scheduler = scheduler
-
+        device.schedule_periode = config[device.name]['interval']
         scheduler.enter(device.schedule_periode,
             device.schedule_priority, 
             device.schedule)
    
    
     def add_thermometer(self,thermometer):
-        "proxy func"
         return self.add_device(thermometer)
 
     def run(self):
@@ -77,6 +74,9 @@ class tip_scheduler(object):
 
 if __name__ == "__main__":
     tip_sched  = tip_scheduler()
+    #tip_sched.add_thermometer(ts)
+    #tip_sched.run()
+    #tip_sched.stop()
     tm = 1
 
     ts = {}
