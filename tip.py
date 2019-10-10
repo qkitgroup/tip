@@ -6,11 +6,7 @@ import configparser
 import sys,time
 import argparse
 
-from lib.tip_dev import *
-
 from lib.tip_init import tip_init
-
-from lib.tip_data import DATA
 
 # server thread to spread information
 import server.tip_srv_thread as tip_srv
@@ -26,16 +22,7 @@ if __name__ == "__main__":
     
     
     config = tip_init(args.ConfigFile)
-    #DATA = DATA(Conf)
-    #DATA.config = Conf
-
-    #PID = tip_pidcontrol.pidcontrol(DATA)
-    #DATA.PID = PID
-
-    #IO = IO_worker(DATA) 
-    #IO.setDaemon(1)
-    #IO.start()
     
-    tipserv = tip_srv.tip_srv(DATA)
-    tipserv.loop()
+    #tipserv = tip_srv.tip_srv(DATA)
+    #tipserv.loop()
 
