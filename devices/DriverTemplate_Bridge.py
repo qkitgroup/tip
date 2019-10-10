@@ -30,6 +30,7 @@ class driver(object):
         and returns the measured value
         """
         # random number
+        time.sleep(self.integration_time)
         return random.random()*100+10000
  
     def get_channel(self): return 0
@@ -40,6 +41,10 @@ class driver(object):
 
     def get_range(self): return 0
     def set_range(self,range): pass
+
+    def set_integration(self,time): 
+        self.integration_time = time
+        
     
     def set_local(self):pass
     def close(self):pass

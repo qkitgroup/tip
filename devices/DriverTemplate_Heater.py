@@ -17,7 +17,7 @@ class driver(object):
         pass
     
     def get_idn(self):
-        return( "Dummy HEater  ... v0" )
+        return( "Dummy Heater  ... v0" )
         
     def get_heater_power(self):
         # random number
