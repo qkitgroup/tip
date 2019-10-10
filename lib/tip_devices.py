@@ -12,16 +12,16 @@ class device(object):
     def __init__(self,name):
         self.name  = name 
         self.backend = 0 # Backend is the device backend, e.g. a resistance bridge
-        #self.schedule_periode = 3
+        self.control_device = 0
         self.schedule_priority = 1
-        self._execute_func = self._hollow_func
+        #self._execute_func = self._hollow_func
         self.scheduler = None
         #self.abort = False
 
     def _hollow_func(self):
         # dummy 
         print ("dummy func executed ...")
-        time.sleep(2)
+        #time.sleep(2)
         return
 
     def schedule(self):
@@ -31,7 +31,7 @@ class device(object):
         which means that the total preiode is schedule_periode+duration_of(execute_func).
         """
         print("\nexec schedule() for " + self.name)
-        print(self.name +" "+str(config['name']['interval']))
+        print(self.name +" "+str(config[self.name]['interval']))
 
 
         if not config[self.name]['active']: return
@@ -39,26 +39,25 @@ class device(object):
         # if abort is changed while _execute_func() is running, it would need another cycle, thus: 
         if not config[self.name]['active']: return  
         # recursive hook into the scheduler queue:
-        self.scheduler.enter(config['name']['interval'], 
+        self.scheduler.enter(config[self.name]['interval'], 
             self.schedule_priority, 
             self.schedule)
 
-class backend(device):
-    def __init__(self,name):
-        super(backend, self).__init__(name)
-        config[name]['last_error'] = ""
-        _types_dict['last_error'] = str
+# class backend(device):
+#     def __init__(self,name):
+#         super(backend, self).__init__(name)
+#         config[name]['last_error'] = ""
+#         _types_dict['last_error'] = str
 
- 
-    def _execute_func():
-        print("func <- executed!")
-        print(self.name)
+#     def _execute_func():
+#         print("func <- executed!")
+#         print(self.name)
         
 
 class thermometer(device):
     def __init__(self,name):
         super(thermometer, self).__init__(name)
-
+        print("init thermometer:"+ name)
         #
         # update the configuration with temperature specific items
         # 
@@ -114,17 +113,17 @@ class thermometer(device):
         self.backend.set_integration( config[self.name]['device_integration_time'])
         
         R = self.backend.get_resistance()
-
-        T = self.calibration.getT_from_R(config[self.name]['resistance'])
+        T = self.calibration.getT_from_R(R)
 
         config[self.name]['resistance']  = R
         config[self.name]['temperature'] = T
 
         if config[self.name]['control_active']:
             new_heat_value = self.control.get_new_heat_value(T)
-
-            self.heater.set_heater_channel(config[self.name]['control_channel'])
-            self.heater.set_heater_value(new_heat_value)
+            
+            print(self.control_device.get_idn())
+            self.control_device.set_heater_channel(config[self.name]['control_channel'])
+            self.control_device.set_heater_power(new_heat_value)
             
             config[self.name]['heating_power'] = new_heat_value
 
