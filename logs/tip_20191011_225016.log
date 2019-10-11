@@ -1,0 +1,183 @@
+2019-10-11 22:50:16 INFO    :  ---------- LOGGING STARTED ----------  (tip_init.py:28)
+2019-10-11 22:50:16 INFO    : Config: Found defined instruments: ['SIM921_1', 'LS_370_1', 'TemplBridge', 'AVS47_1', 'MMR3_1', 'NIDAQ_1', 'TemplHeater', 'SIM928'] (tip_init.py:40)
+2019-10-11 22:50:16 INFO    : Config: Active instruments: ['TemplBridge', 'TemplHeater'] (tip_init.py:41)
+2019-10-11 22:50:16 INFO    : loading driver for: TemplBridge (tip_init.py:44)
+2019-10-11 22:50:16 INFO    : loading driver for: TemplHeater (tip_init.py:44)
+2019-10-11 22:50:16 INFO    : Found thermometers: ['mxc', '4K'] (tip_init.py:52)
+2019-10-11 22:50:16 INFO    : Active thermometers: ['mxc', '4K'] (tip_init.py:53)
+2019-10-11 22:50:16 INFO    : init thermometer:mxc (tip_devices.py:60)
+2019-10-11 22:50:16 INFO    : open calibrations/RuOx_LT_thermometer.txt calibration-file with 237 datapoints for Txyz (tip_eich.py:92)
+2019-10-11 22:50:16 INFO    : add thermometer to scheduler: mxc (tip_init.py:60)
+2019-10-11 22:50:16 INFO    : init thermometer:4K (tip_devices.py:60)
+2019-10-11 22:50:16 INFO    : open calibrations/RuOx_LT_thermometer.txt calibration-file with 237 datapoints for Txyz (tip_eich.py:92)
+2019-10-11 22:50:16 INFO    : add thermometer to scheduler: 4K (tip_init.py:60)
+2019-10-11 22:50:16 INFO    : Configuration at startup:{
+  "4K": {
+    "active": true,
+    "calibration_description": "Txyz",
+    "calibration_file": "RuOx_LT_thermometer.txt",
+    "calibration_file_order": "TR",
+    "calibration_interpolation": "linear",
+    "control_active": true,
+    "control_channel": 0,
+    "control_d": 0.0,
+    "control_default_heat": 0.0,
+    "control_device": "TemplHeater",
+    "control_error": 0,
+    "control_i": 0.1,
+    "control_p": 0.1,
+    "control_resistor": 120.0,
+    "control_temperature": 0,
+    "description": "pulse tube 4K",
+    "device": "TemplBridge",
+    "device_channel": 1,
+    "device_excitation": 4,
+    "device_integration_time": 5.0,
+    "device_range": 3,
+    "heating_current": 0,
+    "heating_power": 0,
+    "heating_voltage": 0,
+    "interval": 5.0,
+    "resistance": 0,
+    "sys_error": "",
+    "temperature": 0,
+    "type": "thermometer"
+  },
+  "AVS47_1": {
+    "active": false,
+    "com_method": "Ethernet",
+    "delay": 0.3,
+    "device": "Picowatt_AVS47",
+    "ip": "xxx.xxx.xxx.xxx",
+    "type": "bridge"
+  },
+  "LOCALHOST": {
+    "ip": "localhost",
+    "name": "servername",
+    "port": 9999
+  },
+  "LS_370_1": {
+    "active": false,
+    "com_method": "Ethernet",
+    "delay": 0.3,
+    "device": "Lakeshore_370",
+    "ip": "xxx.xxx.xxx.xxx",
+    "type": "bridge"
+  },
+  "MMR3_1": {
+    "active": false,
+    "com_method": "Ethernet",
+    "delay": 0.3,
+    "device": "Driver missing / Cryoconcept_mmr3",
+    "ip": "xxx.xxx.xxx.xxx",
+    "type": "bridge"
+  },
+  "NIDAQ_1": {
+    "active": false,
+    "com_method": "USB",
+    "device": "nidaq4",
+    "type": "heater",
+    "url": "Dev1"
+  },
+  "REMOTEHOST": {
+    "ip": "localhost",
+    "name": "clientname",
+    "port": 9999
+  },
+  "SIM921_1": {
+    "active": false,
+    "com_method": "Ethernet",
+    "delay": 0.3,
+    "device": "SRS_SIM900",
+    "ip": "xxx.xxx.xxx.xxx",
+    "sim921_port": "6",
+    "sim925_port": "8",
+    "type": "bridge"
+  },
+  "SIM928": {
+    "active": false,
+    "com_method": "USB",
+    "device": "SRS_SIM900",
+    "port": 10,
+    "type": "heater",
+    "url": "Dev1"
+  },
+  "TemplBridge": {
+    "active": true,
+    "com_method": "Ethernet",
+    "delay": 0.3,
+    "device": "DriverTemplate_Bridge",
+    "ip": "xxx.xxx.xxx.xxx",
+    "type": "bridge"
+  },
+  "TemplHeater": {
+    "active": true,
+    "com_method": "USB",
+    "device": "DriverTemplate_Heater",
+    "type": "heater",
+    "url": "Dev1"
+  },
+  "debug": {
+    "dummymode": "1"
+  },
+  "logging": {
+    "fname": "T_log.txt"
+  },
+  "mxc": {
+    "active": true,
+    "calibration_description": "Txyz",
+    "calibration_file": "RuOx_LT_thermometer.txt",
+    "calibration_file_order": "TR",
+    "calibration_interpolation": "linear",
+    "control_active": false,
+    "control_channel": 0,
+    "control_d": 0.0,
+    "control_default_heat": 0.0,
+    "control_device": "TemplHeater",
+    "control_error": 0,
+    "control_i": 0.1,
+    "control_p": 0.1,
+    "control_resistor": 120.0,
+    "control_temperature": 0,
+    "description": "mixing chamber thermometer",
+    "device": "TemplBridge",
+    "device_channel": 0,
+    "device_excitation": 4,
+    "device_integration_time": 1.0,
+    "device_range": 3,
+    "heating_current": 0,
+    "heating_power": 0,
+    "heating_voltage": 0,
+    "interval": 1.0,
+    "resistance": 0,
+    "sys_error": "",
+    "temperature": 0,
+    "type": "thermometer"
+  },
+  "system": {
+    "abort": false,
+    "active_instruments": [
+      "TemplBridge",
+      "TemplHeater"
+    ],
+    "active_thermometers": [
+      "mxc",
+      "4K"
+    ],
+    "defined_instruments": [
+      "SIM921_1",
+      "LS_370_1",
+      "TemplBridge",
+      "AVS47_1",
+      "MMR3_1",
+      "NIDAQ_1",
+      "TemplHeater",
+      "SIM928"
+    ],
+    "defined_thermometers": [
+      "mxc",
+      "4K"
+    ],
+    "version": 1.5
+  }
+} (tip_init.py:78)

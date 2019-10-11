@@ -2,7 +2,7 @@
 # The objets should be derived from a base "device" class and add specific extensions, e.g. for a
 # thermomenter, data loging, etc.
 # written for TIP 2.0 by HR@KIT 2019 
-
+import logging
 from lib.tip_config import config, device_instances, _types_dict
 from lib.tip_eich import TIPEich
 from lib.tip_pidcontrol import pidcontrol
@@ -30,8 +30,8 @@ class device(object):
         from the scheduler. The scheduler is called after execute_func has been executed again, 
         which means that the total preiode is schedule_periode+duration_of(execute_func).
         """
-        print("\nexec schedule() for " + self.name)
-        print(self.name +" "+str(config[self.name]['interval']))
+        logging.debug("\nexec schedule() for " + self.name)
+        logging.debug(self.name +" "+str(config[self.name]['interval']))
 
 
         if not config[self.name]['active']: return
@@ -57,7 +57,7 @@ class device(object):
 class thermometer(device):
     def __init__(self,name):
         super(thermometer, self).__init__(name)
-        print("init thermometer:"+ name)
+        logging.info("init thermometer:"+ name)
         #
         # update the configuration with temperature specific items
         # 
@@ -105,8 +105,7 @@ class thermometer(device):
     def _execute_func(self):
         " This function gets periodically called by the scheduler "
 
-        print("func <- executed!")
-        print(self.name)
+        logging.debug("_execute_func called for "+self.name)
         
         self.backend.set_channel(     config[self.name]['device_channel'])
         self.backend.set_excitation(  config[self.name]['device_excitation'])
@@ -121,7 +120,7 @@ class thermometer(device):
         if config[self.name]['control_active']:
             new_heat_value = self.control.get_new_heat_value(T)
             
-            print(self.control_device.get_idn())
+            logging.debug(self.control_device.get_idn())
             self.control_device.set_heater_channel(config[self.name]['control_channel'])
             self.control_device.set_heater_power(new_heat_value)
             

@@ -7,7 +7,7 @@
 # Fixme: poly-fit is far from complete (not included)
 #=================================================#
 #Note: Huuuhu Ugly code! (HR/2019)
-
+import logging
 from numpy import *
 from scipy.interpolate import *
 import re
@@ -89,7 +89,7 @@ class TIPEich(object):
 			DATA=self._mySort(data[:,1],data[:,0]) # _mysort(T,R)
 		else:
 			DATA=self._mySort(data[:,0],data[:,1]) # _mysort(R,T)
-		print ("open "+str(self.eich_file)+ " calibration-file with "+ str(len(DATA[:]))+" datapoints for "+self.thermometer )
+		logging.info ("open "+str(self.eich_file)+ " calibration-file with "+ str(len(DATA[:]))+" datapoints for "+self.thermometer )
 		
 		try:
 			self.R_T_sprep=splrep(DATA[:,0],DATA[:,1],s=0, k=1 )

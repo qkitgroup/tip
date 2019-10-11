@@ -5,7 +5,6 @@ import collections
 import json
 from threading import Lock
 import configparser
-import pprint
 
 
 
@@ -96,8 +95,8 @@ def load_config(settings_file = "settings_local.cfg", debug = False):
     # not used in the moment
     cp_conf = configparser.RawConfigParser(inline_comment_prefixes=';')
     cp_conf.read(settings_file)
-    if debug:
-        pprint.pprint({section: dict(cp_conf[section]) for section in cp_conf.sections()})
+    #if debug:
+    #    pprint.pprint({section: dict(cp_conf[section]) for section in cp_conf.sections()})
     return cp_conf
 
 def convert_to_dict(cp_conf): # config parser results
@@ -164,6 +163,7 @@ def update_active_devices(config):
             DT.append(inst)
             if config[inst].get("active",False):
                 AT.append(inst)
+
 
 
 

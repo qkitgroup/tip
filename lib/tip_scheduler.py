@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Scheduler for tip
 # written for TIP 2.0 by HR@KIT 2019
-
+import logging
 import sched,time
 import threading
 
@@ -56,18 +56,18 @@ class tip_scheduler(object):
         # if "device" is given (e.g. a thermometer object), 
         # only this device is removed from the scheduler queue
         if self.devices.get(device,False):
-            print("Scheduler: removing "+device)
+            logging.info("Scheduler: removing "+device)
             self.devices[device].abort = True            
 
         else:
-            print ("Scheduler: removing all tasks from the event queue.")
+            logging.info("Scheduler: removing all tasks from the event queue.")
             for dev in self.devices.values(): 
                 dev.abort = True
             self.devices = {}
             for scheduler in self.schedulers.values():
                 for event in scheduler.queue:
                     scheduler.cancel(event)
-            print(scheduler.queue)
+            logging.info(scheduler.queue)
         
             
 

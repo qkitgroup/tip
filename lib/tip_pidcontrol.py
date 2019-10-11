@@ -2,7 +2,7 @@
 #
 # changelog:
 # 0.3 code cleanup for TIP 2.0
-
+import logging
 from lib.tip_config import config, _types_dict
 
 class pidcontrol(object):
@@ -41,6 +41,6 @@ class pidcontrol(object):
         iTerm = config[self.name]['control_i'] * self.iState  #calculate the integral term
         dTerm = config[self.name]['control_d'] * ( reading - self.dState)
         self.dState = reading
-        print( "P:%.5f I:%.5f D:%.5f terms"%(pTerm,iTerm,dTerm))
-        print( "I:%.5f D:%.5f states"%(self.iState,self.dState))
+        logging.debug( "P:%.5f I:%.5f D:%.5f terms"%(pTerm,iTerm,dTerm))
+        logging.debug( "I:%.5f D:%.5f states"%(self.iState,self.dState))
         return pTerm + iTerm - dTerm
