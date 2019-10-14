@@ -65,3 +65,4 @@ if __name__ == "__main__":
     #test_speed()
     #print(timeit.timeit("test_speed()",setup="from __main__ import test_speed",number = 100))
     print(get_devices())
+    print(get_param("mxc","control_resistor"))

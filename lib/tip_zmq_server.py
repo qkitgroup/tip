@@ -30,7 +30,7 @@ def serve_requests ():
         logging.debug("Received request: %s" % message)
         #  Send reply back to client:
         #  everything is handled by the tip_srv_lib parse_request
-        socket.send_string(parse_request(message))
+        socket.send_string(str(parse_request(message)))
     
     #auth.stop()
 

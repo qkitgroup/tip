@@ -99,7 +99,7 @@ def set_handler(cmds):
 
 
 def get_param_handler(section,params):
-    print (params)
+    
     try:
         param = params.pop(0)
     except IndexError:
@@ -107,7 +107,7 @@ def get_param_handler(section,params):
     except Exception as e:
         print ("get_param_handler exception..." + str(e))
         raise(e)
-
+    #print ("param:"+param)
     if param in section.keys():
         return (section[param])
     elif ':' in param[0]:
