@@ -1,4 +1,4 @@
-# tip regulation gui / HR@KIT 2011 -
+# tip regulation gui / HR@KIT 2011 - 2019
 import sys
 
 # make it pyqt5 only ...
@@ -10,12 +10,16 @@ from PyQt5.QtWidgets import * # QApplication
 
 from time import sleep
 
-from tip_gui_lib import DATA, AcquisitionThread, remote_client
+from tip_gui_lib import DATA, AcquisitionThread #,  remote_client
 from tip_gui_cover import Ui_MainWindow
 
 import argparse
 import configparser
 import numpy
+
+
+from lib.tip_zmq_client_lib import context, get_config, get_param, set_param
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -76,13 +80,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #    self.Temp_view.plot(x, y[i], pen=(i,3))
     
     def _update_newT(self,T):
-        #print "new T:",T
-        #print self.newT_SpinBox.value()
-        rc = remote_client(self.data)    
-        rc.send("set T "+str(T))
-        if not int(rc.recv().strip()) == 1:
-            raise Error("communication error")
-        rc.close()
+        # #print "new T:",T
+        # #print self.newT_SpinBox.value()
+        # rc = remote_client(self.data)    
+        # rc.send("set T "+str(T))
+        # if not int(rc.recv().strip()) == 1:
+        #     raise Error("communication error")
+        # rc.close()
+        set_param("mxc","control_temperature",T)
+
 
     def _quit_tip_gui(self):
         self.data.wants_abort = True
@@ -113,40 +119,44 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def _update_P(self,P):
         self.data.P = P
-        self._update_PID()
+        #self._update_PID()
+        set_param("mxc","control_p",float(P))
         #print self.P_SpinBox.value()
     def _update_I(self,I):
         self.data.I = I
-        self._update_PID()
+        set_param("mxc","control_i",float(I))
+        #self._update_PID()
     def _update_D(self,D):
         self.data.D = D
-        self._update_PID()
-    def _update_PID(self):
-       rc = remote_client(self.data)
-       rc.send("set PID %.5f %.5f %.5f"% (self.data.P,self.data.I,self.data.D))
-       if not int(rc.recv().strip()) == 1:
-           raise Error("communication error")
-       rc.close()
+        set_param("mxc","control_d",float(D))
+    # def _update_PID(self):
+    #    rc = remote_client(self.data)
+    #    rc.send("set PID %.5f %.5f %.5f"% (self.data.P,self.data.I,self.data.D))
+    #    if not int(rc.recv().strip()) == 1:
+    #        raise Error("communication error")
+    #    rc.close()
     def _update_PID_from_remote(self):
     
-        rc = remote_client(self.data)
+        #rc = remote_client(self.data)
         
-        rc.send("GET PID")
-        pid_str=rc.recv().split()
-        rc.close()
-        self.data.P = float(pid_str[0])
-        self.data.I = float(pid_str[1])
-        self.data.D = float(pid_str[2])
+        #rc.send("GET PID")
+        #pid_str=rc.recv().split()
+        #rc.close()
+
+        self.data.P = float(get_param("mxc","control_p"))
+        self.data.I = float(get_param("mxc","control_i"))
+        self.data.D = float(get_param("mxc","control_d"))
         self.P_SpinBox.setValue(self.data.P)
         self.I_SpinBox.setValue(self.data.I)
         self.D_SpinBox.setValue(self.data.D)
+
     def _update_SET_temperature(self):
     
-        rc = remote_client(self.data)
+        #rc = remote_client(self.data)
         
-        rc.send("GET TCTRL")
-        self.data.set_T = float(rc.recv())
-        rc.close()
+        #rc.send("GET TCTRL")
+        self.data.set_T = float(get_param("mxc","control_temperature"))
+        #rc.close()
 
         self.newT_SpinBox.setValue(self.data.set_T)
      

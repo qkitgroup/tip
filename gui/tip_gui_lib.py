@@ -9,8 +9,11 @@ from time import sleep
 #import numpy
 
 # v this will go!
-from pickle import loads
-import socket
+#from pickle import loads
+#import socket
+
+from lib.tip_zmq_client_lib import context, get_config, get_param, set_param
+THERM = "mxc"
 
 from PyQt5.QtCore import  QObject, pyqtSignal
 class DATA(object):
@@ -82,18 +85,22 @@ class AcquisitionThread(Thread,QObject):
 
         
     def setup_acquire_from_remote(self):
-        self.rc=remote_client(self.data)
+        pass
+        #self.rc=remote_client(self.data)
         
-    def acquire_from_remote(self,cmd):
-        self.rc.send("get "+cmd)
-        return self.rc.recv()
-
+    def acquire_from_remote(self,cmd): 
+        #self.rc.send("get "+cmd)
+        #return self.rc.recv()
+        pass
+    
     def update_remote(self,cmd):
-        self.rc.send(str("set "+cmd))
+        pass
+        #self.rc.send(str("set "+cmd))
 
     def stop_remote(self):
-        self.rc.send("EXIT\n")
-        self.rc.close()
+        pass
+        #self.rc.send("EXIT\n")
+        #self.rc.close()
     def process(self, image):
         """ Spawns the processing job.
         """
@@ -123,15 +130,15 @@ class AcquisitionThread(Thread,QObject):
                 
         while not self.data.wants_abort:
             # get state
-            T=float(self.acquire_from_remote("T"))
-            Heat=float(self.acquire_from_remote("HEAT"))
-            pidE=float(self.acquire_from_remote("PIDE"))
-            R=float(self.acquire_from_remote("RES"))
+            T=float(get_param(THERM,"temperature"))
+            #Heat=float(self.acquire_from_remote("HEAT"))
+            #pidE=float(self.acquire_from_remote("PIDE"))
+            #R=float(self.acquire_from_remote("RES"))
 
             self.T_sig.emit(T)
-            self.H_sig.emit(Heat)
-            self.E_sig.emit(pidE)
-            self.R_sig.emit(R)
+            #self.H_sig.emit(Heat)
+            #self.E_sig.emit(pidE)
+            #self.R_sig.emit(R)
             sleep(self.data.UpdateInterval)
             
         #self.stop_remote()
