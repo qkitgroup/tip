@@ -124,7 +124,7 @@ class TIPEich(object):
 	def getT_from_R(self,R):
 		""" only function which should be called from outside """
 		""" returns Temperature from a given Resistance """
-		return self._getT_from_splined_R(R)
+		return float(self._getT_from_splined_R(R))
 
 # generic error class
 class Error(Exception):

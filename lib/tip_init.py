@@ -6,8 +6,10 @@ import importlib
 import tip
 from lib.tip_config import config, device_instances, load_config, convert_to_dict, update_active_devices
 from lib.tip_devices import device, thermometer
-import devices.DriverTemplate_Bridge
 from lib.tip_scheduler import tip_scheduler
+from lib.tip_zmq_server import srv_thread 
+
+import devices.DriverTemplate_Bridge
 
 def setup_logging():
     # everything is relative to the tip directory in the  moment: note the access rights
@@ -32,7 +34,7 @@ def setup_logging():
     fileLogger.addHandler(consoleLogger)
 
     fileLogger.setLevel(logging.INFO)
-    consoleLogger.setLevel(logging.WARNING)
+    consoleLogger.setLevel(logging.INFO)
 
 def load_instruments(config):
     # load instruments first, since some devices, e.g. a thermometer depend on it. 
@@ -70,6 +72,8 @@ def tip_init (settings_file = "settings_local.cfg"):
     setup_logging()
 
     update_active_devices(config)
+
+    srv_thread()
 
     load_instruments(config)
     

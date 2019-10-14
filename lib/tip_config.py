@@ -54,7 +54,7 @@ class SettingsDict(collections.MutableMapping):
 
     def dump_json(self):
         with config.setings_lock:
-            return json.dumps(self.store,indent=2,sort_keys=True)
+            return json.dumps(self.store, indent = 2, sort_keys = True)
     
 # 
 # global config, thread save
