@@ -1,7 +1,6 @@
 # Lakeshore 370, Lakeshore 370 temperature controller driver
-# Hannes Rotzinger hannes.rotzinger@kit.edu 
-# stript down and adapted for TIP 2015
-# Base code 
+# Micha Wildermuth Micha.Wildermuth@kit.edu
+# stripped down and adapted for TIP 2019
 # Based on Joonas Govenius <joonas.govenius@aalto.fi>, 2014
 # Based on Lakeshore 340 driver by Reinier Heeres <reinier@heeres.eu>, 2010.
 #
@@ -20,96 +19,472 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import visa_prologix as visa
-#import visa
 import logging
-from time import sleep
+import time
 import numpy as np
 import random
 
 
-class Lakeshore_370(object):
-    def __init__(self,
-                 name,
-                 ip="129.13.93.80",
-                 gpib="GPIB::12",
-                 delay = 0.1,
-                   reset=False, 
-                   **kwargs
-               ):
-                
-        self._visa = visa.instrument(gpib,ip=ip,delay=delay)
+class driver(object):
+    def __init__(self, name, ip, gpib=8, delay=0.3, **kwargs):
+        self._visa = visa.instrument(gpib, ip=ip, delay=delay, **kwargs)
+        self._attempt_max = 4  # maximal attempts for communication, before error is raised
+        self._resistance = None
+        ''' channel '''
+        self._channel = None
+        self._autoscan = False
+        # TODO: turn all channels off
+        ''' excitation '''
+        self._excitation = None
+        self._excitation_mode = 1
+        self._range = None
+        self._autorange = None
+        ''' averaging '''
+        self._integration = None
+        ''' heater '''
+        self._heater_channel = None
+        self._heater_power = None
         
-        self._channels = kwargs.get('channels', (1, 2, 5, 6, 7, 8))
-        #self.set_scanner_channel
-        self.channel = self._get_Channel()
-        
-        self.R_format_map = {
-            1: '2 mOhm',
-            2: '6.32 mOhm',
-            3: '20 mOhm',
-            4: '63.2 mOhm',
-            5: '200 mOhm',
-            6: '632 mOhm',
-            7: '2 Ohm',
-            8: '6.32 Ohm',
-            9: '20 Ohm',
-            10: '63.2 Ohm',
-            11: '200 Ohm',
-            12: '632 Ohm',
-            13: '2 kOhm',
-            14: '6.32 kOhm',
-            15: '20 kOhm',
-            16: '63.2 kOhm',
-            17: '200 kOhm',
-            18: '632 kOhm',
-            19: '2 MOhm',
-            20: '6.32 MOhm',
-            21: '20 MOhm',
-            22: '63.2 MOhm'
+        self.resistance_ranges = {
+            1: 2e-3, # '2 mOhm'
+            2: 6.32e-3, # '6.32 mOhm',
+            3: 20e-3, # '20 mOhm',
+            4: 63.2e-3, # '63.2 mOhm',
+            5: 200e-3, # '200 mOhm',
+            6: 632e-3, # '632 mOhm',
+            7: 2, # '2 Ohm',
+            8: 6.32, # '6.32 Ohm',
+            9: 20, # '20 Ohm',
+            10: 63.2, # '63.2 Ohm',
+            11: 200, # '200 Ohm',
+            12: 632, # '632 Ohm',
+            13: 2e3, # '2 kOhm',
+            14: 6.32e3, # '6.32 kOhm',
+            15: 20e3, # '20 kOhm',
+            16: 63.2e3, # '63.2 kOhm',
+            17: 200e3, # '200 kOhm',
+            18: 632e3, # '632 kOhm',
+            19: 2e6, # '2 MOhm',
+            20: 6.32e6, # '6.32 MOhm',
+            21: 20e6, # '20 MOhm',
+            22: 63.2e6, # '63.2 MOhm'
             }
 
-        self.Exe_format_map = {
-            1: '2 uV or 1 pA',
-            2: '6.32 uV or 3.16 pA',
-            3: '20 uV or 10 pA',
-            4: '63.2 uV or 31.6 pA',
-            5: '200 uV or 100 pA',
-            6: '632 uV or 316 pA',
-            7: '2 mV or 1 nA',
-            8: '6.32 mV or 3.16 nA',
-            9: '20 mV or 10 nA',
-            10: '63.2 mV or 31.6 nA',
-            11: '200 mV or 100 nA',
-            12: '632 mV or 316nA',
-            13: '1 uA',
-            14: '3.16 uA',
-            15: '10 uA',
-            16: '31.6 uA',
-            17: '100 uA',
-            18: '316 uA',
-            19: '1 mA',
-            20: '3,16 mA',
-            21: '10 mA',
-            22: '31.6 mA'
+        self.excitation_ranges = {
+            1: (2e-6, 1e-12), # '2 uV or 1 pA',
+            2: (6.32e-6, 3.16e-12), # '6.32 uV or 3.16 pA',
+            3: (20e-6, 10e-12), # '20 uV or 10 pA',
+            4: (63.2e-6, 31.6e-12), # '63.2 uV or 31.6 pA',
+            5: (200e-6, 100e-12), # '200 uV or 100 pA',
+            6: (632e-6, 316e-12), # '632 uV or 316 pA',
+            7: (2e-3, 1e-9), # '2 mV or 1 nA',
+            8: (6.32e-3, 3.16e-9), # '6.32 mV or 3.16 nA',
+            9: (20e-3, 10e-9), # '20 mV or 10 nA',
+            10: (63.2e-3, 31.6e-9), # '63.2 mV or 31.6 nA',
+            11: (200e-3, 100e-9), # '200 mV or 100 nA',
+            12: (632e-3, 316e-9), # '632 mV or 316nA',
+            13: (None, 1e-6), # '1 uA',
+            14: (None, 3.16e-6), # '3.16 uA',
+            15: (None, 10e-6), # '10 uA',
+            16: (None, 31.6e-6), # '31.6 uA',
+            17: (None, 100e-6), # '100 uA',
+            18: (None, 316e-6), # '316 uA',
+            19: (None, 1e-3), # '1 mA',
+            20: (None, 3.16e-3), # '3,16 mA',
+            21: (None, 10e-3), # '10 mA',
+            22: (None, 31.6e-3), # '31.6 mA'
             }
 
+        self._reading_ccr = {
+            0: 'CS OVL',
+            1: 'VCM OVL',
+            2: 'VMIX OVL',
+            3: 'VDIF OVL',
+            4: 'R. OVER',
+            5: 'R. UNDER',
+            6: 'T. OVER',
+            7: 'T. UNDER'
+        }
 
         self._heater_ranges = {
-            0: 'off',
-            1: '31.6 uA',
-            2: '100 uA',
-            3: '316 uA',
-            4: '1 mA',
-            5: '3.16 mA',
-            6: '10 mA',
-            7: '31.6 mA',
-            8: '100 mA' }
+            0: False, # 'off',
+            1: 31.6e-6, # '31.6 uA',
+            2: 100e-6, # '100 uA',
+            3: 316e-6, # '316 uA',
+            4: 1e-3, # '1 mA',
+            5: 3.16e-3, # '3.16 mA',
+            6: 10e-3, # '10 mA',
+            7: 31.6e-3, # '31.6 mA',
+            8: 100e-3, # '100 mA'
+        }
 
+    def _ask(self, cmd):
+        attempt = 0
+        while attempt < self._attempt_max:
+            try:
+                return self._visa.ask(cmd)
+            except:
+                logging.debug('Attempt #%d to communicate with LakeShore failed.', attempt + 1)
+                time.sleep((1 + attempt) ** 2 * (0.1 + np.random.rand()))
+                attempt += 1
+        raise
+
+    def _write(self, cmd):
+        attempt = 0
+        while attempt < self._attempt_max:
+            try:
+                return self._visa.write(cmd)
+            except:
+                logging.debug('Attempt #%d to communicate with LakeShore failed.', attempt + 1)
+                time.sleep((1 + attempt) ** 2 * (0.1 + np.random.rand()))
+                attempt += 1
+        raise
+
+    def get_idn(self):
+        """
+        Gets the Instrument identification name of the device.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        IDN: str
+            Instrument identification name
+        """
+        # Corresponding command: <manufacturer>,<model>,<serial>,<date>[term] = *IDN?[term]
+        try:
+            logging.debug('Get IDN.')
+            return str(self._ask('*IDN?'))
+        except Exception  as e:
+            return 'Lakeshore'
+
+    ####################################################################################################################
+    ### bridge                                                                                                       ###
+    ####################################################################################################################
+
+    def set_channel(self, channel):
+        """
+        Sets the channel that is used to measure the resistance of the thermometer.
+
+        Parameters
+        ----------
+        channel: int
+            Number of channel that is connected to the thermometer.
+
+        Returns
+        -------
+        None
+        """
+        # Corresponding command: SCAN <channel>,<autoscan>[term]
+        # INSET <channel>,<off/on>,<dwell>,<pause>,<curve number>,<tempco>[term]
+        try:
+            self._channel = channel
+            self._write('SCAN {:d},{:d}'.format(channel, int(self._autoscan)))
+            logging.debug('Set channel to {!s}.'.format(self._channel))
+        except ValueError as e:
+            raise ValueError('Cannot set channel to {!s}.\n{:s}'.format(channel, e))
+
+    def get_channel(self):
+        """
+        Gets the channel that is used to measure the resistance of the thermometer.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        channel: int
+            Number of channel that is connected to the thermometer.
+        """
+        # Corresponding command: <channel>,<autoscan>[term] = SCAN?[term]
+        try:
+            logging.debug('Get channel.')
+            return int(str(self._ask('SCAN?')).split(sep=',')[0])
+        except Exception as err:
+            logging.error('Cannot get channel. Return last value instead. {!s}'.format(err))
+            return self._channel
+
+    def set_excitation(self, excitation):
+        """
+        Sets the excitation value of the set channel.
+
+        Parameters
+        ----------
+        excitation: float
+            Excitation value of the bias with which the resistance of the thermometer is measured.
+
+        Returns
+        -------
+        None
+        """
+        # Corresponding command: RDGRNG <channel>,<mode>,<excitation>,<range>,<autorange>,<cs off>[term]
+        try:
+            keys, vals = zip(*self.excitation_ranges.items())
+            self._excitation = keys[np.argmax(np.array(vals) > excitation)-1]
+            cs_off = 0 # 0 = excitation on, 1 = excitation off (attention)
+            self._write('RDGRNG {:d},{:d},{:f},{:f},{:d},{:d}'.format(self._channel, self._excitation_mode, self._excitation, self._range, self._autorange, cs_off))
+            logging.debug('Set excitation of channel {!s} to {!s}.'.format(self._channel, excitation))
+        except ValueError as e:
+            raise ValueError('Cannot set excitation of channel {!s} to {!s}.\n{:s}'.format(self._channel, excitation, e))
+
+    def get_excitation(self):
+        """
+        Gets the excitation value of the set channel.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        val: float
+            Excitation value of the bias with which the resistance of the thermometer is measured.
+        """
+        # Corresponding command: <mode>,<excitation>,<range>,<autorange>,<cs off>[term] = RDGRNG? <channel>[term]
+        try:
+            logging.debug('Get excitation of channel {!s}.'.format(self._channel))
+            ans = str(self._ask('RDGRNG?')).split(sep=',')
+            return self.excitation_ranges[ans[1]][ans[0]]
+        except Exception as err:
+            logging.error('Cannot get channel. Return last value instead. {!s}'.format(err))
+            return self._excitation
+
+    def set_range(self, range):
+        """
+        Sets the resistance measurement range of the set channel.
+
+        Parameters
+        ----------
+        range: float
+            Resistance measurement range for the thermometer. 'auto' is -1.
+
+        Returns
+        -------
+        None
+        """
+        # Corresponding command: RDGRNG <channel>,<mode>,<excitation>,<range>,<autorange>,<cs off>[term]
+        try:
+            if range == -1:  # autorange
+                self._autorange = True
+            else:
+                self._autorange = False
+                keys, vals = zip(*self.resistance_ranges.items())
+                self._range = keys[np.argmax(np.array(vals).T[self._excitation_mode] > range)]
+            cs_off = 0  # 0 = excitation on, 1 = excitation off (attention)
+            self._write('RDGRNG {:d},{:d},{:f},{:f},{:d},{:d}'.format(self._channel, self._excitation_mode, self._excitation, self._range, self._autorange, cs_off))
+            logging.debug('Set range of channel {!s} to {!s}.'.format(self._channel, range))
+        except ValueError as e:
+            raise ValueError('Cannot set range of channel {!s} to {!s}.\n{:s}'.format(self._channel, range, e))
+
+    def get_range(self):
+        """
+        Gets the resistance measurement range of the set channel.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        range: float
+            Resistance measurement range for the thermometer.
+        """
+        # Corresponding command: <mode>,<excitation>,<range>,<autorange>,<cs off>[term] = RDGRNG? <channel>[term]
+        try:
+            logging.debug('Get range of channel {!s}.'.format(self._channel))
+            ans = str(self._ask('RDGRNG?')).split(sep=',')
+            if ans[3]:
+                return -1
+            else:
+                return self.resistance_ranges[ans[2]]
+        except Exception as err:
+            logging.error('Cannot get range. Return last value instead. {!s}'.format(err))
+            return self._range
+
+    def get_resistance(self):
+        """
+        Gets the resistance value of the thermometer that is connected to the set channel.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        resistance: float
+            Resistance of the thermometer.
+        """
+        # Corresponding command: <ohm value>[term] = RDGR? <channel>[term]
+        # Corresponding command: <status bit weighting>[term] = RDGST? <channel> [term]
+        try:
+            logging.debug('Get resistance of channel {!s}.'.format(self._channel))
+            self._resistance = float(self._ask('RDGR? {:d}'.format(self._channel)))
+        except Exception as err:
+            logging.error('Cannot get channel. Return last value instead. {!s}'.format(err))
+        return self._resistance
+
+    def set_integration(self, integration):
+        """
+        Sets the integration for the resistance measurement of the set channel.
+
+        Parameters
+        ----------
+        integration: float
+            Integration that composes of integration time and those averages.
+
+        Returns
+        -------
+        None
+        """
+        # Corresponding command: FILTER <channel>,<off/on>,<settle time>,<window>[term]
+        try:
+            self._integration = np.round(integration)
+            status = int(bool(integration))
+            window = 80
+            self._write('FILTER {:d},{:d},{:d},{:d}'.format(self._channel, status, self._integration, window))
+            logging.debug('Set integration of channel {!s} to {!s}.'.format(self._channel, integration))
+        except ValueError as e:
+            raise ValueError('Cannot set integration of channel {!s} to {!s}.\n{:s}'.format(self._channel, integration, e))
+
+    def get_integration(self):
+        """
+        Gets the integration for the resistance measurement of the set channel.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        integration: float
+            Integration, that composes of integration time and those averages.
+        """
+        # Corresponding command: #<off/on>,<settle time>,<window>[term] = FILTER? <channel>[term]
+        try:
+            logging.debug('Get integration of channel {!s}.'.format(self._channel))
+            return int(str(self._ask('FILTER? {:d}'.format(self._channel))).split(sep=',')[1])
+        except Exception as err:
+            logging.error('Cannot get integration. Return last value instead. {!s}'.format(err))
+            return self._integration
+
+    ####################################################################################################################
+    ### heater                                                                                                       ###
+    ####################################################################################################################
+
+    def set_heater_channel(self, channel):
+        """
+        Sets the channel that is used to supply the heater.
+
+        Parameters
+        ----------
+        channel: int
+            Number of channel that is connected to the heater.
+
+        Returns
+        -------
+        None
+        """
+        self._heater_channel = channel
+        logging.debug('Set heater channel to {!s}.'.format(channel))
+
+    def get_heater_channel(self):
+        """
+        Gets the channel that is used to supply the heater.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        channel: int
+            Number of channel that is connected to the heater.
+        """
+        logging.debug('Get heater channel.')
+        return self._heater_channel
+
+    def set_heater_power(self, power):
+        """
+        Sets the heat power of the set channel.
+
+        Parameters
+        ----------
+        power: float
+            Heat power.
+
+        Returns
+        -------
+        None
+        """
+        try:
+            self._heater_power = power
+            self._write('MOUT {:.8f}'.format(self._heater_power)) # TODO: Do we need to care about the range?
+            logging.debug('Set heater power to {!s}.'.format(power))
+        except ValueError as e:
+            raise ValueError('Cannot set manual heater power to {!s}.\n{:s}'.format(power, e))
+
+    def set_heater_range(self, range):
+        self._write('HTRRNG {:d}'.format(range))
+
+    def get_heater_power(self):
+        """
+        Gets the heat power of the set channel.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        power: float
+            Heat power.
+        """
+        # Corresponding command: HTR? HTRRNG?, MOUT?
+        try:
+            logging.debug('Get heater power.')
+            return float(self._ask('MOUT?'))
+            #return float(self._ask('HTR?'))
+        except Exception as err:
+            logging.error('Cannot get heater power. Return last value instead. {!s}'.format(err))
+            return self._heater_power
+
+    def set_local(self):
+        """
+        Sets to local mode.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        # Corresponding command: MODE <mode>[term]
+        mode = 0  # <mode> 0 = local, 1 = remote, 2 = remote with local lockout.
+        self._write('MODE {:d}'.format(mode))
+
+    def _close(self):
+        """
+        Closes the connection.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        visa._close_connection()
+
+    """
     def reset(self):
         self.__write('*RST')
         sleep(.5)
-
-                    
 
     def __ask(self, msg):
         attempt = 0
@@ -379,6 +754,7 @@ class Lakeshore_370(object):
         return self._get_Channel()
     def setup_device(self): 
         pass
+    """
         
         
             
