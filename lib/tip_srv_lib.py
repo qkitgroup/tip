@@ -3,7 +3,9 @@
 # rewritten from scratch for TIP 2.0 HR@KIT 2019
 #
 import sys
+import logging
 import json
+
 from lib.tip_config import config, convert_string_to_value
 
 
@@ -35,7 +37,8 @@ def parse_request(request):
             if CHANNEL is ommitted ('//') then the default channel is assumed
     """
     "tokenize the request string"
-    print(request)
+    logging.info(request)
+
     cmds = request.strip('/').lower().split("/")
     "remove heading or trailing white spaces"
     cmds = [cmd.strip() for cmd in cmds]
@@ -65,9 +68,10 @@ def get_handler(cmds):
     except Exception as e:
         print ("get_handler exception..." + str(e))
         raise (e)
-
     if cmd in config.keys():
         return (get_param_handler(config[cmd],cmds))
+    elif '::' in cmd[:2]:
+        return config.dump_json()
     elif ':' in cmd[0]:
         return json.dumps(list(config.keys()))
     else:
