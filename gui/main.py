@@ -18,7 +18,7 @@ import configparser
 import numpy
 
 
-from lib.tip_zmq_client_lib import context, get_config, get_param, set_param
+from lib.tip_zmq_client_lib import setup_connection, get_config, get_param, set_param, set_exit
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -37,11 +37,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #self.menubar.setNativeMenuBar(False)
         self._setup_signal_slots()
         self._setup_views()
+
+        setup_connection("tcp://localhost:5000")
+
         self.acquisition_thread =False
         
-        self.Temps =numpy.zeros(100)
+        self.Temps =numpy.empty(100)
+        self.Temps.fill(numpy.nan)
         self.Errors=numpy.zeros(100)
+        self.Errors.fill(numpy.nan)
         self.Heats = numpy.zeros(100)
+        self.Heats.fill(numpy.nan)
         self.times = numpy.arange(100,0,-1)
         
     def _setup_signal_slots(self):
@@ -92,8 +98,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def _quit_tip_gui(self):
         self.data.wants_abort = True
-        sleep(0.5)
+        sleep(0.2)
         exit()
+
     def _start_aquisition(self):
         #AQ  = AcquisitionThread(DATA)
         """ Callback of the "start stop acquisition" button. This starts
@@ -113,36 +120,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.acquisition_thread.R_sig.connect(self.R_field.setValue)
             
             self._update_PID_from_remote()
-            self._update_SET_temperature()
+            self._update_control_temperature()
             self.acquisition_thread.start()
             
 
     def _update_P(self,P):
         self.data.P = P
-        #self._update_PID()
         set_param("mxc","control_p",float(P))
         #print self.P_SpinBox.value()
     def _update_I(self,I):
         self.data.I = I
         set_param("mxc","control_i",float(I))
-        #self._update_PID()
+
     def _update_D(self,D):
         self.data.D = D
         set_param("mxc","control_d",float(D))
-    # def _update_PID(self):
-    #    rc = remote_client(self.data)
-    #    rc.send("set PID %.5f %.5f %.5f"% (self.data.P,self.data.I,self.data.D))
-    #    if not int(rc.recv().strip()) == 1:
-    #        raise Error("communication error")
-    #    rc.close()
+
     def _update_PID_from_remote(self):
     
-        #rc = remote_client(self.data)
-        
-        #rc.send("GET PID")
-        #pid_str=rc.recv().split()
-        #rc.close()
-
         self.data.P = float(get_param("mxc","control_p"))
         self.data.I = float(get_param("mxc","control_i"))
         self.data.D = float(get_param("mxc","control_d"))
@@ -150,14 +145,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.I_SpinBox.setValue(self.data.I)
         self.D_SpinBox.setValue(self.data.D)
 
-    def _update_SET_temperature(self):
-    
-        #rc = remote_client(self.data)
-        
-        #rc.send("GET TCTRL")
+    def _update_control_temperature(self):
         self.data.set_T = float(get_param("mxc","control_temperature"))
-        #rc.close()
-
         self.newT_SpinBox.setValue(self.data.set_T)
      
         
@@ -175,7 +164,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.Error_view.plt.setData(self.times, self.Errors)
 
     def _update_gui_values(self,T,R,Heat,Tctrl):
-        #print T
         self.T_field.setValue(T)
         self.R_field.setValue(R)
         self.H_field.setValue(Heat*1e6)
@@ -186,7 +174,7 @@ def main(argv):
     # some configuration boilerplate
     data = DATA()
     parser = argparse.ArgumentParser(
-        description="TIP Is not Perfect // HR@KIT 2011-2015")
+        description="TIP Is not Perfect // HR@KIT 2011-2019")
 
     parser.add_argument('ConfigFile', nargs='?', default='settings_local.cfg',
                         help='Configuration file name')

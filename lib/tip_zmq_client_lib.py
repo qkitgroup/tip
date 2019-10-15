@@ -10,14 +10,13 @@ import timeit
 import json
 
 context = zmq.Context()
-
-#  Socket to talk to server
-print("Connecting to TIP server…")
 socket = context.socket(zmq.REQ)
-socket.connect("tcp://localhost:5000")
+#  Socket to talk to server
+#socket = None
 
-
-
+def setup_connection(url="tcp://localhost:5000"):
+    print("Connecting to TIP server…")
+    socket.connect(url)
 
 def set_param(device, param, value):
     socket.send_string("set/"+device+"/"+param+"/"+str(value))
@@ -43,6 +42,9 @@ def get_config():
     socket.send_string("get/::")
     message = socket.recv_string()
     return json.loads(message)
+
+def set_exit():
+    return socket.send_string("EXIT")
 
 
 def test_speed():
