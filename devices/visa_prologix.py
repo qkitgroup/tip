@@ -105,7 +105,7 @@ class instrument(object):
         cmd=cmd.rstrip()
         cmd+=self.term_char
         #self._set_read_after_write(False)
-        self.sock.send(cmd)
+        self.sock.send(cmd.encode('ascii'))
         #print " -- "+str(cmd).rstrip()
         #time.sleep(self.delay) # the delay is now in _set_read!
         
@@ -167,10 +167,10 @@ class instrument(object):
     def _set_read_after_write(self, On=True):
         if On:
             # Turn on read-after-write
-            self.sock.send("++auto 1\r\n")
+            self.sock.send("++auto 1\r\n".encode('ascii'))
         else:
             # Turn off read-after-write to avoid "Query Unterminated" errors
-            self.sock.send("++auto 0\r\n")
+            self.sock.send("++auto 0\r\n".encode('ascii'))
 
     def _set_read_timeout(self,**kwargs):
         timeout = kwargs.get("timeout",self.timeout)
@@ -188,17 +188,17 @@ class instrument(object):
             
     def _set_GPIB_EOS(self,EOS='\n'): # end of signal/string
         EOSs={'\r\n':0,'\r':1,'\n':2,'':3}
-        self.sock.send("++eos"+EOSs.get(EOS)+"\n")
+        self.sock.send("++eos"+EOSs.get(EOS)+"\n".encode('ascii'))
 
     def _set_GPIB_EOT(self,EOT=False):
         # send at EOI an EOT (end of transmission) character ?
         if EOT:
-            self.sock.send("++eot_enable 1\n")
+            self.sock.send("++eot_enable 1\n".encode('ascii'))
         else:
-            self.sock.send("++eot_enable 0\n")
+            self.sock.send("++eot_enable 0\n".encode('ascii'))
     def _set_GPIB_EOT_char(self,EOT_char=42):
         # set the EOT character
-        self.sock.send("++eot_char"+EOT_char+"\n")
+        self.sock.send("++eot_char"+EOT_char+"\n".encode('ascii'))
 
     def _set_ifc(self):
         self._send("++ifc")
@@ -239,16 +239,16 @@ class instrument(object):
         return self._send_recv("*IDN?")
     
     def _dump_internal_vars(self):
-        print "timeout"+self.timeout 
-        print "chunk_size"+ self.chunk_size 
-        print "values_format"+ self.values_format 
-        print "term_char"+ self.term_char 
-        print "send_end"+ self.send_end 
-        print "delay"+self.delay
-        print "lock"+self.lock
-        print "gpib_addr"+self.gpib_addr
-        print "ip"+self.ip
-        print "ethernet_port"+ self.ethernet_port 
+        print( "timeout"+self.timeout )
+        print( "chunk_size"+ self.chunk_size ) 
+        print( "values_format"+ self.values_format )
+        print( "term_char"+ self.term_char )
+        print( "send_end"+ self.send_end )
+        print( "delay"+self.delay )
+        print( "lock"+self.lock )
+        print( "gpib_addr"+self.gpib_addr )
+        print( "ip"+self.ip )
+        print( "ethernet_port"+ self.ethernet_port )
 
 
     # generic error class
@@ -260,22 +260,22 @@ class instrument(object):
     
     def CheckError(self):
         # check for device error
-        self.sock.send("SYST:ERR?\n")
-        self.sock.send("++read eoi\n")
+        self.sock.send("SYST:ERR?\n".encode('ascii'))
+        self.sock.send("++read eoi\n".encode('ascii'))
 
         s = None
 
         try:
             s = self.sock.recv(100)
         except socket.timeout:
-            print "socket timeout"
+            print( "socket timeout")
             s = ""
         
-        except socket.error, e:
+        except socket.error as e:
             pass
             
-        print s
-        print e
+        print( s )
+        print( e )
 
 
 # do some checking ...
@@ -286,7 +286,7 @@ if __name__ == "__main__":
    #   ls.write("*IDN?")
    #   print ls.read()
    #ls.write("*RST")
-   print "clearing buffers"
+   print ( "clearing buffers" )
    ls.write("*CLS")
    ls.write("REM 1;DLY 1")
    ls.write("*ESE 1;*SRE 32")
@@ -303,15 +303,15 @@ if __name__ == "__main__":
    sp=0
    for i in range(10):
        spr=int(ls._get_spoll().rstrip())
-       print "serial poll:",spr," #",i
+       print ("serial poll:",spr," #",i )
        if (spr & 16)==16:
-           print float(ls.read().split()[1])
+           print (float(ls.read().split()[1]))
            break
        time.sleep(0.4)
    
    #ls.write("ADC ?")
    #time.sleep(5)
-   print ls.read()
+   print (ls.read())
    
    ls.write("REM 0")
    ls._close_connection()
