@@ -1,5 +1,5 @@
 # Picowatt_AVS47 class, to perform the communication between the Wrapper and the device
-# Hannes Rotzinger hannes.rotzinger@kit.edu April 2010
+# Hannes Rotzinger hannes.rotzinger@kit.edu 2010- 2019 for TIP 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -14,42 +14,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-QTLAB = False
 
-
-if QTLAB:
-    from instrument import Instrument
-else:
-    class Instrument(object):
-        FLAG_GETSET = 0 
-        FLAG_GET_AFTER_SET = 1
-        def __init__(self,name,**kwargs):
-            pass
-        def add_parameter(self,name,**kwargs):
-            pass
-        def add_function(self,name):
-            pass
 
 
 import visa_prologix as visa
-#import visa
 import types
 import time
 import logging
-import random # this is for testing
 
-class Picowatt_AVS47(Instrument):
+
+class driver(object):
     '''
     This is the python driver for the Picowatt AVS 47
-    pulse generator
-
-    Usage:
-    Initialize with
-    <name> = instruments.create('<name>', 'AVS_47', address='<GPIB address>',
-        reset=<bool>)
+    resistance bridge
     '''
 
-    def __init__(self, name, address, reset=False,ip="",delay=0):
+
+    def __init__(self, name, address, gpib="GPIB::20", delay=0,**kwargs):
         '''
         Initializes the AVS_47, and communicates with the wrapper.
 
@@ -62,23 +43,113 @@ class Picowatt_AVS47(Instrument):
             None
         '''
         
-        Instrument.__init__(self, name, tags=['physical'])
-
         self._address = address
-        self._visainstrument = visa.instrument(self._address,ip=ip,delay=delay)
+        self._visainstrument = visa.instrument(gpib,ip=address,delay=delay)
 
-        self.add_parameter('delay', type=types.FloatType,
-            flags=Instrument.FLAG_GETSET | Instrument.FLAG_GET_AFTER_SET,
-            channels=(1, 2), minval=0.0, maxval=999, units='sec',channel_prefix='ch%d_')
-
-        self.add_function('reset')
-        self.add_function('get_all')
-
-        if reset:
-            self.reset()
-        else:
-            self.get_all()
         
+        self.delay = 0
+        self.averages = 0
+        self._open()
+
+
+    def setup_device(self):
+        pass
+    
+    def get_idn(self):
+        return self._visainstrument.ask("*IDN ?")
+        
+    def get_resistance(self):
+        if self.averages > 0:
+            # the time to get the AVS settled after averaging can vary a lot.
+            # however, to keep the trafic low, we simply wait for now.
+
+            self._visainstrument.write("ADC")
+            self._visainstrument.write("AVE " + str(self.averages))
+            time.sleep(float(self.averages*0.4+1))
+            self._visainstrument.write("RES ?")
+            #self._visainstrument.wait_for_srq()
+            #print dir(self._visainstrument)
+            #time.sleep(1)
+            #print int(self._visainstrument._get_spoll().rstrip())
+            return self._visainstrument.read().split()[1]
+        else:
+            self._visainstrument.write("ADC")
+            time.sleep(0.5)
+            self._visainstrument.write("RES ?")
+            #        self._visainstrument.wait_for_srq()
+            #print dir(self._visainstrument)
+            #time.sleep(1)
+            #print int(self._visainstrument._get_spoll().rstrip())
+            return self._visainstrument.read().split()[1]
+    
+
+
+
+    def get_channel(self):
+        return int(self._visainstrument.ask("MUX ?").split()[1])
+
+    def set_channel(self,channel):
+        # change the mux to channel n
+        cmd="MUX " + str(channel)
+        self._visainstrument.write(cmd)
+        return self.get_channel()
+
+    def get_excitation(self):
+        return int(self._visainstrument.ask("EXC ?").split()[1])
+
+    def set_excitation(self,excitation):
+        # change the excitation
+        cmd="EXC " + str(excitation)
+        self._visainstrument.write(cmd)
+        return self.get_excitation()
+
+    def get_range(self):
+        return int(self._visainstrument.ask("RAN ?").split()[1])
+
+    def set_range(self,n):
+        if n==10:
+            cmd="ARN 1"
+        else:
+            self._visainstrument.write("ARN 0")
+            cmd="RAN " + str(int(n))
+        self._visainstrument.write(cmd)
+        time.sleep(3)
+        return self.get_range()
+
+    def set_integration(self,time):
+        # The AVS needs 0.4 seconds per average so:
+        # time seconds  are int(time/0.4) avages
+        self.averages = int(time/0.4)
+        
+    def set_remote(self):
+        self._visainstrument.write("REM 1")
+        
+    def set_local(self):
+        self._visainstrument.write("REM 0")
+
+    def close(self):
+        # Put the controller back in zero (shorted) inputs
+        #self._visainstrument.write("INP 0")
+        # local the controller
+        self._visainstrument.write("REM 0")
+
+    def _open(self,reset=False):
+        if reset:
+            # give the device a power on reset
+            self._visainstrument.write("*RST")
+        
+            # give the controller a power on reset
+            self._visainstrument.write("ponrst")
+        
+            time.sleep(0.5)
+        
+        # Make the system remote
+        self._visainstrument.write("rem 1")
+        
+        # connect the MAV bit to the SRQ
+        self._visainstrument.write("*SRE 32")
+
+    
 
     def reset(self):
         '''
@@ -96,31 +167,10 @@ class Picowatt_AVS47(Instrument):
         time.sleep(0.5)
         self.get_all()
 
-    def get_all(self):
-        '''
-        Reads all channels  from the instrument,
-        and updates the wrapper.
 
-        Input:
-            None
-
-        Output:
-            None
-        '''
-
-        logging.info(__name__ + ' : reading all channels from instrument')
-        """
-        for i in range(1,3):
-            self.get('ch%d_delay' % i)
-            self.get('ch%d_width' % i)
-            self.get('ch%d_low' % i)
-            self.get('ch%d_high' % i)
-            self.get('ch%d_status' % i)
-        """
-        #self.get_display()
 
     # communication with device
-    def do_get_delay(self, channel):
+    def _get_delay(self, channel):
         '''
         Reads the pulse delay from the specified channel
 
@@ -133,7 +183,7 @@ class Picowatt_AVS47(Instrument):
         logging.debug(__name__ + ' : get delay for channel %d' % channel)
         
 
-    def do_set_delay(self, val, channel):
+    def _set_delay(self, val, channel):
         '''
         Sets the delay of the pulse of the specified channel
 
@@ -146,68 +196,8 @@ class Picowatt_AVS47(Instrument):
         '''
         logging.debug(__name__ + ' : set delay for channel %d to %f' % (channel, val))
         
-        
-        
-        
-    def _open(self,reset=False):
-        if reset:
-            # give the device a power on reset
-            self._visainstrument.write("*RST")
-        
-            # give the controller a power on reset
-            self._visainstrument.write("ponrst")
-        
-            time.sleep(0.5)
-        
-        # Make the system remote
-        self._visainstrument.write("rem 1")
-        
-        # connect the MAV bit to the SRQ
-        self._visainstrument.write("*SRE 32")
-
-    def _close(self):
-        # Put the controller back in zero (shorted) inputs
-        #self._visainstrument.write("INP 0")
-        # local the controller
-        self._visainstrument.write("rem 0")
-    
-    def _set_channel(self,channel, excitation, range):
-        
-        ZERO = 0
-        MEASURE=1
-
-        #Change the input to zero
-        cmd="INP " + str(ZERO)
-        self._visainstrument.write(cmd)
-    
-        # change the mux to channel n
-        cmd="MUX " + str(channel)
-        self._visainstrument.write(cmd)
-    
-        # change the excitation
-        cmd="EXC " + str(excitation)
-        self._visainstrument.write(cmd)
-    
-        # change the range, 10 means autorange
-        #if range == 10:
-        #cmd="ARN 1"
-        #else:
-        cmd="ARN 0"
-        self._visainstrument.write(cmd)
-    
-        cmd="RAN " + str(range)
-        self._visainstrument.write(cmd)
-    
-        # change the input to measure
-        cmd="INP " + str(MEASURE)
-        self._visainstrument.write(cmd)
-        
-        # the AVS needs some time to get settled.
-        # change the input to measure
-        cmd="DLY 15"
-        self._visainstrument.write(cmd)
-        time.sleep(15)
-
+ 
+    """
     def _request_resistance(self):
 
         # Clear the status byte
@@ -263,7 +253,8 @@ class Picowatt_AVS47(Instrument):
         if self._message_available():
             # the answer probably has to be converted to something useful
             return float(self._visainstrument.read().split()[1])
-    
+    """
+
     def _unset_Header(self):
         self._visainstrument.write("HDR 0")
 
@@ -331,11 +322,7 @@ class Picowatt_AVS47(Instrument):
         """
 
 
-    def _set_remote(self):
-        self._visainstrument.write("REM 1")
-        
-    def _set_local(self):
-        self._visainstrument.write("REM 0")
+    
         
     def _get_remote(self):
         return self._visainstrument.ask("REM ?")
@@ -349,67 +336,65 @@ class Picowatt_AVS47(Instrument):
     def _get_input(self):
         return int(self._visainstrument.ask("INP ?").split()[1])
 
-    def _set_range(self,n):
-        if n==10:
-            cmd="ARN 1"
-        else:
-            self._visainstrument.write("ARN 0")
-            cmd="RAN " + str(int(n))
-        self._visainstrument.write(cmd)
-        time.sleep(3)
-        return self._get_range()
-
-    def _get_range(self):
-        return int(self._visainstrument.ask("RAN ?").split()[1])
+    
     def _set_autorange(self,ON=1):
         cmd = "ARN "+str(ON)
         self._visainstrument.write(cmd)
     def _get_autorange(self):
         return int(self._visainstrument.ask("ARN ?").split()[1])
-    def _set_excitation(self,n):
-        cmd="EXC " + str(int(n))
-        self._visainstrument.write(cmd)
 
-    def _get_excitation(self):
-        return int(self._visainstrument.ask("EXC ?").split()[1])
 
-    def _set_mux(self,n):
-        cmd="MUX " + str(n)
-        self._visainstrument.write(cmd)
-        
-    def _get_mux(self):
-        return int(self._visainstrument.ask("MUX ?").split()[1])
+ 
 
-    def _get_id(self):
-        return self._visainstrument.ask("*IDN ?")
-    def _get_adc(self):
-        self._visainstrument.write("ADC")
-        time.sleep(1)
-        self._visainstrument.write("RES ?")
-        #        self._visainstrument.wait_for_srq()
-        #print dir(self._visainstrument)
-        #time.sleep(1)
-        #print int(self._visainstrument._get_spoll().rstrip())
-        return self._visainstrument.read().split()[1]
-    def _get_ave(self):
-        self._visainstrument.write("ADC")
-        self._visainstrument.write("AVE 2")
-        time.sleep(1)
-        self._visainstrument.write("RES ?")
-        #        self._visainstrument.wait_for_srq()
-        #print dir(self._visainstrument)
-        #time.sleep(1)
-        #print int(self._visainstrument._get_spoll().rstrip())
-        return self._visainstrument.read().split()[1]
+ 
+    
 
     def _get_testR(self,init_R=0):
         return float(random.random()+init_R)
 
+    """
+    def _set_channel(self,channel, excitation, range):
+        
+        ZERO = 0
+        MEASURE=1
+
+        #Change the input to zero
+        cmd="INP " + str(ZERO)
+        self._visainstrument.write(cmd)
+    
+        # change the mux to channel n
+        cmd="MUX " + str(channel)
+        self._visainstrument.write(cmd)
+    
+        # change the excitation
+        cmd="EXC " + str(excitation)
+        self._visainstrument.write(cmd)
+    
+        # change the range, 10 means autorange
+        #if range == 10:
+        #cmd="ARN 1"
+        #else:
+        cmd="ARN 0"
+        self._visainstrument.write(cmd)
+    
+        cmd="RAN " + str(range)
+        self._visainstrument.write(cmd)
+    
+        # change the input to measure
+        cmd="INP " + str(MEASURE)
+        self._visainstrument.write(cmd)
+        
+        # the AVS needs some time to get settled.
+        # change the input to measure
+        cmd="DLY 15"
+        self._visainstrument.write(cmd)
+        time.sleep(15)
+"""
 
 # do some checking ...
 if __name__ == "__main__":
-    avs=Picowatt_AVS47("AVS47","GPIB::20",ip="172.22.197.181",delay=0.9)
-    print avs._get_id()
+    avs=driver("AVS47_1",address="10.22.197.62",gpib="GPIB::20",delay=0.9)
+    print(avs.get_idn())
     ##print avs.__get_range()
     ##print dir(avs)
     #avs.reset()
@@ -427,9 +412,9 @@ if __name__ == "__main__":
     #print avs._get_id()
     
     #print avs._get_resistance()
-    print avs._set_range(6)
+    print (avs._set_range(0))
 
-    print avs._get_ave()
+    print(avs._get_ave())
     avs._close()
 
 """
