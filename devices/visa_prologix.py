@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 """
 GPIB_ETHERNET python class for prologix ethernet-to-gpib bridge, 
-written by Hannes Rotzinger, hannes.rotzinger@kit.edu for qtlab, qtlab.sf.net
+written by Hannes Rotzinger, hannes.rotzinger@kit.edu for TIP but 
+can also be used in combination with visa
 
 interfaces GPIB commands over ethernet
 
 released under the GPL, whatever version
 
 Changelog:
-0.1 March 2010, initial version, very alpha, most of the functionality is far from bullet proof.
-0.2 Oct. 2019, mayor update (HR)
+0.1 March 2010 (HR), initial version, very alpha, most of the functionality is far from bullet proof.
+0.2 Oct. 2019 (HR), mayor update 
 """
 
 import socket
@@ -40,6 +41,7 @@ class instrument(object):
         # reading from the instrument
         #
         self.timeout        = kwargs.get("timeout",3)
+
         #
         # delay after each write command to the PROLOGIX GPIB-ETHERNET 
         # device
@@ -50,6 +52,7 @@ class instrument(object):
         # size of chunks read
         # 
         self.chunk_size     = kwargs.get("chunk_size",20*1024)
+
         #
         # values format
         # 
@@ -73,9 +76,9 @@ class instrument(object):
         self.instrument_delay = kwargs.get("instrument_delay",0)
 
         self.send_end       = kwargs.get("send_end", False)
-        self.lock           = kwargs.get("lock",     False)
         
-        self.debug          =  kwargs.get("debug",    True)
+        self.debug          =  kwargs.get("debug",   False)
+
         #
         # setup of the PROLOGIX GPIB-ETHERNET
         #
@@ -103,7 +106,7 @@ class instrument(object):
         # switch automatic receive off
         self._set_read_after_write(False)        
 
-        self._set_EOI_assert()
+        self._set_EOI_assert(True)
         
         self._set_read_timeout(self.timeout)
 
@@ -118,13 +121,19 @@ class instrument(object):
     def read(self):
         return self._recv()
     def read_values(self,format):
+        #
+        # FIXME: not yet implemented: format
+        #
         return self._recv()
         
-    def ask(self,cmd):
-        return self._send_recv(cmd)
+    def ask(self, cmd, instrument_delay = 0):
+        return self._send_recv(cmd, instrument_delay)
 
-    def ask_for_values(self,cmd,format=None):
-        return self._send_recv(cmd)
+    def ask_for_values(self,cmd,format=None,instrument_delay = 0):
+        #
+        # FIXME: not yet implemented: format
+        #
+        return self._send_recv(cmd,instrument_delay)
         
     def clear(self):
         return self._set_reset()
@@ -154,7 +163,8 @@ class instrument(object):
         #cmd  = cmd.rstrip()
         cmd += self.term_char
         cmd  = cmd.encode('ascii')
-        print(cmd)
+        if self.debug:
+            print(cmd)
         self.sock.send(cmd)
         # wait for delay seconds before next command. 
         # depends on the device
@@ -236,7 +246,7 @@ class instrument(object):
 
     def _set_read_timeout(self,timeout):
         # sets the timeout of the device before reading.
-        self._send("++read_tmo_ms "+str(timeout*1000))
+        self._send("++read_tmo_ms "+str(int(timeout*1000)))
     
     #
     # lower level functions, may not be neccessary
@@ -271,20 +281,12 @@ class instrument(object):
     # get the service request bit
     def _get_srq(self,**kwargs):
         cmd="++srq"
-        bufflen=kwargs.get("bufflen",self.chunk_size)
-        cmd=cmd.rstrip()
-        cmd+=self.term_char
-        
         self._send(cmd)
-        #self._set_read()
-        return self._recv(bufflen)
+        return self._recv()
 
     def _get_spoll(self):
         cmd="++spoll"
-        cmd=cmd.rstrip()
-        cmd+=self.term_char
-        self._send(cmd)
-        return self._recv(self.chunk_size)
+        return self._send_recv(cmd,instrument_delay=0.4).rstrip()
     
     def _get_status(self):
         cmd="++status 48"
@@ -314,7 +316,6 @@ class instrument(object):
         print( "term_char"+ self.term_char )
         print( "send_end"+ self.send_end )
         print( "delay"+self.delay )
-        print( "lock"+self.lock )
         print( "gpib_addr"+self.gpib_addr )
         print( "ip"+self.ip )
         print( "ethernet_port"+ self.ethernet_port )
@@ -349,18 +350,53 @@ class instrument(object):
 
 # do some checking ...
 if __name__ == "__main__":
-   ls=instrument(
+    ls=instrument(
        "GPIB::20", 
         ip = "10.22.197.63", 
         delay = 0.1, 
-        term_char = "\n",
+        term_char = "\r",
         eos_char = "\r",
-        timeout = 3,
-        instrument_delay = 0.2
+        timeout = 1,
+        instrument_delay = 0,
+        debug = True
         )
-   #ls.write("*CLS")
-   #print(ls._get_version())
-   print(ls._get_idn())
+    ls.write("*ESE 1")
+    ls.write("*SRE 32")
+    ls.write("HDR 0")
+    ls.write("*OPC")
+
+    for i in range(3):
+        
+        ls.write("*CLS")
+        
+        #ls.write("++clr")
+        #print(ls._get_version())
+        
+        #tm = time.time()
+        #print(ls._get_idn())
+        #print(ls.ask("RES?",instrument_delay=0))
+        #print("The last command took:%f seconds."%(time.time()-tm))
+
+        ls.write("ADC; AVE 5; AVE ?")
+        
+        
+        while(True):
+            MAV = ls._get_spoll()
+            if MAV:# and '\n\n' not in str(MAV): 
+                try:
+                    if (int(MAV) == 16):
+                        print (MAV)
+                        break
+                except ValueError:
+                    pass
+                print (MAV)
+
+            print("no message available")
+            print (MAV)
+            time.sleep(0.2)
+        print("###############################")
+        print (float(ls.ask("RES?")))
+        print("###############################")
    #print(ls._send("RES?"))
    #time.sleep(ls.timeout)
    #print(ls._recv())
