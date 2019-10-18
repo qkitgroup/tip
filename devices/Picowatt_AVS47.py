@@ -51,11 +51,12 @@ class driver(object):
             ip = address, 
             delay = delay, 
             term_char = "\r",
-            eos_char = "\r",
+            eos_char = "",
             timeout = 1,
             instrument_delay = 0,
             debug = self.debug
             )
+            
         self.averages = 0
         self.setup_device()
 
@@ -74,7 +75,7 @@ class driver(object):
         # Make the system remote
         self._visainstrument.write("REM 1")
         
-        self._visainstrument.write("*ESE 1")
+        #self._visainstrument.write("*ESE 1")
         # connect the MAV bit to the SRQ
         self._visainstrument.write("*SRE 32")
 
@@ -82,7 +83,7 @@ class driver(object):
         self._set_no_header()
 
         # issue the operation complete flag
-        self._visainstrument.write("*OPC")
+        #self._visainstrument.write("*OPC")
         
     
     def get_idn(self):
@@ -91,44 +92,28 @@ class driver(object):
     def get_resistance(self):
         if self.averages > 0:
             # the time to get the AVS settled after averaging can vary a lot.
-            #
-            #self._visainstrument.write("*ESE 1") 
-            #self._visainstrument.write("*SRE 32")
-            
-            #self._visainstrument.write("*OPC")   
+            #   
             self._visainstrument.write("*CLS")
-            self._visainstrument.write("ADC; AVE %d; AVE?"%(self.averages))
-            #self._visainstrument.write("AVE " + str(self.averages))
-            #time.sleep(float(self.averages*0.4+1))
-            #self._visainstrument.write("AVE ?")
-            #self._visainstrument.wait_for_srq()
-            #print dir(self._visainstrument)
-            #time.sleep(1)
+            self._visainstrument.write("DLY 10;ADC; AVE %d; *OPC" % (self.averages))
             self._get_message_available()
-            #print( int(self._visainstrument._get_spoll().rstrip()))
-
-            return self._visainstrument.read()
+            #self._visainstrument.write("*CLS")
+            return self._visainstrument.ask("AVE?")
         else:
             self._visainstrument.write("ADC")
             time.sleep(1)
             self._visainstrument.write("RES ?")
-            #        self._visainstrument.wait_for_srq()
-            #print dir(self._visainstrument)
-            #time.sleep(1)
-            #print int(self._visainstrument._get_spoll().rstrip())
-            return self._visainstrument.read().split()[1]
-    
-
-
+            
+            return self._visainstrument.read()
 
     def get_channel(self):
         return int(self._visainstrument.ask("MUX ?",instrument_delay=1))
 
     def set_channel(self,channel):
         # change the mux to channel n
-        cmd="MUX " + str(channel)
+        self._visainstrument.write("*CLS")
+        cmd="MUX %d;DLY 5;*OPC"%(channel)
         self._visainstrument.write(cmd)
-        time.sleep(1)
+        self._get_message_available()
         return self.get_channel()
 
     def get_excitation(self):
@@ -136,21 +121,24 @@ class driver(object):
 
     def set_excitation(self,excitation):
         # change the excitation
-        cmd="EXC " + str(excitation)
+        self._visainstrument.write("*CLS")
+        cmd="EXE %d;DLY 5;*OPC"%(excitation)
         self._visainstrument.write(cmd)
+        self._get_message_available()
         return self.get_excitation()
 
     def get_range(self):
         return int(self._visainstrument.ask("RAN ?",instrument_delay=1))
 
     def set_range(self,n):
+        self._visainstrument.write("*CLS")
         if n==10:
-            cmd="ARN 1"
+            cmd="ARN 1;DLY 10;*OPC"
         else:
             self._visainstrument.write("ARN 0")
-            cmd="RAN " + str(int(n))
+            cmd="RAN %d;DLY 10;*OPC"%(n)
         self._visainstrument.write(cmd)
-        time.sleep(3)
+        self._get_message_available()
         return self.get_range()
 
     def set_integration(self,time):
@@ -166,14 +154,9 @@ class driver(object):
 
     def close(self):
         # Put the controller back in zero (shorted) inputs
-        #self._visainstrument.write("INP 0")
+        self._visainstrument.write("INP 0")
         # local the controller
         self._visainstrument.write("REM 0")
-
- 
-        
-
-    
 
     def reset(self):
         '''
@@ -197,19 +180,20 @@ class driver(object):
         # MAV: poll for message available on the GPIB bus
         # *OPC, *ESR 1, SRE 32 should be set
         # should be used between send and recv
-        max_iter  = 100
+        max_iter  = 50
         for i in range(max_iter):
             MAV = self._visainstrument._get_spoll()
-            if self.debug:
-                print(MAV)
+            logging.debug("AVS 47 MAV value" + str(MAV))
             if MAV:
                 try:
-                    if (int(MAV) == 16):
-                        print(i)
+                    # From the manual it should be 16 but for some unknown reason
+                    # it answers to 32 so:
+                    if (int(MAV) == 32):
+                        logging.debug("MAV Operation took [s]" + str(i*0.4))
                         break
                 except ValueError:
                     pass
-            time.sleep(0.3)
+            time.sleep(0.4)
     
     def _set_no_header(self):
         self._visainstrument.write("HDR 0")
@@ -234,18 +218,6 @@ class driver(object):
     def _get_autorange(self):
         return int(self._visainstrument.ask("ARN ?"))
 
-    def _get_delay(self, channel):
-        '''
-        Reads the pulse delay from the specified channel
-
-        Input:
-            channel (int) : 1 or 2, the number of the designated channel
-
-        Output:
-            delay (float) : delay in seconds
-        '''
-        logging.debug(__name__ + ' : get delay for channel %d' % channel)
-        
 
     def _set_delay(self, val, channel):
         '''
@@ -270,42 +242,15 @@ if __name__ == "__main__":
         timeout = 1,
         delay   = 0.2,
         debug   = False)
-    #time.sleep(5)
-    #avs._visainstrument.write("*CLS")
-    
-    #print (avs.get_idn())
-    #print (avs.get_range())
-    #print (avs.get_channel())
-    #print (avs.get_excitation())
+    tm = time.time()
     for c in [0,1,2]:
+        tm = time.time()
         avs.set_integration(2)
-        print (avs.set_channel(c))
-        print (avs.set_excitation(4))
-        print (avs.set_range(10))
-        print (float(avs.get_resistance()))
-    ##print dir(avs)
-    #avs.reset()
-    #avs._open()
-    #avs.set_remote()
-    
-    #print avs._get_autorange()
-    #avs._set_autorange(ON=0)
-    #
-    #avs._set_channel(0,4,7)
-    #print avs._get_mux()
-   
-    #print avs._get_adc()
-    
-    #print avs._get_range()
-    #print avs._get_id()
-    
-    #print avs._get_resistance()
-    #print (avs.set_range(0))
-
-    #print(avs._get_ave())
-    #savs._close()
-    
-    #avs.set_local()
+        print ("Channel: "   +str(avs.set_channel(c)))
+        print ("Excitation: "+str(avs.set_excitation(4)))
+        print ("Range: "     +str(avs.set_range(10)))
+        print ("Resistance: "+str(float(avs.get_resistance())))
+        print ("Channel reading took [s]: "+str(time.time()-tm))
 
 """
 AVS 47  Number codes

@@ -16,7 +16,7 @@ Changelog:
 import socket
 import time
 import re
-
+import logging
 
 class instrument(object):
     
@@ -160,11 +160,11 @@ class instrument(object):
     
     def _send(self,cmd):
         "send data to device"
-        #cmd  = cmd.rstrip()
+
         cmd += self.term_char
         cmd  = cmd.encode('ascii')
-        if self.debug:
-            print(cmd)
+
+        logging.debug("VISA PROLOGIX CMD: " + str(cmd))
         self.sock.send(cmd)
         # wait for delay seconds before next command. 
         # depends on the device
@@ -338,14 +338,14 @@ class instrument(object):
         try:
             s = self._recv(100)
         except socket.timeout:
-            print( "socket timeout")
+            logging.error( "socket timeout")
             s = ""
         
         except socket.error as e:
             pass
             
-        print( s )
-        print( e )
+        logging.error( s )
+        logging.error( e )
 
 
 # do some checking ...
@@ -365,73 +365,3 @@ if __name__ == "__main__":
     ls.write("HDR 0")
     ls.write("*OPC")
 
-    for i in range(3):
-        
-        ls.write("*CLS")
-        
-        #ls.write("++clr")
-        #print(ls._get_version())
-        
-        #tm = time.time()
-        #print(ls._get_idn())
-        #print(ls.ask("RES?",instrument_delay=0))
-        #print("The last command took:%f seconds."%(time.time()-tm))
-
-        ls.write("ADC; AVE 5; AVE ?")
-        
-        
-        while(True):
-            MAV = ls._get_spoll()
-            if MAV:# and '\n\n' not in str(MAV): 
-                try:
-                    if (int(MAV) == 16):
-                        print (MAV)
-                        break
-                except ValueError:
-                    pass
-                print (MAV)
-
-            print("no message available")
-            print (MAV)
-            time.sleep(0.2)
-        print("###############################")
-        print (float(ls.ask("RES?")))
-        print("###############################")
-   #print(ls._send("RES?"))
-   #time.sleep(ls.timeout)
-   #print(ls._recv())
-   #print(ls._recv())
-   #print(ls._send_recv("++help"))
-   #print ( "clearing buffers" )
-   #ls.write("*CLS")
-   #print(ls._get_version())
-   #print(ls._get_idn())
-   #ls.write("REM 1;DLY 1")
-   #ls.write("*ESE 1;*SRE 32")
-   #time.sleep(1)
-   
-   # AVS 47
-   #print "setting bridge remote, meassure, 2MOhm, 100muV and wait 15s"
-   #ls.write("REM 1;INP 1; RAN 7; EXC 4;DLY 15;")
-   #time.sleep(15)
-   
-   #ls.write("ADC;DLY 1")
-   #ls._send_recv("RES ?")
-   #time.sleep(2)
-   #ls.write("RES ?")
-   #sp=0
-   #for i in range(10):
-   #    spr=int(ls._get_spoll().rstrip())
-   #    print ("serial poll:",spr," #",i )
-   #    if (spr & 16)==16:
-   #        print (float(ls.read().split()[1]))
-   #        break
-   #    time.sleep(0.4)
-   
-   #ls.write("ADC ?")
-   #time.sleep(5)
-   #print (ls.read())
-   
-   #ls.write("REM 0")
-   #ls._close_connection()
-   
