@@ -183,13 +183,13 @@ class driver(object):
         max_iter  = 50
         for i in range(max_iter):
             MAV = self._visainstrument._get_spoll()
-            logging.debug("AVS 47 MAV value" + str(MAV))
+            logging.debug("AVS 47 MAV value: " + str(MAV))
             if MAV:
                 try:
                     # From the manual it should be 16 but for some unknown reason
                     # it answers to 32 so:
                     if (int(MAV) == 32):
-                        logging.debug("MAV Operation took [s]" + str(i*0.4))
+                        logging.debug("MAV Operation took [s] " + str(i*0.4))
                         break
                 except ValueError:
                     pass
@@ -241,7 +241,8 @@ if __name__ == "__main__":
         gpib    = "GPIB::20",
         timeout = 1,
         delay   = 0.2,
-        debug   = False)
+        debug   = True)
+
     tm = time.time()
     for c in [0,1,2]:
         tm = time.time()

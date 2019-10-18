@@ -77,7 +77,11 @@ class instrument(object):
 
         self.send_end       = kwargs.get("send_end", False)
         
+        # enable/disable debugging
         self.debug          =  kwargs.get("debug",   False)
+        if self.debug:
+            logger = logging.getLogger()
+            logger.setLevel(logging.DEBUG)
 
         #
         # setup of the PROLOGIX GPIB-ETHERNET
@@ -171,13 +175,15 @@ class instrument(object):
         time.sleep(self.delay)
 
     def _recv(self,**kwargs):
-        "read data from device"
+        # read data from device, remove the trailing non-printable chars
+        # and convert it to a utf8 string
+        
         bufflen=kwargs.get("bufflen",self.chunk_size)
 
         self._set_read()
         
         buff = self.sock.recv(bufflen)
-        return buff
+        return buff.decode().rstrip()
         
     def _send_recv(self,cmd,instrument_delay=0,**kwargs):
         "send and read "
