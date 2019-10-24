@@ -34,7 +34,7 @@ def setup_logging():
     fileLogger.addHandler(consoleLogger)
 
     fileLogger.setLevel(logging.INFO)
-    consoleLogger.setLevel(logging.INFO)
+    consoleLogger.setLevel(logging.DEBUG)
 
 def load_instruments(config):
     # load instruments first, since some devices, e.g. a thermometer depend on it. 

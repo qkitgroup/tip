@@ -18,14 +18,24 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-import visa_prologix as visa
+
 import logging
 import time
-import numpy as np
+import devices.visa_prologix as visa
+from lib.tip_config import config
 
 
-class driver(object):
-    def __init__(self, name, address, gpib="gpib::12", delay=0.1, **kwargs):
+def driver(name):
+    
+    LS = Lakeshore_37X(name,
+                address = config[name]['address'],
+                gpib    = config[name]['gpib'],
+                delay   = config[name]['delay'],
+                timeout = config[name]['timeout'])
+    return LS
+
+class Lakeshore_37X(object):
+    def __init__(self, name, address, gpib="gpib::12", delay=0.2, timeout = 1, **kwargs):
 
 
         self._visa = visa.instrument(
@@ -34,9 +44,9 @@ class driver(object):
             delay = delay, 
             term_char = "\n",
             eos_char = "",
-            timeout = 1,
-            instrument_delay = 0,
-            debug = True
+            timeout = timeout,
+            instrument_delay = 0.06,
+            debug = False
             )
             
         #
@@ -46,59 +56,52 @@ class driver(object):
         # static bridge conversion tables
         self._setup_bridge_tables()
 
-        self._resistance = 0
-        ''' channel '''
-        self._channel = 1
-        self._autoscan = False
-        # TODO: turn all channels off
-        ''' excitation '''
+        #
+        # variables for the 'fast mode':
+        # if integration is 0 then the channel settings are not being updated from the bridge
+        # and the resistance asked directly
+        # should only be used when scanning one thermometer
+        self._channel = 0
+        self._integration_time = 1
+
         self._excitation = 1
         self._excitation_mode = 1
-        self._range = 1
-        self._autorange = 1
-        ''' averaging '''
-        self._integration = 1
+        
+
         ''' heater '''
         self._heater_channel = 0
         self._heater_power = 0
 
         # maximal attempts for communication, before error is raised
         self._attempt_max = 4  
-
-        #clear the message buffer
+        #
+        # reset the bridge and wait 5 seconds
+        #
+        self._visa.write("*RST")
+        time.sleep(5)
+        #
+        # Get the bridge version
+        #
+        self.idn =self.get_idn()
+        #
+        # Enable status reporing
+        #
+        self._visa.write("*SRE 92")
+        #
+        # update the event status register to report all
+        # here the bridge appears to be buggy
+        #
+        self._visa.write("*ESE 220")
+        #
+        # disable autoscan
+        #
+        self._set_autoscan(False)
+        self._autoscan = 0
+        #
+        # clear the message buffer
+        #
         self._visa.write("*CLS")
-        # nevertheless:
-        # this is a bugfix: On startup there is a message
-        # 'Unrecognized command' sitting in the read-queue
-        # We flush it by reading.
-        try:
-            self._visa.read()
-        except:
-            pass
-    """
-    def _ask(self, cmd):
-        attempt = 0
-        while attempt < self._attempt_max:
-            try:
-                return self._visa.ask(cmd)
-            except:
-                logging.debug('Attempt #%d to communicate with LakeShore failed.', attempt + 1)
-                time.sleep((1 + attempt) ** 2 * (0.1 + np.random.rand()))
-                attempt += 1
-        raise
-
-    def _write(self, cmd):
-        attempt = 0
-        while attempt < self._attempt_max:
-            try:
-                return self._visa.write(cmd)
-            except:
-                logging.debug('Attempt #%d to communicate with LakeShore failed.', attempt + 1)
-                time.sleep((1 + attempt) ** 2 * (0.1 + np.random.rand()))
-                attempt += 1
-        raise
-    """
-
+        
 
     def get_idn(self):
         """
@@ -136,10 +139,10 @@ class driver(object):
             Number of channel that is connected to the thermometer.
         """
         # Corresponding command: <channel>,<autoscan>[term] = SCAN?[term]
-        channel, mode, excitation, r_range, autorange, cs_off, autoscan = \
-            self._get_channel_parameters()
-        logging.debug('Get current channel: {!s}'.format(channel))
-        return int(channel), int(autoscan)
+        channel, autoscan = self._visa.ask("SCAN?").split(",")
+        channel = int(channel)
+        logging.debug('Get current channel: {:d}'.format(channel))
+        return channel
 
 
 
@@ -159,13 +162,17 @@ class driver(object):
         # Corresponding command: SCAN <channel>,<autoscan>[term]
         # INSET <channel>,<off/on>,<dwell>,<pause>,<curve number>,<tempco>[term]
         
-        current_channel, autoscan = self.get_channel()
+        
+        current_channel = self.get_channel()
         if current_channel == channel:
             # do nothing
             return
         else:
-            logging.debug('Set channel to {!s}.'.format(self._channel))
+            logging.debug('Set channel to {:d}.'.format(channel))
             self._visa.write('SCAN {:d},{:d}'.format(channel, self._autoscan))
+            self._visa.write('*OPC')
+            time.sleep(4)
+        self._channel = channel
 
     def get_excitation(self):
         """
@@ -218,6 +225,8 @@ class driver(object):
         
             self._visa.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
                 .format(channel, excitation_mode, excitation, r_range, autorange, cs_off))
+            self._visa.write('*OPC')
+            time.sleep(3)
         
     
     def get_range(self):
@@ -254,13 +263,16 @@ class driver(object):
         None
         """
         # Corresponding command: RDGRNG <channel>,<mode>,<excitation>,<range>,<autorange>,<cs off>[term]
-        channel, excitation_mode, excitation, current_r_range, autorange, cs_off,autoscan = \
+        channel, excitation_mode, excitation, current_r_range, autorange, cs_off, autoscan = \
             self._get_channel_parameters()
 
         if r_range == -1:  # autorange
             autorange = 1
             self._visa.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
                 .format(channel, excitation_mode, excitation, r_range, autorange, cs_off))
+            self._visa.write('*OPC')
+            time.sleep(3)
+
         elif r_range == current_r_range:
             # do nothing
             return
@@ -269,16 +281,8 @@ class driver(object):
             .format(channel, r_range,self.resistance_ranges[r_range]))
             self._visa.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
                 .format(channel, excitation_mode, excitation, r_range, autorange, cs_off))
-
-            """
-            self._autorange = False
-            
-
-            keys, vals = zip(*self.resistance_ranges.items())
-            self._range = keys[np.argmax(np.array(vals).T[self._excitation_mode] > range)]
-            cs_off = 0  # 0 = excitation on, 1 = excitation off (attention)
-            self._write('RDGRNG {:d},{:d},{:f},{:f},{:d},{:d}'.format(self._channel, self._excitation_mode, self._excitation, self._range, self._autorange, cs_off))
-            """
+            self._visa.write('*OPC')
+            time.sleep(3)
 
 
     def get_resistance(self):
@@ -294,10 +298,29 @@ class driver(object):
         resistance: float
             Resistance of the thermometer.
         """
-        # Corresponding command: <ohm value>[term] = RDGR? <channel>[term]
-        # Corresponding command: <status bit weighting>[term] = RDGST? <channel> [term]
-        logging.debug('Get resistance of channel {!s}.'.format(self._channel))
-        resistance = float(self._ask('RDGR? {:d}'.format(self._channel)))
+        if self._integration_time is not 0 :
+            
+            channel = self.get_channel()
+            time.sleep(0.1)
+
+            for i in range(10):
+                # query the event status register, with 000 the bridge should be settled enough
+                ESR = int(self._visa.ask("*ESR?"))
+                if int(ESR):
+                    time.sleep(1)
+                else:
+                    break
+            # the ESR register was not cleared ... return nothing sensful
+            if i == 9: return 0
+
+            # Corresponding command: <ohm value>[term] = RDGR? <channel>[term]
+            logging.debug('Get resistance of channel {:d}.'.format(channel))
+            resistance = float(self._visa.ask('RDGR? {:d}'.format(channel)))
+        else:
+            # 'fast mode'
+            logging.debug('Get resistance of channel {:d}.'.format(self._channel))
+            resistance = float(self._visa.ask('RDGR? {:d}'.format(self._channel)))
+
         return resistance
 
     def set_integration(self, integration):
@@ -314,16 +337,18 @@ class driver(object):
         None
         """
         # Corresponding command: FILTER <channel>,<off/on>,<settle time>,<window>[term]
-        try:
-            self._integration = np.round(integration)
-            status = int(bool(integration))
-            window = 1
-            self._write('FILTER {:d},{:d},{:d},{:d}'.format(self._channel, status, 
-            self._integration, window))
-            logging.debug('Set integration of channel {!s} to {!s}.'.format(self._channel, integration))
-        except ValueError as e:
-            raise ValueError('Cannot set integration of channel {!s} to {!s}.\n{:s}'.format(self._channel, integration, e))
 
+        channel = self.get_channel()
+        status, settle_time, window = self._get_filter(channel)
+
+        if settle_time == integration:
+            # do nothing
+            return
+        else:
+            self._set_filter(channel,settle_time=integration)
+            logging.debug('Set integration of channel {!s} to {!s}.'.format(self._channel, integration))
+        self._integration_time = integration
+    
     def get_integration(self):
         """
         Gets the integration for the resistance measurement of the set channel.
@@ -345,6 +370,65 @@ class driver(object):
         except Exception as err:
             logging.error('Cannot get integration. Return last value instead. {!s}'.format(err))
             return self._integration
+
+    def _get_autoscan(self):
+        channel, autoscan = self._visa.ask("SCAN?").split(",")
+        return bool(int(autoscan))
+
+    def _set_autoscan(self,status = False):
+
+        channel, autoscan = self._visa.ask("SCAN?").split(",")
+
+        self._visa.write('SCAN {:d},{:d}'.format(int(channel), int(status)))
+        
+
+    def _get_channel_parameters(self):
+        # get channel parameters for comparison
+        
+        # query channel first
+        channel, autoscan = self._visa.ask("SCAN?").split(",")
+
+        # and then the parameter
+        mode, excitation, r_range, autorange, cs_off = \
+            self._visa.ask("RDGRNG? %s"%(channel)).split(",")
+        # where 
+        # mode [0: voltage excitation | 1:current excitation]
+        # autorange [0: off | 1: on]
+        # cs_off [0: excitation on | 1: excitation off]
+
+
+        # and input scan parameters (unused)
+        #onoff, dwell, pause, curveno, tempco = \
+        #    self._visa.ask("INSET? %s"%(channel)).split(",")
+        # where
+        # ...
+
+        return (int(channel), int(mode), int(excitation), int(r_range),
+             int(autorange), int(cs_off), int(autoscan))
+    
+    def _set_channel_parameters(self):
+        pass
+
+
+    def _get_status_byte(self,channel):
+        #channel = self.get_channel()
+        return (self._visa.ask("RDGST? %s"%(channel)))
+
+    def _get_filter(self,channel):
+        status, settle_time, window = \
+        self._visa.ask('FILTER? {:d}'.format(channel)).split(',')
+        return bool(int(status)), int(settle_time), int(window)
+
+    def _set_filter(self, channel, status = True, settle_time = 5, window = 2 ):
+
+        if self._get_filter(channel) != (status, settle_time, window):
+            self._visa.write('FILTER %d,%d,%d,%d'%(channel,int(status), settle_time, window))
+            self._visa.write('*OPC')
+            time.sleep(settle_time)
+
+
+        
+        
 
     ####################################################################################################################
     ### heater                                                                                                       ###
@@ -459,33 +543,6 @@ class driver(object):
 
 
 
-    def _get_channel_parameters(self):
-        # get channel parameters for comparison
-        
-        # query channel first
-        channel, autoscan = self._visa.ask("SCAN?").split(",")
-
-        # and then the parameter
-        mode, excitation, r_range, autorange, cs_off = \
-            self._visa.ask("RDGRNG? %s"%(channel)).split(",")
-        # where 
-        # mode [0: voltage excitation | 1:current excitation]
-        # autorange [0: off | 1: on]
-        # cs_off [0: excitation on | 1: excitation off]
-
-
-        # and input scan parameters (unused)
-        #onoff, dwell, pause, curveno, tempco = \
-        #    self._visa.ask("INSET? %s"%(channel)).split(",")
-        # where
-        # ...
-
-        return (int(channel), int(mode), int(excitation), int(r_range),
-             int(autorange), int(cs_off), int(autoscan))
-    
-    def _set_channel_parameters(self):
-        pass
-
 
     def _setup_bridge_tables(self):
 
@@ -566,81 +623,57 @@ class driver(object):
 
 
 if __name__ == "__main__":
-    LS=driver("LS370", "10.22.197.62")
-    print(LS.get_idn())
-    #print(LS._get_input_channel_parameters())
-    print (LS._get_channel_parameters())
-    print (LS.get_excitation())
-    print (LS.get_range())
+    LS=Lakeshore_37X("LS370", "10.22.197.62")
     
-    #LS.set_channel(6)
-    #print (LS.set_channel(1))
-    #print (LS.set_excitation(5))
-    #print (LS.set_integration(2))
-    #print(LS._ask('Filter? 1'))
-    #print (LS.get_resistance())
+    scan_mode = False
+    fast_mode = True
 
-    """
-    print (LS.set_channel(2))
-    print (LS.set_excitation(5))
-    print (LS.set_integration(2))
-    print (LS.get_resistance())
+    if scan_mode :
+        for loop in range(10):
+            print (loop)
+            for ch in [1,2,5,6]:
+                print(ch)
+                LS.set_channel(ch)
+                LS.set_range(10)
+                LS.set_excitation(4)
+                LS.set_integration(10)
+                tm=time.time()
+                for i in range(5):
+                    print (LS.get_resistance())
+                print (time.time()-tm)
 
-    print (LS.set_channel(5))
-    print (LS.set_excitation(5))
-    print (LS.set_integration(6))
-    print (LS.get_resistance())
-    
-    print (LS.set_channel(6))
-    print (LS.set_excitation(5))
-    print (LS.set_integration(6))
-    print (LS._ask('Filter? 6'))
-    print (LS.get_resistance())
-    #print (LS.set_Heat(1e-7))
-    #print (LS.get_Heat())
-    #print (LS.set_Heat(0))
-    #print (LS.get_Heat())
-    """
+    if fast_mode:
+        ch = 0
+        LS.set_channel(ch)
+        LS.set_excitation(4)
+        LS.set_range(10)
+        LS.set_integration(0)
+        tm=time.time()
+        for i in range(10):
+            print (LS.get_resistance())
+        print (time.time()-tm)
+        
 
-    """
+""" 
+                     model == 'Lakeshore 372AC':     
+                        while :
+                            settled = self.askAndLog('RDGSTL?')
+                            settledMeasure1 = int(settled.split(',')[1].strip())
+                            if settledMeasure0 == 0 and settledMeasure1 == 0:
+                                break
+                            settledMeasure0 = settledMeasure1
+                            self.wait(0.05)
+
+"""
+
+
+
+
+"""
     def reset(self):
         self.__write('*RST')
         sleep(.5)
-
-    def __ask(self, msg):
-        attempt = 0
-        while True:
-          try:
-            m = self._visa.ask("%s" % msg).replace('\r','')
-            sleep(.01)
-            break
-          except:
-            if attempt >= 0: logging.warn('Attempt #%d to communicate with LakeShore failed.', 1+attempt)
-            if attempt < 4:
-              sleep((1+attempt)**2 * (0.1 + random.random()))
-            else:
-              raise
-        return m
-
-    def __write(self, msg):
-        attempt = 0
-        while True:
-          try:
-            self._visa.write("%s" % msg)
-            sleep(.5)
-            break
-          except:
-            if attempt > 0: logging.warn('Attempt #%d to communicate with LakeShore failed.', 1+attempt)
-            if attempt < 4:
-              sleep((1+attempt)**2 * (0.1 + random.random()))
-            else:
-              raise
-
- 
-
-    def _get_IDN(self):
-        return self.__ask('*IDN?')
-        
+       
     def get_common_mode_reduction(self):
         ans = self.__ask('CMR?')
         return bool(int(ans))
@@ -649,28 +682,6 @@ if __name__ == "__main__":
         ans = self.__ask('GUARD?')
         return bool(int(ans))
         
-    def get_scanner_auto(self):
-        ans = self.__ask('SCAN?')
-        return bool(int(ans.split(',')[1]))
-
-    def set_scanner_auto(self, val):
-        ch = self.get_scanner_channel()
-        cmd = 'SCAN %d,%d' % (ch, 1 if val else 0)
-        self.__write(cmd)
-        self.get_scanner_auto()
-        self.get_scanner_channel()
-        
-    def get_scanner_channel(self):
-        ans = self.__ask('SCAN?')
-        return int(ans.split(',')[0])
-
-    def set_scanner_channel(self, val):
-        auto = self.get_scanner_auto()
-        cmd = 'SCAN %d,%d' % (val, 1 if auto else 0)
-        self.__write(cmd)
-        self.get_scanner_auto()
-        self.get_scanner_channel()
-
     def get_Temp(self, channel):
         try:
             ans = float(self.__ask('RDGK? %s' % channel))
@@ -733,10 +744,6 @@ if __name__ == "__main__":
         getattr(self, 'get_filter_settle_time%s' % channel)()
         getattr(self, 'get_filter_on%s' % channel)()
         getattr(self, 'get_filter_reset_threshold%s' % channel)()
-        
-    def get_filter_reset_threshold(self, channel):
-        ans = self.__ask('FILTER? %s' % channel)
-        return float(ans.split(',')[2])
         
     def get_heater_range(self):
         ans = self.__ask('HTRRNG?')
@@ -840,41 +847,7 @@ if __name__ == "__main__":
         ans = self.__ask('CSET?')
         return float(ans.split(',')[6])
 
-    # functions added for TIP
-    def _get_Channel(self):
-        return self.get_scanner_channel()
-    def _set_Channel(self,channel):
-        self.channel = channel
-        return self.set_scanner_channel(channel)
-        
-    def _get_ave(self):
-        # just a proxy in the moment
-        return self.get_Res(self.channel)
-        
-    def get_T(self):
-        return self.get_Temp(self.channel)
-        
-    def get_Rval(self):
-        return self.get_Res(self.channel)
-        
-    def set_output0(self,OUT_Volt): # HEATER interface
-            return self.set_Voltage(OUT_Volt)
-
-    def set_Voltage(self,OUT_Volt): # HEATER interface
-            return self.set_Voltage(OUT_Volt)
-            
-    def set_Heat(self,power):
-        self.__write('MOUT %.8F' % (power))
-    def get_Heat(self):
-        return float(self.__ask('MOUT?'))
-    def get_Range(self): 
-        return self.get_resistance_range(self.channel)
-    def get_Excitation(self):
-        return get_excitation_range(self.channel)
-    def get_Channel(self): 
-        return self._get_Channel()
-    def setup_device(self): 
-        pass
+    
     """
         
         

@@ -80,11 +80,11 @@ def _int(s): return int(float(s))
 _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
                 'control_channel':_int,
-                'interval':float, 'device_integration_time':float, 'delay':float,
+                'interval':float, 'device_integration_time':float, 'delay':float,'timeout':float,
                 'control_resistor':float, 'control_default_heat':float,
                 'control_p':float, 'control_i':float, 'control_d':float,
                 'version':float,
-                'type':str, 'device':str, 'description':str, 'com_method':str, 'ip':str, 'url':str,
+                'type':str, 'device':str, 'description':str, 'com_method':str, 'address':str, 'url':str,'gpib':str,
                 'control_device':str,
                 'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
                 'calibration_file_order':str

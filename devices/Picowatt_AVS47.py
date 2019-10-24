@@ -17,13 +17,23 @@
 
 
 
-import visa_prologix as visa
+import devices.visa_prologix as visa
 import types
 import time
 import logging
+from lib.tip_config import config
 
 
-class driver(object):
+def driver(name):
+    
+    avs = AVS47(name,
+                address = config[name]['address'],
+                gpib    = config[name]['gpib'],
+                delay   = config[name]['delay'],
+                timeout = config[name]['timeout'])
+    return avs
+
+class AVS47(object):
     '''
     This is the python driver for the Picowatt AVS 47
     resistance bridge
@@ -97,13 +107,13 @@ class driver(object):
             self._visainstrument.write("DLY 10;ADC; AVE %d; *OPC" % (self.averages))
             self._get_message_available()
             #self._visainstrument.write("*CLS")
-            return self._visainstrument.ask("AVE?")
+            return float(self._visainstrument.ask("AVE?"))
         else:
             self._visainstrument.write("ADC")
             time.sleep(1)
             self._visainstrument.write("RES ?")
             
-            return self._visainstrument.read()
+            return float(self._visainstrument.read())
 
     def get_channel(self):
         return int(self._visainstrument.ask("MUX ?",instrument_delay=1))
