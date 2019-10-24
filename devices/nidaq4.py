@@ -15,11 +15,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+
+"""
+NIDAQ heater driver / basic interface
+"""
+
 import ctypes
 import types
 import numpy
 import logging
 import time
+import sys
+from lib.tip_config import config
 
 nidaq = ctypes.windll.nicaiu
 
@@ -59,7 +66,7 @@ def CHK(err):
 
     if err < 0:
         buf_size = 100
-        buf = ctypes.create_string_buffer('\000' * buf_size)
+        buf = ctypes.create_string_buffer(b'\000' * buf_size)
         nidaq.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
         raise RuntimeError('Nidaq call failed with error %d: %s' % \
             (err, repr(buf.value)))
@@ -68,12 +75,12 @@ def buf_to_list(buf):
     name = ''
     namelist = []
     for ch in buf:
-        if ch in '\000 \t\n':
+        if ch in b'\000 \t\n':
             name = name.rstrip(',')
             if len(name) > 0:
                 namelist.append(name)
                 name = ''
-            if ch == '\000':
+            if ch == b'\000':
                 break
         else:
             name += ch
@@ -84,7 +91,7 @@ def get_device_names():
     '''Return a list of available NIDAQ devices.'''
 
     bufsize = 1024
-    buf = ctypes.create_string_buffer('\000' * bufsize)
+    buf = ctypes.create_string_buffer(b'\000' * bufsize)
     nidaq.DAQmxGetSysDevNames(ctypes.byref(buf), bufsize)
     return buf_to_list(buf)
 
@@ -96,7 +103,7 @@ def get_physical_input_channels(dev):
     '''Return a list of physical input channels on a device.'''
 
     bufsize = 1024
-    buf = ctypes.create_string_buffer('\000' * bufsize)
+    buf = ctypes.create_string_buffer(b'\000' * bufsize)
     nidaq.DAQmxGetDevAIPhysicalChans(dev, ctypes.byref(buf), bufsize)
     return buf_to_list(buf)
 
@@ -104,7 +111,7 @@ def get_physical_output_channels(dev):
     '''Return a list of physical output channels on a device.'''
 
     bufsize = 1024
-    buf = ctypes.create_string_buffer('\000' * bufsize)
+    buf = ctypes.create_string_buffer(b'\000' * bufsize)
     nidaq.DAQmxGetDevAOPhysicalChans(dev, ctypes.byref(buf), bufsize)
     return buf_to_list(buf)
 
@@ -112,7 +119,7 @@ def get_physical_counter_channels(dev):
     '''Return a list of physical counter channels on a device.'''
 
     bufsize = 1024
-    buf = ctypes.create_string_buffer('\000' * bufsize)
+    buf = ctypes.create_string_buffer(b'\000' * bufsize)
     nidaq.DAQmxGetDevCIPhysicalChans(dev, ctypes.byref(buf), bufsize)
     return buf_to_list(buf)
 
@@ -135,12 +142,12 @@ def read(devchan, samples=1, freq=10000.0, minv=-10.0, maxv=10.0,
         A numpy.array with the data on success, None on error
     '''
 
-    if type(config) is types.StringType:
+    if type(config) is str:
         if config in _config_map:
             config = _config_map[config]
         else:
             return None
-    if type(config) is not types.IntType:
+    if type(config) is not int:
         return None
     
     if samples == 1:
@@ -174,8 +181,8 @@ def read(devchan, samples=1, freq=10000.0, minv=-10.0, maxv=10.0,
                 data.ctypes.data, None))
             read = int32(1)
 
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print (str(e))
         logging.error('NI DAQ call failed: %s', str(e))
     finally:
         if taskHandle.value != 0:
@@ -206,25 +213,29 @@ def write(devchan, data, freq=10000.0, minv=-10.0, maxv=10.0,
         Number of values written
     '''
 
-    if type(data) in (types.IntType, types.FloatType):
+    if type(data) in (int, float):
         data = numpy.array([data], dtype=numpy.float64)
     elif isinstance(data, numpy.ndarray):
         if data.dtype is not numpy.float64:
             data = numpy.array(data, dtype=numpy.float64)
-    elif len(data) > 0:
+    elif data.size > 0:
         data = numpy.array(data, dtype=numpy.float64)
-    samples = len(data)
+    samples = data.size
 
     taskHandle = TaskHandle(0)
     written = int32()
     try:
+        
         CHK(nidaq.DAQmxCreateTask("", ctypes.byref(taskHandle)))
+        
         CHK(nidaq.DAQmxCreateAOVoltageChan(taskHandle, devchan, "",
             float64(minv), float64(maxv), DAQmx_Val_Volts, None))
-
-        if len(data) == 1:
+        
+        if data.size == 1:
+            
             CHK(nidaq.DAQmxWriteAnalogScalarF64(taskHandle, 1, float64(timeout),
-                float64(data[0]), None))
+                float64(data), None))
+            
             written = int32(1)
         else:
             CHK(nidaq.DAQmxCfgSampClkTiming(taskHandle, "", float64(freq),
@@ -233,7 +244,7 @@ def write(devchan, data, freq=10000.0, minv=-10.0, maxv=10.0,
                 DAQmx_Val_GroupByChannel, data.ctypes.data,
                 ctypes.byref(written), None))
             CHK(nidaq.DAQmxStartTask(taskHandle))
-    except Exception, e:
+    except Exception as e:
         logging.error('NI DAQ call failed (correct channel configuration selected?): %s', str(e))
     finally:
         if taskHandle.value != 0:
@@ -276,7 +287,7 @@ def read_counter(devchan="/Dev1/ctr0", samples=1, freq=1.0, timeout=1.0, src="")
                 data.ctypes.data, int32(samples), ctypes.byref(nread), None))
             nread = int32(1)
 
-    except Exception, e:
+    except Exception as e:
         logging.error('NI DAQ call failed: %s', str(e))
 
     finally:
@@ -288,7 +299,6 @@ def read_counter(devchan="/Dev1/ctr0", samples=1, freq=1.0, timeout=1.0, src="")
         return int(data[0])
     else:
         return data
-
 
 
 def sync_write_read(O_devchan,I_devchan,waveform,**kwargs):
@@ -384,7 +394,7 @@ def sync_write_read(O_devchan,I_devchan,waveform,**kwargs):
                     DAQmx_Val_GroupByChannel, waveform.ctypes.data,
                     ctypes.byref(sampswritten), None))
     if debug:
-        print "Debug: read_write() Analog-Output buffer written:",waveform,sampswritten
+        print( "Debug: read_write() Analog-Output buffer written:",waveform,sampswritten)
 
     #
     # start the tasks, sampling of (samples +1) at AI is started when AO startet
@@ -401,7 +411,7 @@ def sync_write_read(O_devchan,I_devchan,waveform,**kwargs):
                                  #~ AI_samples+1, ctypes.byref(sampsread), None))
     
     if debug:
-        print "Debug: read_write() Analog-Input buffer read:", readbuf ,readbuf.size
+        print("Debug: read_write() Analog-Input buffer read:", readbuf ,readbuf.size)
 
     # stop the whole thing, fixme: use try...except !
     if AO.value != 0:
@@ -420,20 +430,59 @@ def sync_write_read(O_devchan,I_devchan,waveform,**kwargs):
     
     aveis = numpy.arange(oversamples)
     if debug:
-        print len(readbuf), len(returnbuf), aveis
+        print (len(readbuf), len(returnbuf), aveis)
     for i in numpy.arange(samples):
             for ii in aveis:
                 returnbuf[i] += readbuf[oversamples*i+ii]
     return returnbuf/float(oversamples)
 
 
-def set_output0(v_value):
-	if v_value > 2:
-		v_value=2.0
-	return write("Dev1/ao1",v_value,minv=0.0, maxv=2.0)
+# def set_output0(v_value):
+# 	if v_value > 2:
+# 		v_value=2.0
+# 	return write("Dev1/ao1",v_value,minv=0.0, maxv=2.0)
     
+
+
+class driver(object):
+    
+    def __init__(self,name):
+        self._channel = 'Dev2/ao0'.encode('ascii')
+        self.resistance = 120
+        self.setup_device()
+    
+    def setup_device(self):
+        pass
+    
+    def get_idn(self):
+        return( "NIDAQ  USB instrument." )
+        
+    def get_heater_power(self):
+        # random number
+
+        R_L = 29.2
+        R_H = self.resistance
+        return (self.V/(R_H+R_L))**2* R_H
+        return 
+    def set_heater_power(self,value):
+        self.V = numpy.sqrt(self.resistance*value)        
+        write(self._channel, self.V, freq=1000, minv=0.0, maxv=2.0)
+
+    def get_heater_channel(self):
+        return 0
+    def set_heater_channel(self,value):
+        pass
+
+    def set_local(self):pass
+    def close(self):pass
+
+
 if __name__ == '__main__':
     # some tests
     #buf= numpy.linspace(0,5,10)
     #print sync_write_read('Dev1/ai0','Dev1/ao0',buf,rate=100000)
-    print set_output0(0)
+    #print (get_physical_output_channels('Dev2'))
+    HT = driver('NIDAQ_1')
+    HT.set_heater_power(1e-2)
+    print(HT.get_heater_power())
+    
