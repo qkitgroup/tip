@@ -14,7 +14,7 @@ from PyQt5.QtCore import  QObject, pyqtSignal
 class DATA(object):
     REMOTEHOST = "localhost"
     REMOTEPORT = 9999
-    UpdateInterval = 1
+    UpdateInterval = 2
     DEBUG = False
     wants_abort = True
 
@@ -90,7 +90,7 @@ class AcquisitionThread(Thread,QObject):
             Heat = float(get_param(THERM,"heating_power"))
             pidE = float(get_param(THERM,"control_error"))
             R    = float(get_param(THERM,"resistance"))
-
+            print(R)
             self.T_sig.emit(T)
             self.H_sig.emit(Heat)
             self.E_sig.emit(pidE)

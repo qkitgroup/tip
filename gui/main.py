@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import * # QApplication
 
 from time import sleep
 
-from tip_gui_lib import DATA, AcquisitionThread #,  remote_client
-from tip_gui_cover import Ui_MainWindow
+from gui.tip_gui_lib import DATA, AcquisitionThread #,  remote_client
+from gui.tip_gui_cover import Ui_MainWindow
 
 import argparse
 import configparser
@@ -163,6 +163,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.Errors=numpy.delete(numpy.append(self.Errors,Error*1e6),0)
         self.Error_view.plt.setData(self.times, self.Errors)
 
+    @pyqtSlot(float)
+    def _update_R(self,R):
+        self.R_field.setValue(R)
+        
     def _update_gui_values(self,T,R,Heat,Tctrl):
         self.T_field.setValue(T)
         self.R_field.setValue(R)
