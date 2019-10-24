@@ -79,7 +79,7 @@ def tip_init (settings_file = "settings_local.cfg"):
     
     load_thermometers(config)
 
-    logging.info("Configuration at startup:"+config.dump_json())
+    #logging.info("Configuration at startup:"+config.dump_json())
     #print(device_instances.items())
 
 if __name__ == "__main__":

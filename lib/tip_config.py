@@ -78,6 +78,7 @@ def _int(s): return int(float(s))
 # mapping of parameter types
 # 
 _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
+                'calibration_active':_boolean,
                 'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
                 'control_channel':_int,
                 'interval':float, 'device_integration_time':float, 'delay':float,'timeout':float,
@@ -87,7 +88,7 @@ _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'type':str, 'device':str, 'description':str, 'com_method':str, 'address':str, 'url':str,'gpib':str,
                 'control_device':str,
                 'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
-                'calibration_file_order':str
+                'calibration_file_order':str, 'calibration_key_format':str
             }
 
 

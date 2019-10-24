@@ -2,6 +2,7 @@
 # The objets should be derived from a base "device" class and add specific extensions, e.g. for a
 # thermomenter, data loging, etc.
 # written for TIP 2.0 by HR@KIT 2019 
+from math import log10
 import logging
 from lib.tip_config import config, device_instances, _types_dict
 from lib.tip_eich import TIPEich
@@ -84,18 +85,16 @@ class thermometer(device):
         #
         # create a calibration object for the thermomenter
         #
-        # print(config[name]['calibration_file'])
-        # if config[name]['calibration_file'] is not 'None':
-        #     self.calibration = TIPEich(
-        #         config[name]['calibration_description'],
-        #         config[name]['calibration_file'],
-        #         config[name]['calibration_file_order'],
-        #         config[name]['calibration_interpolation'])
-        # else:
-        class calib(object):
-            def getT_from_R(self,R):
-                return 0
-        self.calibration = calib()
+        if config[name]['calibration_active']:
+            self.calibration = TIPEich(
+                config[name]['calibration_description'],
+                config[name]['calibration_file'],
+                config[name]['calibration_file_order'],
+                config[name]['calibration_interpolation'])
+
+            self.cal_key_formats = {}
+            self.cal_key_formats['R'] = lambda R: R
+            self.cal_key_formats['log10R'] = log10
 
         #
         # create a pid controller for the thermomenter
@@ -118,18 +117,22 @@ class thermometer(device):
         self.backend.set_integration( config[self.name]['device_integration_time'])
         
         R = self.backend.get_resistance()
-        T = self.calibration.getT_from_R(R)
-
         config[self.name]['resistance']  = R
-        config[self.name]['temperature'] = T
-        logging.info (self.name + "\t R: " + str(R))
-        if config[self.name]['control_active']:
-            new_heat_value = self.control.get_new_heat_value(T)
-            
-            logging.debug(self.control_device.get_idn())
-            self.control_device.set_heater_channel(config[self.name]['control_channel'])
-            self.control_device.set_heater_power(new_heat_value)
-            
-            config[self.name]['heating_power'] = new_heat_value
+        logging.info (self.name + "\t R: %.01f "% (R))
+
+        if config[self.name]['calibration_active']:
+            Cal_R = self.cal_key_formats[config[self.name]['calibration_key_format']](R)
+            T = self.calibration.get_T_from_R(Cal_R)
+            config[self.name]['temperature'] = T
+            logging.info (self.name + "\t T: %.05f "% (T))
+
+            if config[self.name]['control_active']:
+                new_heat_value = self.control.get_new_heat_value(T)
+                
+                logging.debug(self.control_device.get_idn())
+                self.control_device.set_heater_channel(config[self.name]['control_channel'])
+                self.control_device.set_heater_power(new_heat_value)
+                
+                config[self.name]['heating_power'] = new_heat_value
 
 

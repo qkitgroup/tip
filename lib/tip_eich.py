@@ -9,7 +9,9 @@
 #Note: Huuuhu Ugly code! (HR/2019)
 import logging
 from numpy import *
-from scipy.interpolate import *
+import numpy as np
+from scipy.interpolate import splev, splrep
+#from scipy.interpolate import *
 import re
 import os
 
@@ -87,15 +89,15 @@ class TIPEich(object):
 			raise Error('Opening of '+self.eich_file+": ("+self.thermometer+') failed ')
 		if self.flip:
 			DATA=self._mySort(data[:,1],data[:,0]) # _mysort(T,R)
+			
 		else:
 			DATA=self._mySort(data[:,0],data[:,1]) # _mysort(R,T)
+			#print(data[:,0],data[:,1])
 		logging.info ("open "+str(self.eich_file)+ " calibration-file with "+ str(len(DATA[:]))+" datapoints for "+self.thermometer )
 		
-		try:
-			self.R_T_sprep=splrep(DATA[:,0],DATA[:,1],s=0, k=1 )
-		except:
-			print(self.thermometer+" error while processing lin spline fit")
-			raise
+		self.R_T_sprep=splrep(DATA[:,0],DATA[:,1],s=0, k=1 )
+		self.DATA =  DATA 
+
 
 	def open_data_to_matrix(self,filename):
 		""" read file and split line into array of float values"""
@@ -110,8 +112,7 @@ class TIPEich(object):
 				if p.match(l):
 					continue
 				else:
-					data.append([ float(tok) for tok in l.split()])
-	
+					data.append([ float(str(tok)) for tok in l.split()])
 			return array(data) 
 		except:
 			print("Error while processing: "+filename)
@@ -121,7 +122,7 @@ class TIPEich(object):
 		""" returns value of spline interpolated fit """
 		return splev(R, self.R_T_sprep, der=0)
 
-	def getT_from_R(self,R):
+	def get_T_from_R(self,R):
 		""" only function which should be called from outside """
 		""" returns Temperature from a given Resistance """
 		return float(self._getT_from_splined_R(R))
@@ -136,8 +137,25 @@ class Error(Exception):
 if __name__ == "__main__":
 	""" A couple of unity tests  """
 	
-	R=890000
-	Therm0 = TIPEich("Coldplate","RuOx_LT_thermometer.txt",order="RT",type="linear")
-	print ("linear interpolation:", Therm0.getT_from_R(R))
+	import matplotlib.pyplot as plt
+	Therm0 = TIPEich("mxc","RU-1000-BF0_007_U03316_mxc_LS.txt",
+			order="RT",type="linear")
+	
+	spl = splrep(Therm0.DATA[:,0], Therm0.DATA[:,1])
+
+	Rs = np.linspace(3,4.5, 100)
+	Ts = splev(Rs, spl)
+	plt.yscale("log")
+	plt.plot(Therm0.DATA[:,0], Therm0.DATA[:,1], '.')
+	plt.plot(Rs,Ts,'r-')
+
+	TsL = splev(Rs, Therm0.R_T_sprep)
+	plt.plot(Rs,TsL,'b-')
+	plt.show()
+	"""
+	R=29000
+	
+	print ("linear interpolation:", Therm0.get_T_from_R(R))
 	Therm1 = TIPEich("Coldplate","RuOx_LT_thermometer.txt",order="RT",type="spline")
-	print ("qubic spline:", Therm1.getT_from_R(R))
+	print ("qubic spline:", Therm1.get_T_from_R(R))
+	"""
