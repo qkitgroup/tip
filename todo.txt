@@ -1,4 +1,11 @@
-TODO
-
-Add excitation in tip_dev.py to the run loop
-Add channel in tip_dev.py to the run loop 
+TODO for tip 2.0
+
+o  rewrite tip_eich.py
+o  extend gui
+   - support for multible channels 
+   - read bridge ranges
+   - 
+o  cleanup code, remove random comments
+o  add SIM bridge/heater
+o  add MMR3 bridge
+o  add Lakeshore 372
