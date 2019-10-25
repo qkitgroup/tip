@@ -463,9 +463,14 @@ class driver(object):
         R_L = 29.2
         R_H = self.resistance
         return (self.V/(R_H+R_L))**2* R_H
-        return 
+        
+
     def set_heater_power(self,value):
-        self.V = numpy.sqrt(self.resistance*value)        
+        # we cannot cool with a heater :)
+        if value < 0 : value = 0
+
+        self.V = numpy.sqrt(self.resistance*value)
+        logging.info("applied heater voltage: %f"%(self.V))
         write(self._channel, self.V, freq=1000, minv=0.0, maxv=2.0)
 
     def get_heater_channel(self):

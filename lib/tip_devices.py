@@ -118,15 +118,16 @@ class thermometer(device):
         
         R = self.backend.get_resistance()
         config[self.name]['resistance']  = R
-        logging.info (self.name + "\t R: %.01f "% (R))
+        logging.info (self.name + "\t R: %.01f Ohm"% (R))
 
         if config[self.name]['calibration_active']:
             Cal_R = self.cal_key_formats[config[self.name]['calibration_key_format']](R)
             T = self.calibration.get_T_from_R(Cal_R)
             config[self.name]['temperature'] = T
-            logging.info (self.name + "\t T: %.05f "% (T))
+            logging.info (self.name + "\t T: %.05f K"% (T))
 
             if config[self.name]['control_active']:
+                print('entered control part')
                 new_heat_value = self.control.get_new_heat_value(T)
                 
                 logging.debug(self.control_device.get_idn())
@@ -134,5 +135,5 @@ class thermometer(device):
                 self.control_device.set_heater_power(new_heat_value)
                 
                 config[self.name]['heating_power'] = new_heat_value
-
+                logging.info('%s Heat: %.02f uW'%(self.name, new_heat_value*1e6))
 
