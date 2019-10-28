@@ -39,10 +39,10 @@ def parse_request(request):
     "tokenize the request string"
     logging.info(request)
 
-    cmds = request.strip('/').lower().split("/")
+    cmds = request.strip('/').split("/")
     "remove heading or trailing white spaces"
     cmds = [cmd.strip() for cmd in cmds]
-    cmd = cmds.pop(0)
+    cmd = cmds.pop(0).lower()
 
     if 'g' in  cmd[0] or 'get' in cmd:
         return get_handler(cmds)
@@ -55,14 +55,14 @@ def parse_request(request):
     elif 'exit' in cmd:
         return exit_handler(config)
     else:
-        return ("invalid syntax : "+reqest)
+        return ("invalid syntax : "+request)
 
 
 
 def get_handler(cmds):
     "/GET/[instrument|device]/"
     try:
-        cmd = cmds.pop(0)
+        cmd = cmds.pop(0) # case sensitive 'instruments'
     except IndexError:
         return "Error: No instrument or device given!"
     except Exception as e:
@@ -70,6 +70,8 @@ def get_handler(cmds):
         raise (e)
     if cmd in config.keys():
         return (get_param_handler(config[cmd],cmds))
+    elif '' == cmd:
+        return ("Error: Subcommand not recognized! "+cmd)
     elif '::' in cmd[:2]:
         return config.dump_json()
     elif ':' in cmd[0]:
@@ -87,7 +89,6 @@ def set_handler(cmds):
     except Exception as e:
         print ("set_handler exception..." + str(e))
         raise (e)
-
     if cmd in config.keys():
         if cmd in ['system']:
             return ("ERROR: Section readonly! "+cmd)
@@ -101,7 +102,7 @@ def set_handler(cmds):
 def get_param_handler(section,params):
     
     try:
-        param = params.pop(0)
+        param = params.pop(0).lower()
     except IndexError:
         return ("Error: No parameter given!")
     except Exception as e:
@@ -110,6 +111,8 @@ def get_param_handler(section,params):
     #print ("param:"+param)
     if param in section.keys():
         return (section[param])
+    elif '' == param:
+        return ("Error: parameter not recognized! "+cmd)
     elif ':' in param[0]:
         #return (json.dumps(list(section.keys())))
         return (json.dumps(section,indent=2,sort_keys=True))
@@ -119,7 +122,7 @@ def get_param_handler(section,params):
 def set_param_handler(section,params):
     #print (params)
     try:
-        param = params.pop(0)
+        param = params.pop(0).lower()
     except IndexError:
         return ("Error: No  parameter given!")
     except Exception as e:
