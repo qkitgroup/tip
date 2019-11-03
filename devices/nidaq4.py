@@ -467,11 +467,13 @@ class driver(object):
 
     def set_heater_power(self,value):
         # we cannot cool with a heater :)
+        max_value = 10.0 
         if value < 0 : value = 0
+        if value > max_value : value = max_value
 
         self.V = numpy.sqrt(self.resistance*value)
         logging.info("applied heater voltage: %f"%(self.V))
-        write(self._channel, self.V, freq=1000, minv=0.0, maxv=2.0)
+        write(self._channel, self.V, freq=1000, minv=0.0, maxv=max_value)
 
     def get_heater_channel(self):
         return 0
