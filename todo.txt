@@ -11,3 +11,10 @@ o  add SIM bridge/heater
 o  add MMR3 bridge
 o  add Lakeshore 372
 o
+O bugfix: fix set temperature update in gui
+
+o control:
+o add zone PID, range and excitation settings 
+o 
+o featur request: new_T should update thermomenter range (and maybe exitation strength )
+o
