@@ -114,13 +114,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.acquisition_thread.T_sig.connect(self._update_Temp)
             self.acquisition_thread.H_sig.connect(self._update_Heat)
             self.acquisition_thread.E_sig.connect(self._update_Error)
-            
+            self.acquisition_thread.C_T_sig.connect(self._update_control_temperature)
+
             self.acquisition_thread.T_sig.connect(self.T_field.setValue)
             self.acquisition_thread.H_sig.connect(self.H_field.setValue)
             self.acquisition_thread.R_sig.connect(self.R_field.setValue)
+
             
-            self._update_PID_from_remote()
-            self._update_control_temperature()
+            self.data.P = float(get_param("mxc","control_p"))
+            self.data.I = float(get_param("mxc","control_i"))
+            self.data.D = float(get_param("mxc","control_d"))
+            self.P_SpinBox.setValue(self.data.P)
+            self.I_SpinBox.setValue(self.data.I)
+            self.D_SpinBox.setValue(self.data.D)
+
+            #self.data.set_T = float(get_param("mxc","control_temperature"))
+            #self.newT_SpinBox.setValue(self.data.set_T)
+
+            #self._update_PID_from_remote()
+            #self._update_control_temperature()
             self.acquisition_thread.start()
             
 
@@ -144,6 +156,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.P_SpinBox.setValue(self.data.P)
         self.I_SpinBox.setValue(self.data.I)
         self.D_SpinBox.setValue(self.data.D)
+        #self.newT_SpinBox.setValue(self.data.C_T)
+       
 
     def _update_control_temperature(self):
         self.data.set_T = float(get_param("mxc","control_temperature"))

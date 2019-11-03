@@ -33,10 +33,11 @@ class Error(Exception):
 class AcquisitionThread(Thread,QObject):
     """ Acquisition loop. This is the worker thread that retrieves info ...
     """
-    T_sig = pyqtSignal(float)
-    H_sig = pyqtSignal(float)
-    E_sig = pyqtSignal(float)
-    R_sig = pyqtSignal(float)
+    T_sig   = pyqtSignal(float)
+    H_sig   = pyqtSignal(float)
+    E_sig   = pyqtSignal(float)
+    R_sig   = pyqtSignal(float)
+    C_T_sig = pyqtSignal(float)
     def __init__(self,DATA):
         Thread.__init__(self)
         QObject.__init__(self)
@@ -49,12 +50,10 @@ class AcquisitionThread(Thread,QObject):
         return (get_param(device,param))
 
     def update_remote(self,device,cmd):
-        pass
         return (set_param(device,param))
 
     def stop_remote(self):
         return (set_exit())
-        pass
         #self.rc.send("EXIT\n")
         #self.rc.close()
     def process(self, image):
@@ -90,11 +89,14 @@ class AcquisitionThread(Thread,QObject):
             Heat = float(get_param(THERM,"heating_power"))
             pidE = float(get_param(THERM,"control_error"))
             R    = float(get_param(THERM,"resistance"))
-            print(R)
+            C_T  = float(get_param(THERM,"control_temperature"))
+            #print(R)
             self.T_sig.emit(T)
             self.H_sig.emit(Heat)
             self.E_sig.emit(pidE)
             self.R_sig.emit(R)
+            self.C_T_sig.emit(C_T)
+
             sleep(self.data.UpdateInterval)
             
         #self.stop_remote()
