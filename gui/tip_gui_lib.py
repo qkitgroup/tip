@@ -8,15 +8,17 @@ from threading import Thread
 from time import sleep
 
 from lib.tip_zmq_client_lib import context, get_config, get_param, set_param, set_exit
-THERM = "mxc"
+
 
 from PyQt5.QtCore import  QObject, pyqtSignal
+
 class DATA(object):
     REMOTEHOST = "localhost"
     REMOTEPORT = 9999
     UpdateInterval = 2
     DEBUG = False
     wants_abort = True
+    Thermometer = None
 
 
 def logstr(logstring):
@@ -45,8 +47,6 @@ class AcquisitionThread(Thread,QObject):
         self.data = DATA
 
     def acquire_from_remote(self,device,param): 
-        #self.rc.send("get "+cmd)
-        #return self.rc.recv()
         return (get_param(device,param))
 
     def update_remote(self,device,cmd):
@@ -54,8 +54,7 @@ class AcquisitionThread(Thread,QObject):
 
     def stop_remote(self):
         return (set_exit())
-        #self.rc.send("EXIT\n")
-        #self.rc.close()
+        
     def process(self, image):
         """ Spawns the processing job.
         """
@@ -72,12 +71,6 @@ class AcquisitionThread(Thread,QObject):
     def run(self):
         """ Runs the acquisition loop.
         """
-
-        #self.setup_acquire_from_remote()
-
-        #self.T_arr[:]=float(self.acquire_from_remote("T"))*1000
-        #self.Heat_arr[:]=float(self.acquire_from_remote("HEAT"))*1e6
-        #self.pidE_arr[:]=float(self.acquire_from_remote("PIDE"))*1e6
         R=0
         Heat =0
 
@@ -85,11 +78,11 @@ class AcquisitionThread(Thread,QObject):
                 
         while not self.data.wants_abort:
             # get state
-            T    = float(get_param(THERM,"temperature"))
-            Heat = float(get_param(THERM,"heating_power"))
-            pidE = float(get_param(THERM,"control_error"))
-            R    = float(get_param(THERM,"resistance"))
-            C_T  = float(get_param(THERM,"control_temperature"))
+            T    = float(get_param(self.data.thermometer,"temperature"))
+            Heat = float(get_param(self.data.thermometer,"heating_power"))
+            pidE = float(get_param(self.data.thermometer,"control_error"))
+            R    = float(get_param(self.data.thermometer,"resistance"))
+            C_T  = float(get_param(self.data.thermometer,"control_temperature"))
             #print(R)
             self.T_sig.emit(T)
             self.H_sig.emit(Heat)
@@ -97,7 +90,12 @@ class AcquisitionThread(Thread,QObject):
             self.R_sig.emit(R)
             self.C_T_sig.emit(C_T)
 
-            sleep(self.data.UpdateInterval)
+            #sleep(self.data.UpdateInterval)
+            interval = self.data.tip_conf[self.data.thermometer]['interval']
+            # make sure the gui stais reponsive, 3 s max delay. 
+            if interval > 3: 
+                interval = 3
+            sleep(interval)
             
-        #self.stop_remote()
+            
         self.display('Connection stopped')

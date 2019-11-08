@@ -18,7 +18,7 @@ import configparser
 import numpy
 
 
-from lib.tip_zmq_client_lib import setup_connection, get_config, get_param, set_param, set_exit
+from lib.tip_zmq_client_lib import setup_connection, close_connection, get_config, get_param, set_param, set_exit
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -38,34 +38,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._setup_signal_slots()
         self._setup_views()
 
-        setup_connection("tcp://localhost:5000")
+        self.tip_url
+        #"tcp://localhost:5000"
+        
+        self.tip_conf = None
+        self.thermometer = None
 
+        self._set_view_containers()
         self.acquisition_thread =False
         
-        self.Temps =numpy.empty(100)
+    def _set_view_containers(self):
+        self.Temps  = numpy.empty(100)
         self.Temps.fill(numpy.nan)
-        self.Errors=numpy.zeros(100)
+        self.Errors = numpy.zeros(100)
         self.Errors.fill(numpy.nan)
-        self.Heats = numpy.zeros(100)
+        self.Heats  = numpy.zeros(100)
         self.Heats.fill(numpy.nan)
-        self.times = numpy.arange(100,0,-1)
+        self.times  = numpy.arange(100,0,-1)
         
     def _setup_signal_slots(self):
         
         self.newT_SpinBox.valueChanged.connect(self._update_newT)
-        #QObject.connect(self.newT_SpinBox,SIGNAL("valueChanged(double)"),self._update_newT)
+        
         self.P_SpinBox.valueChanged.connect(self._update_P)
-
-        #QObject.connect(self.P_SpinBox,SIGNAL("valueChanged(double)"),self._update_P)
         self.I_SpinBox.valueChanged.connect(self._update_I)
-        #QObject.connect(self.I_SpinBox,SIGNAL("valueChanged(double)"),self._update_I)
+        
         self.D_SpinBox.valueChanged.connect(self._update_D)
-        #QObject.connect(self.D_SpinBox,SIGNAL("valueChanged(double)"),self._update_D)
-
+        self.Thermometer_box.currentIndexChanged.connect(self._thermometer_changed)
+        
+        self.Connect.released.connect(self._connetc_to_tip)
         self.Start.released.connect(self._start_aquisition)        
-        #QObject.connect(self.Start,SIGNAL("released()"),self._start_aquisition)
         self.Quit.released.connect(self._quit_tip_gui)
-        #QObject.connect(self.Quit,SIGNAL("released()"),self._quit_tip_gui)
+        
     
     
     def _setup_views(self):
@@ -86,15 +90,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #    self.Temp_view.plot(x, y[i], pen=(i,3))
     
     def _update_newT(self,T):
-        # #print "new T:",T
-        # #print self.newT_SpinBox.value()
-        # rc = remote_client(self.data)    
-        # rc.send("set T "+str(T))
-        # if not int(rc.recv().strip()) == 1:
-        #     raise Error("communication error")
-        # rc.close()
-        set_param("mxc","control_temperature",T)
+        set_param(self.thermometer,"control_temperature",T)
 
+    def _connetc_to_tip(self):
+        if self.Connect.isChecked():
+            setup_connection(self.tip_url.text())
+            self.Connect.setText("Connected")
+            self.tip_conf = get_config()
+            self.data.tip_conf = self.tip_conf 
+            for thermometer in self.tip_conf['system']['active_thermometers']:
+                self.Thermometer_box.addItem(thermometer)
+            
+        else:
+            self.Connect.setText("Connect")
+    
+    def _thermometer_changed(self):
+        self.thermometer  = self.Thermometer_box.currentText()
+        DATA.thermometer = self.thermometer
+        self._set_view_containers()
+        print(self.thermometer)
 
     def _quit_tip_gui(self):
         self.data.wants_abort = True
@@ -108,9 +122,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         if self.acquisition_thread and self.acquisition_thread.isAlive():
             self.data.wants_abort = True
+            #close_connection()
+            self.Start.setText("Start")
+
         else:
+            self.Start.setText("Stop")
+            # prepare the acuisition thread
             # connect the function calls
             self.acquisition_thread = AcquisitionThread(self.data)
+
             self.acquisition_thread.T_sig.connect(self._update_Temp)
             self.acquisition_thread.H_sig.connect(self._update_Heat)
             self.acquisition_thread.E_sig.connect(self._update_Error)
@@ -121,15 +141,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.acquisition_thread.R_sig.connect(self.R_field.setValue)
 
             
-            self.data.P = float(get_param("mxc","control_p"))
-            self.data.I = float(get_param("mxc","control_i"))
-            self.data.D = float(get_param("mxc","control_d"))
+            self.data.P = float(get_param(self.thermometer,"control_p"))
+            self.data.I = float(get_param(self.thermometer,"control_i"))
+            self.data.D = float(get_param(self.thermometer,"control_d"))
             self.P_SpinBox.setValue(self.data.P)
             self.I_SpinBox.setValue(self.data.I)
             self.D_SpinBox.setValue(self.data.D)
 
-            #self.data.set_T = float(get_param("mxc","control_temperature"))
-            #self.newT_SpinBox.setValue(self.data.set_T)
+            self.data.control_T = float(get_param(self.thermometer,"control_temperature"))
+            self.newT_SpinBox.setValue(self.data.control_T)
 
             #self._update_PID_from_remote()
             #self._update_control_temperature()
@@ -138,30 +158,32 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def _update_P(self,P):
         self.data.P = P
-        set_param("mxc","control_p",float(P))
+        set_param(self.thermometer,"control_p",float(P))
         #print self.P_SpinBox.value()
     def _update_I(self,I):
         self.data.I = I
-        set_param("mxc","control_i",float(I))
+        set_param(self.thermometer,"control_i",float(I))
 
     def _update_D(self,D):
         self.data.D = D
-        set_param("mxc","control_d",float(D))
+        set_param(self.thermometer,"control_d",float(D))
 
     def _update_PID_from_remote(self):
     
-        self.data.P = float(get_param("mxc","control_p"))
-        self.data.I = float(get_param("mxc","control_i"))
-        self.data.D = float(get_param("mxc","control_d"))
+        self.data.P = float(get_param(self.thermometer,"control_p"))
+        self.data.I = float(get_param(self.thermometer,"control_i"))
+        self.data.D = float(get_param(self.thermometer,"control_d"))
         self.P_SpinBox.setValue(self.data.P)
         self.I_SpinBox.setValue(self.data.I)
         self.D_SpinBox.setValue(self.data.D)
         #self.newT_SpinBox.setValue(self.data.C_T)
        
 
-    def _update_control_temperature(self):
-        self.data.set_T = float(get_param("mxc","control_temperature"))
-        self.newT_SpinBox.setValue(self.data.set_T)
+    def _update_control_temperature(self,control_T):
+        self.data.control_T = control_T
+        set_param(self.thermometer,"control_temperature",float(control_T))
+        #self.data.set_T = float(get_param(self.thermometer,"control_temperature"))
+        #self.newT_SpinBox.setValue(self.data.set_T)
      
         
     @pyqtSlot(float)
