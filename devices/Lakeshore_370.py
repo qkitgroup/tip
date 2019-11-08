@@ -600,8 +600,8 @@ class Lakeshore_37X(object):
             '3,16 mA',
             '10 mA',
             '31.6 mA'
-            }
-            
+        ]
+
         self.resistance_ranges = {
             1: 2e-3, # '2 mOhm'
             2: 6.32e-3, # '6.32 mOhm',

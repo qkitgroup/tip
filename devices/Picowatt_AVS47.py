@@ -31,6 +31,9 @@ def driver(name):
                 gpib    = config[name]['gpib'],
                 delay   = config[name]['delay'],
                 timeout = config[name]['timeout'])
+                
+    config[name]['device_ranges'] = avs.ranges
+    config[name]['device_excitations'] = avs.excitations
     return avs
 
 class AVS47(object):
