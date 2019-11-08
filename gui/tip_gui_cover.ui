@@ -235,6 +235,9 @@
            <property name="decimals">
             <number>5</number>
            </property>
+           <property name="maximum">
+            <double>999.899999999999977</double>
+           </property>
           </widget>
          </item>
          <item row="1" column="2">

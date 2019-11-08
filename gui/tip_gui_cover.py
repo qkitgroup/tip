@@ -104,6 +104,7 @@ class Ui_MainWindow(object):
         self.T_field.setReadOnly(True)
         self.T_field.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         self.T_field.setDecimals(5)
+        self.T_field.setMaximum(999.9)
         self.T_field.setObjectName("T_field")
         self.gridLayout.addWidget(self.T_field, 0, 3, 1, 1)
         self.label_4 = QtWidgets.QLabel(self.groupBox)
