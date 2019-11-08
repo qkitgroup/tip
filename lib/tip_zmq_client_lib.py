@@ -1,6 +1,6 @@
 #
-#   Hello World client in Python
-#   Connects REQ socket to tcp://localhost:5555
+#   
+#   
 #   Sends "Hello" to server, expects "World" back
 #
 
@@ -17,6 +17,10 @@ socket = context.socket(zmq.REQ)
 def setup_connection(url="tcp://localhost:5000"):
     print("Connecting to TIP server…")
     socket.connect(url)
+
+def close_connection():
+    print("Closing connection to TIP server…")
+    socket.close()
 
 def set_param(device, param, value):
     socket.send_string("set/"+device+"/"+param+"/"+str(value))
