@@ -6,12 +6,23 @@ Dummy resistance bridge driver /  basic interface
 import sys
 import random
 import time
+from lib.tip_config import config
 
+def driver(name):
+    DT = DriverTemplate(name)
+                
+    config[name]['device_ranges'] = DT.ranges
+    config[name]['device_excitations'] = DT.excitations
+    return DT
 
-class driver(object):
+class DriverTemplate(object):
     
     def __init__(self,name):
-        pass
+        # bridge ranges v 0    v 1    ...                            v 7    
+        self.ranges = [ 'None', '2R', '20R','200R','2K','20K','200K','2M']
+        # bridge excitations v 0    v 1    ...                                           v 7
+        self.excitations = ['None','3 uV', '10 uV', '30 uV', '100 uV', '300_uV', '1 mV', '3 mV']
+        
     
     def setup_device(self):
         pass

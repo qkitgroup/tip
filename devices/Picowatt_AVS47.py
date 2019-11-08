@@ -66,7 +66,11 @@ class AVS47(object):
             instrument_delay = 0,
             debug = self.debug
             )
-            
+        # bridge ranges v 0    v 1    ...                            v 7    
+        self.ranges = [ 'None', '2R', '20R','200R','2K','20K','200K','2M']
+        # bridge excitations v 0    v 1    ...                                           v 7
+        self.excitations = ['None','3 uV', '10 uV', '30 uV', '100 uV', '300_uV', '1 mV', '3 mV']
+
         self.averages = 0
         self.setup_device()
 
@@ -242,6 +246,7 @@ class AVS47(object):
         '''
         logging.debug(__name__ + ' : set delay for channel %d to %f' % (channel, val))
 
+    
 
 # do some checking ...
 if __name__ == "__main__":
@@ -282,26 +287,7 @@ CH6=6,
 CH7=7
 }
 
-ranges={
-RANGE_NONE=0,
-RANGE_2R=1,
-RANGE_20R=2,
-RANGE_200R=3,
-RANGE_2K=4,
-RANGE_20K=5,
-RANGE_200K=6,
-RANGE_2M=7
-}
-excitations={
-EXC_NONE=0,
-EXC_3_uV=1,
-EXC_10_uV=2,
-EXC_30_uV=3,
-EXC_100_uV=4,
-EXC_300_uV=5,
-EXC_1_mV=6,
-EXC_3_mV=7
-}
+
 
 measure={
 DISPLAY_R=0,

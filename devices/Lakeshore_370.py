@@ -32,6 +32,9 @@ def driver(name):
                 gpib    = config[name]['gpib'],
                 delay   = config[name]['delay'],
                 timeout = config[name]['timeout'])
+
+    config[name]['device_ranges'] = LS.ranges
+    config[name]['device_excitations'] = LS.excitations
     return LS
 
 class Lakeshore_37X(object):
@@ -546,6 +549,59 @@ class Lakeshore_37X(object):
 
     def _setup_bridge_tables(self):
 
+        self.ranges = [
+            'None',
+            '2 mOhm',
+            '6.32 mOhm',
+            '20 mOhm',
+            '63.2 mOhm',
+            '200 mOhm',
+            '632 mOhm',
+            '2 Ohm',
+            '6.32 Ohm',
+            '20 Ohm',
+            '63.2', 
+            '63.2 Ohm',
+            '200 Ohm',
+            '632 Ohm',
+            '2 kOhm',
+            '6.32 kOhm',
+            '20 kOhm',
+            '63.2 kOhm',
+            '200 kOhm',
+            '632 kOhm',
+            '2 MOhm',
+            '6.32 MOhm',
+            '20 MOhm',
+            '63.2 MOhm'
+        ]
+
+        self.excitations = [
+            'None',
+            '2 uV or 1 pA',
+            '6.32 uV or 3.16 pA',
+            '20 uV or 10 pA',
+            '63.2 uV or 31.6 pA',
+            '200 uV or 100 pA',
+            '632 uV or 316 pA',
+            '2 mV or 1 nA',
+            '6.32 mV or 3.16 nA',
+            '20 mV or 10 nA',
+            '63.2 mV or 31.6 nA',
+            '200 mV or 100 nA',
+            '632 mV or 316nA',
+            '1 uA',
+            '3.16 uA',
+            '10 uA',
+            '31.6 uA',
+            '100 uA',
+            '316 uA',
+            '1 mA',
+            '3,16 mA',
+            '10 mA',
+            '31.6 mA'
+            }
+            
         self.resistance_ranges = {
             1: 2e-3, # '2 mOhm'
             2: 6.32e-3, # '6.32 mOhm',
