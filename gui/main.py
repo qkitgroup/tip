@@ -66,6 +66,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.D_SpinBox.valueChanged.connect(self._update_D)
         self.Thermometer_box.currentIndexChanged.connect(self._thermometer_changed)
         
+        self.range_spinbox.valueChanged.connect(self._range_changed)
+        self.excitation_spinbox.valueChanged.connect(self._excitation_changed)
+
         self.Connect.released.connect(self._connetc_to_tip)
         self.Start.released.connect(self._start_aquisition)        
         self.Quit.released.connect(self._quit_tip_gui)
@@ -109,6 +112,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         DATA.thermometer = self.thermometer
         self._set_view_containers()
         print(self.thermometer)
+
+    def _range_changed(self,device_range):
+        set_param(self.thermometer,"device_range",device_range)
+        print(device_range)
+
+    def _excitation_changed(self,device_excitation):
+        set_param(self.thermometer,"device_excitation",device_excitation)
+        print(device_excitation)        
+
 
     def _quit_tip_gui(self):
         self.data.wants_abort = True
