@@ -69,7 +69,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.Connect.released.connect(self._connetc_to_tip)
         self.Start.released.connect(self._start_aquisition)        
         self.Quit.released.connect(self._quit_tip_gui)
-        
+
+        self.action_TIP_server.triggered.connect(self._set_tip_server)
     
     
     def _setup_views(self):
@@ -103,6 +104,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             
         else:
             self.Connect.setText("Connect")
+    
+    def _set_tip_server(self):
+        text, ok = QInputDialog.getText(self, "Enter URL to TIP server ",
+                                     "TIP server:", QLineEdit.Normal,
+                                     "tcp://localhost:5000")
+        if ok and text:
+            textLabel.setText(text)
     
     def _thermometer_changed(self):
         self.thermometer  = self.Thermometer_box.currentText()

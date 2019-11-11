@@ -52,6 +52,8 @@ def parse_request(request):
         return (config['system']['version'])
     elif 'c' in cmd[0] or 'config' in cmd:
         return(json.dumps(config,indent=2,sort_keys=True))
+    elif 'm' in cmd[0] or 'macro' in cmd:
+        return ""
     elif 'exit' in cmd:
         return exit_handler(config)
     else:
