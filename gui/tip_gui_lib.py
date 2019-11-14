@@ -13,8 +13,8 @@ from lib.tip_zmq_client_lib import context, get_config, get_param, set_param, se
 from PyQt5.QtCore import  QObject, pyqtSignal
 
 class DATA(object):
-    REMOTEHOST = "localhost"
-    REMOTEPORT = 9999
+    #REMOTEHOST = "localhost"
+    #REMOTEPORT = 9999
     UpdateInterval = 2
     DEBUG = False
     wants_abort = True
@@ -22,7 +22,6 @@ class DATA(object):
 
 
 def logstr(logstring):
-    #if data.DEBUG:
     print(str(logstring))
     
 class Error(Exception):
@@ -40,18 +39,22 @@ class AcquisitionThread(Thread,QObject):
     E_sig   = pyqtSignal(float)
     R_sig   = pyqtSignal(float)
     C_T_sig = pyqtSignal(float)
+    P_sig   = pyqtSignal(float)
+    I_sig   = pyqtSignal(float)
+    D_sig   = pyqtSignal(float)
+
     def __init__(self,DATA):
         Thread.__init__(self)
         QObject.__init__(self)
         DATA.wants_abort = False
         self.data = DATA
-
+    """
     def acquire_from_remote(self,device,param): 
         return (get_param(device,param))
 
     def update_remote(self,device,cmd):
         return (set_param(device,param))
-
+    """
     def stop_remote(self):
         return (set_exit())
         
@@ -83,12 +86,19 @@ class AcquisitionThread(Thread,QObject):
             pidE = float(get_param(self.data.thermometer,"control_error"))
             R    = float(get_param(self.data.thermometer,"resistance"))
             C_T  = float(get_param(self.data.thermometer,"control_temperature"))
-            #print(R)
+            P    = float(get_param(self.data.thermometer,"control_p"))
+            I    = float(get_param(self.data.thermometer,"control_i"))
+            D    = float(get_param(self.data.thermometer,"control_d"))
+            
+
             self.T_sig.emit(T)
             self.H_sig.emit(Heat)
             self.E_sig.emit(pidE)
             self.R_sig.emit(R)
             self.C_T_sig.emit(C_T)
+            self.P_sig.emit(P)
+            self.I_sig.emit(I)
+            self.D_sig.emit(D)
 
             #sleep(self.data.UpdateInterval)
             interval = self.data.tip_conf[self.data.thermometer]['interval']

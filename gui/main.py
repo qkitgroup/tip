@@ -38,7 +38,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._setup_signal_slots()
         self._setup_views()
 
-        self.tip_url
+        self.tip_url = "tcp://localhost:5000"
+        self.tip_connected = False
         #"tcp://localhost:5000"
         
         self.tip_conf = None
@@ -48,13 +49,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.acquisition_thread =False
         
     def _set_view_containers(self):
-        self.Temps  = numpy.empty(100)
-        self.Temps.fill(numpy.nan)
-        self.Errors = numpy.zeros(100)
-        self.Errors.fill(numpy.nan)
-        self.Heats  = numpy.zeros(100)
-        self.Heats.fill(numpy.nan)
-        self.times  = numpy.arange(100,0,-1)
+        LENGTH = 0
+        self.Temps  = numpy.empty(LENGTH)
+        #self.Temps.fill(numpy.nan)
+        self.Errors = numpy.zeros(LENGTH)
+        #self.Errors.fill(numpy.nan)
+        self.Heats  = numpy.zeros(LENGTH)
+        #self.Heats.fill(numpy.nan)
+        self.times  = numpy.zeros(LENGTH) #numpy.arange(LENGTH,0,-1)
         
     def _setup_signal_slots(self):
         
@@ -62,58 +64,60 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         self.P_SpinBox.valueChanged.connect(self._update_P)
         self.I_SpinBox.valueChanged.connect(self._update_I)
-        
         self.D_SpinBox.valueChanged.connect(self._update_D)
+
         self.Thermometer_box.currentIndexChanged.connect(self._thermometer_changed)
         
         self.range_spinbox.valueChanged.connect(self._range_changed)
         self.excitation_spinbox.valueChanged.connect(self._excitation_changed)
 
-        self.Connect.released.connect(self._connetc_to_tip)
-        self.Start.released.connect(self._start_aquisition)        
-        self.Quit.released.connect(self._quit_tip_gui)
+        #self.Connect.released.connect(self._connetc_to_tip)
+        #self.Start.released.connect(self._start_aquisition)        
 
         self.action_TIP_server.triggered.connect(self._set_tip_server)
+        self.actionQuit.triggered.connect(self._quit_tip_gui)
     
     
     def _setup_views(self):
-        self.Temp_view.setLabel('left',"Temperature / K")
-        self.Temp_view.setLabel('bottom',"Time")
+        self.Temp_view.setLabel('left',"Temperature", units="K")
+        self.Temp_view.setLabel('bottom',"Time", units="s")
         self.Temp_view.plt = self.Temp_view.plot(pen='y')
-        
 
-        self.Heat_view.setLabel('left',"Heat / uW")
-        self.Heat_view.setLabel('bottom',"Time")
+        self.Heat_view.setLabel('left',"Heat", units="W")
+        self.Heat_view.setLabel('bottom',"Time",units="s")
         self.Heat_view.plt = self.Heat_view.plot(pen='y')
         
-        self.Error_view.setLabel('left',"Error / uK ")
-        self.Error_view.setLabel('bottom',"Time")
+        self.Error_view.setLabel('left',"Error", units="K")
+        self.Error_view.setLabel('bottom',"Time",units="s")
         self.Error_view.plt = self.Error_view.plot(pen='y')
         
-        #for i in range(3):
-        #    self.Temp_view.plot(x, y[i], pen=(i,3))
     
     def _update_newT(self,T):
+        print ("update new temperature")
         set_param(self.thermometer,"control_temperature",T)
 
     def _connetc_to_tip(self):
-        if self.Connect.isChecked():
-            setup_connection(self.tip_url.text())
-            self.Connect.setText("Connected")
-            self.tip_conf = get_config()
-            self.data.tip_conf = self.tip_conf 
-            for thermometer in self.tip_conf['system']['active_thermometers']:
-                self.Thermometer_box.addItem(thermometer)
-            
-        else:
-            self.Connect.setText("Connect")
+        setup_connection(self.tip_url)
+
+        self.tip_connected = True
+        self.statusbar.showMessage("Connected to: "+str(self.tip_url))
+
+        self.tip_conf = get_config()
+        self.data.tip_conf = self.tip_conf 
+
+        self.Thermometer_box.clear()
+        for thermometer in self.tip_conf['system']['active_thermometers']:
+            self.Thermometer_box.addItem(thermometer)
+        
+        self._start_aquisition()
+        
     
     def _set_tip_server(self):
-        text, ok = QInputDialog.getText(self, "Enter URL to TIP server ",
+        self.tip_url, ok = QInputDialog.getText(self, "Enter URL to TIP server ",
                                      "TIP server:", QLineEdit.Normal,
                                      "tcp://localhost:5000")
-        if ok and text:
-            textLabel.setText(text)
+        if ok and self.tip_url:
+            self._connetc_to_tip()
     
     def _thermometer_changed(self):
         self.thermometer  = self.Thermometer_box.currentText()
@@ -129,8 +133,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         set_param(self.thermometer,"device_excitation",device_excitation)
         print(device_excitation)        
 
-
     def _quit_tip_gui(self):
+        print("Quit GUI")
         self.data.wants_abort = True
         sleep(0.2)
         exit()
@@ -142,12 +146,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         if self.acquisition_thread and self.acquisition_thread.isAlive():
             self.data.wants_abort = True
-            #close_connection()
-            self.Start.setText("Start")
 
         else:
-            self.Start.setText("Stop")
-            # prepare the acuisition thread
             # connect the function calls
             self.acquisition_thread = AcquisitionThread(self.data)
 
@@ -156,11 +156,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.acquisition_thread.E_sig.connect(self._update_Error)
             self.acquisition_thread.C_T_sig.connect(self._update_control_temperature)
 
+            self.acquisition_thread.P_sig.connect(self._update_P_from_remote)
+            self.acquisition_thread.I_sig.connect(self._update_I_from_remote)
+            self.acquisition_thread.D_sig.connect(self._update_D_from_remote)
+
             self.acquisition_thread.T_sig.connect(self.T_field.setValue)
             self.acquisition_thread.H_sig.connect(self.H_field.setValue)
             self.acquisition_thread.R_sig.connect(self.R_field.setValue)
 
-            
             self.data.P = float(get_param(self.thermometer,"control_p"))
             self.data.I = float(get_param(self.thermometer,"control_i"))
             self.data.D = float(get_param(self.thermometer,"control_d"))
@@ -171,53 +174,70 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.data.control_T = float(get_param(self.thermometer,"control_temperature"))
             self.newT_SpinBox.setValue(self.data.control_T)
 
-            #self._update_PID_from_remote()
-            #self._update_control_temperature()
             self.acquisition_thread.start()
             
 
     def _update_P(self,P):
-        self.data.P = P
+        #self.data.P = P
         set_param(self.thermometer,"control_p",float(P))
-        #print self.P_SpinBox.value()
+
     def _update_I(self,I):
-        self.data.I = I
+        #self.data.I = I
         set_param(self.thermometer,"control_i",float(I))
 
     def _update_D(self,D):
-        self.data.D = D
+        #self.data.D = D
         set_param(self.thermometer,"control_d",float(D))
 
-    def _update_PID_from_remote(self):
-    
-        self.data.P = float(get_param(self.thermometer,"control_p"))
-        self.data.I = float(get_param(self.thermometer,"control_i"))
-        self.data.D = float(get_param(self.thermometer,"control_d"))
-        self.P_SpinBox.setValue(self.data.P)
-        self.I_SpinBox.setValue(self.data.I)
-        self.D_SpinBox.setValue(self.data.D)
-        #self.newT_SpinBox.setValue(self.data.C_T)
-       
+    def _update_P_from_remote(self,P):
+        if not self.P_SpinBox.hasFocus():
+            self.P_SpinBox.setValue(P)
+    def _update_I_from_remote(self,I):
+        if not self.I_SpinBox.hasFocus():
+            self.I_SpinBox.setValue(I)
+    def _update_D_from_remote(self,D):   
+        if not self.D_SpinBox.hasFocus():
+            self.D_SpinBox.setValue(D)       
 
     def _update_control_temperature(self,control_T):
         self.data.control_T = control_T
-        set_param(self.thermometer,"control_temperature",float(control_T))
-        #self.data.set_T = float(get_param(self.thermometer,"control_temperature"))
-        #self.newT_SpinBox.setValue(self.data.set_T)
-     
+        if not self.newT_SpinBox.hasFocus():
+            self.newT_SpinBox.setValue(control_T)
+
+
+        
         
     @pyqtSlot(float)
     def _update_Temp(self,Temp):
-        self.Temps = numpy.delete(numpy.append(self.Temps,Temp*1e3),0)
-        self.Temp_view.plt.setData(x=self.times, y=self.Temps)#, pen=(1,3))
+        MAXLENGTH = 150
+        if len(self.Temps) < MAXLENGTH:
+            self.Temps = numpy.append(self.Temps,Temp)
+        else:
+            self.Temps = numpy.delete(numpy.append(self.Temps,Temp),0)
+        times = numpy.arange(len(self.Temps),0,-1)
+        self.Temp_view.plt.setData(x=times, y=self.Temps)#, pen=(1,3))
+
     @pyqtSlot(float)
     def _update_Heat(self,Heat):
-        self.Heats = numpy.delete(numpy.append(self.Heats,Heat*1e6),0)
-        self.Heat_view.plt.setData(self.times, self.Heats)#, pen=(1,3))
+        MAXLENGTH = 150
+        if len(self.Heats) < MAXLENGTH:
+            self.Heats = numpy.append(self.Heats,Heat)
+        else:
+            self.Heats = numpy.delete(numpy.append(self.Heats,Heat),0)
+        times = numpy.arange(len(self.Heats),0,-1)
+        self.Heat_view.plt.setData(times, self.Heats)#, pen=(1,3))
+
     @pyqtSlot(float)
     def _update_Error(self,Error):
-        self.Errors=numpy.delete(numpy.append(self.Errors,Error*1e6),0)
-        self.Error_view.plt.setData(self.times, self.Errors)
+        MAXLENGTH = 150
+        if len(self.Errors) < MAXLENGTH:
+            self.Errors = numpy.append(self.Errors,Error)
+        else:
+            self.Errors=numpy.delete(numpy.append(self.Errors,Error),0)
+
+        times = numpy.arange(len(self.Errors),0,-1)
+        
+        self.Error_view.plt.setData(times, self.Errors)
 
     @pyqtSlot(float)
     def _update_R(self,R):
