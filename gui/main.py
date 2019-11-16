@@ -6,9 +6,11 @@ import sys
 #from PyQt4.QtGui import *
 from PyQt5.QtCore import * #Qt, QObject
 from PyQt5.QtWidgets import * # QApplication
+from PyQt5 import QtGui
 
 
 from time import sleep
+import pprint
 
 from gui.tip_gui_lib import DATA, AcquisitionThread #,  remote_client
 from gui.tip_gui_cover import Ui_MainWindow
@@ -44,10 +46,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         self.tip_conf = None
         self.thermometer = None
-
+        self.new_thermometer = False
         self._set_view_containers()
         self.acquisition_thread =False
-        
+    
+    def closeEvent(self, event):
+        print ("window destroyed")
+        self._quit_tip_gui()
+        event.accept()
+
     def _set_view_containers(self):
         LENGTH = 0
         self.Temps  = numpy.empty(LENGTH)
@@ -57,7 +64,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.Heats  = numpy.zeros(LENGTH)
         #self.Heats.fill(numpy.nan)
         self.times  = numpy.zeros(LENGTH) #numpy.arange(LENGTH,0,-1)
-        
+    
+    def _set_range_box(self,thermometer):
+        self.rangeBox.clear()
+        for drange in self.tip_conf[self.tip_conf[thermometer]['device']]['device_ranges']:
+            self.rangeBox.addItem(drange)
+    
+    def _set_excitation_box(self,thermometer):
+        self.excitationBox.clear()
+        for drange in self.tip_conf[self.tip_conf[thermometer]['device']]['device_excitations']:
+            self.excitationBox.addItem(drange)
+
+
     def _setup_signal_slots(self):
         
         self.newT_SpinBox.valueChanged.connect(self._update_newT)
@@ -68,14 +86,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.Thermometer_box.currentIndexChanged.connect(self._thermometer_changed)
         
-        self.range_spinbox.valueChanged.connect(self._range_changed)
-        self.excitation_spinbox.valueChanged.connect(self._excitation_changed)
+        self.rangeBox.currentIndexChanged.connect(self._range_changed)
+        self.excitationBox.currentIndexChanged.connect(self._excitation_changed)
 
         #self.Connect.released.connect(self._connetc_to_tip)
         #self.Start.released.connect(self._start_aquisition)        
 
         self.action_TIP_server.triggered.connect(self._set_tip_server)
         self.actionQuit.triggered.connect(self._quit_tip_gui)
+        self.actionTIP_Configuration.triggered.connect(self._display_config)
     
     
     def _setup_views(self):
@@ -119,22 +138,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if ok and self.tip_url:
             self._connetc_to_tip()
     
+    def _display_config(self):
+        tip_config = get_config()
+        txt = pprint.pformat(tip_config, indent=4)
+        msgBox = TextDisplay(self)
+        msgBox.display(txt)
+        msgBox.show()
+
     def _thermometer_changed(self):
         self.thermometer  = self.Thermometer_box.currentText()
         DATA.thermometer = self.thermometer
+        self.new_thermometer = True
         self._set_view_containers()
+        self._set_range_box(self.thermometer)
+        self._set_excitation_box(self.thermometer)
+        self.new_thermometer = False
+
         print(self.thermometer)
 
     def _range_changed(self,device_range):
-        set_param(self.thermometer,"device_range",device_range)
-        print(device_range)
+        if not self.new_thermometer:
+            set_param(self.thermometer,"device_range",device_range)
+            print(device_range)
 
     def _excitation_changed(self,device_excitation):
-        set_param(self.thermometer,"device_excitation",device_excitation)
-        print(device_excitation)        
+        if not self.new_thermometer:
+            set_param(self.thermometer,"device_excitation",device_excitation)
+            print(device_excitation)        
 
     def _quit_tip_gui(self):
-        print("Quit GUI")
+        print("Quitting TIP GUI")
         self.data.wants_abort = True
         sleep(0.2)
         exit()
@@ -155,14 +188,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.acquisition_thread.H_sig.connect(self._update_Heat)
             self.acquisition_thread.E_sig.connect(self._update_Error)
             self.acquisition_thread.C_T_sig.connect(self._update_control_temperature)
+            self.acquisition_thread.Int_sig.connect(self.Int_field.setValue)
+                  
 
             self.acquisition_thread.P_sig.connect(self._update_P_from_remote)
             self.acquisition_thread.I_sig.connect(self._update_I_from_remote)
             self.acquisition_thread.D_sig.connect(self._update_D_from_remote)
 
+            self.acquisition_thread.DR_sig.connect(self._update_range_from_remote)
+            self.acquisition_thread.DE_sig.connect(self._update_excitation_from_remote)
+
             self.acquisition_thread.T_sig.connect(self.T_field.setValue)
             self.acquisition_thread.H_sig.connect(self.H_field.setValue)
             self.acquisition_thread.R_sig.connect(self.R_field.setValue)
+
 
             self.data.P = float(get_param(self.thermometer,"control_p"))
             self.data.I = float(get_param(self.thermometer,"control_i"))
@@ -198,6 +237,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _update_D_from_remote(self,D):   
         if not self.D_SpinBox.hasFocus():
             self.D_SpinBox.setValue(D)       
+
+    def _update_range_from_remote(self,R):
+        if not self.rangeBox.hasFocus():
+            self.rangeBox.setCurrentIndex(R)
+    def _update_excitation_from_remote(self,E):   
+        if not self.excitationBox.hasFocus():
+            self.excitationBox.setCurrentIndex(E)     
 
     def _update_control_temperature(self,control_T):
         self.data.control_T = control_T
@@ -248,6 +294,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.R_field.setValue(R)
         self.H_field.setValue(Heat*1e6)
         #self.newT_SpinBox.setValue(Tctrl)
+    
+class TextDisplay(QtGui.QMainWindow):
+    def __init__(self, parent=None):
+        super(TextDisplay, self).__init__(parent)
+        self.TE = QTextEdit()
+        self.setCentralWidget(self.TE)
+        self.resize(400,500)
+    def display(self,txt):
+        self.TE.insertPlainText(txt)
+
         
 # Main entry to program.  Sets up the main app and create a new window.
 def main(argv):

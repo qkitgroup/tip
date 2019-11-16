@@ -70,13 +70,6 @@
          <property name="spacing">
           <number>0</number>
          </property>
-         <item row="1" column="4">
-          <widget class="QSpinBox" name="excitation_spinbox">
-           <property name="suffix">
-            <string/>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="3">
           <widget class="QLabel" name="label_6">
            <property name="text">
@@ -88,13 +81,6 @@
           <widget class="QLabel" name="label_4">
            <property name="text">
             <string>Excitation</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QSpinBox" name="range_spinbox">
-           <property name="suffix">
-            <string/>
            </property>
           </widget>
          </item>
@@ -157,7 +143,7 @@
           </spacer>
          </item>
          <item row="1" column="6">
-          <widget class="QDoubleSpinBox" name="Interval">
+          <widget class="QDoubleSpinBox" name="Int_field">
            <property name="enabled">
             <bool>true</bool>
            </property>
@@ -237,6 +223,12 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="rangeBox"/>
+         </item>
+         <item row="1" column="4">
+          <widget class="QComboBox" name="excitationBox"/>
          </item>
         </layout>
        </widget>
@@ -528,6 +520,9 @@
   <action name="actionTIP_Configuration">
    <property name="text">
     <string>TIP Configuration</string>
+   </property>
+   <property name="shortcut">
+    <string>C</string>
    </property>
   </action>
   <action name="actionQuit_TIP_GUI">

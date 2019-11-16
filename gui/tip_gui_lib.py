@@ -7,7 +7,7 @@ Created on Tue Mar 31 21:59:44 2015
 from threading import Thread
 from time import sleep
 
-from lib.tip_zmq_client_lib import context, get_config, get_param, set_param, set_exit
+from lib.tip_zmq_client_lib import context, get_config, get_device, get_param, set_param, set_exit
 
 
 from PyQt5.QtCore import  QObject, pyqtSignal
@@ -42,7 +42,9 @@ class AcquisitionThread(Thread,QObject):
     P_sig   = pyqtSignal(float)
     I_sig   = pyqtSignal(float)
     D_sig   = pyqtSignal(float)
-
+    Int_sig = pyqtSignal(float)
+    DR_sig   = pyqtSignal(float)
+    DE_sig   = pyqtSignal(float)
     def __init__(self,DATA):
         Thread.__init__(self)
         QObject.__init__(self)
@@ -81,15 +83,20 @@ class AcquisitionThread(Thread,QObject):
                 
         while not self.data.wants_abort:
             # get state
-            T    = float(get_param(self.data.thermometer,"temperature"))
-            Heat = float(get_param(self.data.thermometer,"heating_power"))
-            pidE = float(get_param(self.data.thermometer,"control_error"))
-            R    = float(get_param(self.data.thermometer,"resistance"))
-            C_T  = float(get_param(self.data.thermometer,"control_temperature"))
-            P    = float(get_param(self.data.thermometer,"control_p"))
-            I    = float(get_param(self.data.thermometer,"control_i"))
-            D    = float(get_param(self.data.thermometer,"control_d"))
             
+            thermometer_data = get_device(self.data.thermometer)
+            T        = float(thermometer_data["temperature"])
+            Heat     = float(thermometer_data["heating_power"])
+            pidE     = float(thermometer_data["control_error"])
+            R        = float(thermometer_data["resistance"])
+            C_T      = float(thermometer_data["control_temperature"])
+            P        = float(thermometer_data["control_p"])
+            I        = float(thermometer_data["control_i"])
+            D        = float(thermometer_data["control_d"])
+
+            DR       = int(thermometer_data["device_range"])
+            DE       = int(thermometer_data["device_excitation"])
+            interval = float(thermometer_data['interval'])
 
             self.T_sig.emit(T)
             self.H_sig.emit(Heat)
@@ -99,10 +106,13 @@ class AcquisitionThread(Thread,QObject):
             self.P_sig.emit(P)
             self.I_sig.emit(I)
             self.D_sig.emit(D)
+            self.DR_sig.emit(DR)
+            self.DE_sig.emit(DE)
+            self.Int_sig.emit(interval)
 
             #sleep(self.data.UpdateInterval)
-            interval = self.data.tip_conf[self.data.thermometer]['interval']
-            # make sure the gui stais reponsive, 3 s max delay. 
+            
+            # make sure the gui stays reponsive, 3 s max delay. 
             if interval > 3: 
                 interval = 3
             sleep(interval)
