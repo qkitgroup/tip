@@ -1,5 +1,9 @@
 # tip regulation gui / HR@KIT 2011 - 2019
+
+
+
 import sys
+import numpy
 
 # make it pyqt5 only ...
 #from PyQt4.QtCore import *
@@ -8,20 +12,17 @@ from PyQt5.QtCore import * #Qt, QObject
 from PyQt5.QtWidgets import * # QApplication
 from PyQt5 import QtGui
 
-
 from time import sleep
 import pprint
 
-from gui.tip_gui_lib import DATA, AcquisitionThread #,  remote_client
+from gui.pg_time_axis import DateAxisItem
+from gui.tip_gui_lib import DATA, AcquisitionThread
 from gui.tip_gui_cover import Ui_MainWindow
-
-import argparse
-import configparser
-import numpy
-
 
 from lib.tip_zmq_client_lib import setup_connection, close_connection, get_config, get_param, set_param, set_exit
 
+gui_signals = {}
+abort = False
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -42,7 +43,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.tip_url = "tcp://localhost:5000"
         self.tip_connected = False
-        #"tcp://localhost:5000"
         
         self.tip_conf = None
         self.thermometer = None
@@ -64,7 +64,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.Heats  = numpy.zeros(LENGTH)
         #self.Heats.fill(numpy.nan)
         self.times  = numpy.zeros(LENGTH) #numpy.arange(LENGTH,0,-1)
-    
+        self.change_times = numpy.array([],dtype = numpy.float64)
+
+
     def _set_range_box(self,thermometer):
         self.rangeBox.clear()
         for drange in self.tip_conf[self.tip_conf[thermometer]['device']]['device_ranges']:
@@ -98,17 +100,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     
     
     def _setup_views(self):
+        axis = DateAxisItem(orientation='bottom')
         self.Temp_view.setLabel('left',"Temperature", units="K")
         self.Temp_view.setLabel('bottom',"Time", units="s")
         self.Temp_view.plt = self.Temp_view.plot(pen='y')
+        axis.attachToPlotItem(self.Temp_view.getPlotItem())
 
+        axis = DateAxisItem(orientation='bottom')
         self.Heat_view.setLabel('left',"Heat", units="W")
         self.Heat_view.setLabel('bottom',"Time",units="s")
         self.Heat_view.plt = self.Heat_view.plot(pen='y')
+        axis.attachToPlotItem(self.Heat_view.getPlotItem())
         
+        axis = DateAxisItem(orientation='bottom')
         self.Error_view.setLabel('left',"Error", units="K")
         self.Error_view.setLabel('bottom',"Time",units="s")
         self.Error_view.plt = self.Error_view.plot(pen='y')
+        axis.attachToPlotItem(self.Error_view.getPlotItem())
         
     
     def _update_newT(self,T):
@@ -184,6 +192,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # connect the function calls
             self.acquisition_thread = AcquisitionThread(self.data)
 
+            self.acquisition_thread.ctime_sig.connect(self._update_change_times)
             self.acquisition_thread.T_sig.connect(self._update_Temp)
             self.acquisition_thread.H_sig.connect(self._update_Heat)
             self.acquisition_thread.E_sig.connect(self._update_Error)
@@ -250,9 +259,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not self.newT_SpinBox.hasFocus():
             self.newT_SpinBox.setValue(control_T)
 
+        
+    @pyqtSlot(float)
+    def _update_change_times(self,ctime):
+        #print ("CTIME:"+str(ctime))
+        MAXLENGTH = 150
+        
+        if len(self.change_times) < MAXLENGTH:
+            self.change_times = numpy.append(self.change_times,ctime)
+        else:
+            self.change_times = numpy.delete(numpy.append(self.change_times,ctime),0)
+        
+        self.change_times_display = self.change_times# (self.change_times-self.change_times[0])[::-1]
+        
+        #with numpy.printoptions(precision=20):
+        #    #(precision=10)floatmode = 'maxprec',,suppress=True
+        #    print (self.change_times)
+        
+        
+        
 
-        
-        
     @pyqtSlot(float)
     def _update_Temp(self,Temp):
         MAXLENGTH = 150
@@ -260,8 +286,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.Temps = numpy.append(self.Temps,Temp)
         else:
             self.Temps = numpy.delete(numpy.append(self.Temps,Temp),0)
-        times = numpy.arange(len(self.Temps),0,-1)
-        self.Temp_view.plt.setData(x=times, y=self.Temps)#, pen=(1,3))
+        #times = numpy.arange(len(self.Temps),0,-1)
+        self.Temp_view.plt.setData(x=self.change_times_display, y=self.Temps)#, pen=(1,3))
 
     @pyqtSlot(float)
     def _update_Heat(self,Heat):
@@ -270,8 +296,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.Heats = numpy.append(self.Heats,Heat)
         else:
             self.Heats = numpy.delete(numpy.append(self.Heats,Heat),0)
-        times = numpy.arange(len(self.Heats),0,-1)
-        self.Heat_view.plt.setData(times, self.Heats)#, pen=(1,3))
+        #times = numpy.arange(len(self.Heats),0,-1)
+        self.Heat_view.plt.setData(self.change_times_display, self.Heats)#, pen=(1,3))
 
     @pyqtSlot(float)
     def _update_Error(self,Error):
@@ -281,20 +307,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.Errors=numpy.delete(numpy.append(self.Errors,Error),0)
 
-        times = numpy.arange(len(self.Errors),0,-1)
+        #times = numpy.arange(len(self.Errors),0,-1)
         
-        self.Error_view.plt.setData(times, self.Errors)
+        self.Error_view.plt.setData(self.change_times_display, self.Errors)
 
     @pyqtSlot(float)
     def _update_R(self,R):
         self.R_field.setValue(R)
-        
+    """    
     def _update_gui_values(self,T,R,Heat,Tctrl):
         self.T_field.setValue(T)
         self.R_field.setValue(R)
         self.H_field.setValue(Heat*1e6)
         #self.newT_SpinBox.setValue(Tctrl)
-    
+    """
 class TextDisplay(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(TextDisplay, self).__init__(parent)
@@ -307,6 +333,8 @@ class TextDisplay(QtGui.QMainWindow):
         
 # Main entry to program.  Sets up the main app and create a new window.
 def main(argv):
+    import argparse
+    import configparser
     # some configuration boilerplate
     data = DATA()
     parser = argparse.ArgumentParser(

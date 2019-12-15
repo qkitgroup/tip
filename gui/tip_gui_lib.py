@@ -5,21 +5,14 @@ Created on Tue Mar 31 21:59:44 2015
 @author: hrotzing
 """
 from threading import Thread
-from time import sleep
-
+from time import sleep, time
 from lib.tip_zmq_client_lib import context, get_config, get_device, get_param, set_param, set_exit
-
-
 from PyQt5.QtCore import  QObject, pyqtSignal
 
 class DATA(object):
-    #REMOTEHOST = "localhost"
-    #REMOTEPORT = 9999
-    UpdateInterval = 2
     DEBUG = False
     wants_abort = True
     Thermometer = None
-
 
 def logstr(logstring):
     print(str(logstring))
@@ -30,21 +23,24 @@ class Error(Exception):
     def __str__(self):
         return repr(self.value)
 
-        
+
+
 class AcquisitionThread(Thread,QObject):
     """ Acquisition loop. This is the worker thread that retrieves info ...
     """
-    T_sig   = pyqtSignal(float)
-    H_sig   = pyqtSignal(float)
-    E_sig   = pyqtSignal(float)
-    R_sig   = pyqtSignal(float)
-    C_T_sig = pyqtSignal(float)
-    P_sig   = pyqtSignal(float)
-    I_sig   = pyqtSignal(float)
-    D_sig   = pyqtSignal(float)
-    Int_sig = pyqtSignal(float)
-    DR_sig   = pyqtSignal(float)
-    DE_sig   = pyqtSignal(float)
+    ctime_sig = pyqtSignal(float)
+    T_sig     = pyqtSignal(float)
+    H_sig     = pyqtSignal(float)
+    E_sig     = pyqtSignal(float)
+    R_sig     = pyqtSignal(float)
+    C_T_sig   = pyqtSignal(float)
+    P_sig     = pyqtSignal(float)
+    I_sig     = pyqtSignal(float)
+    D_sig     = pyqtSignal(float)
+    Int_sig   = pyqtSignal(float)
+    DR_sig    = pyqtSignal(float)
+    DE_sig    = pyqtSignal(float)
+
     def __init__(self,DATA):
         Thread.__init__(self)
         QObject.__init__(self)
@@ -78,6 +74,7 @@ class AcquisitionThread(Thread,QObject):
         """
         R=0
         Heat =0
+        old_ctime = 0
 
         self.display('Start')
                 
@@ -85,6 +82,7 @@ class AcquisitionThread(Thread,QObject):
             # get state
             
             thermometer_data = get_device(self.data.thermometer)
+            ctime    = float(thermometer_data["change_time"])
             T        = float(thermometer_data["temperature"])
             Heat     = float(thermometer_data["heating_power"])
             pidE     = float(thermometer_data["control_error"])
@@ -98,24 +96,71 @@ class AcquisitionThread(Thread,QObject):
             DE       = int(thermometer_data["device_excitation"])
             interval = float(thermometer_data['interval'])
 
-            self.T_sig.emit(T)
-            self.H_sig.emit(Heat)
-            self.E_sig.emit(pidE)
-            self.R_sig.emit(R)
-            self.C_T_sig.emit(C_T)
-            self.P_sig.emit(P)
-            self.I_sig.emit(I)
-            self.D_sig.emit(D)
-            self.DR_sig.emit(DR)
-            self.DE_sig.emit(DE)
-            self.Int_sig.emit(interval)
+            # new data ?
+            if not (ctime == old_ctime):
+                self.ctime_sig.emit(ctime)
+                self.T_sig.emit(T)
+                self.H_sig.emit(Heat)
+                self.E_sig.emit(pidE)
+                self.R_sig.emit(R)
+                self.C_T_sig.emit(C_T)
 
-            #sleep(self.data.UpdateInterval)
-            
+                self.P_sig.emit(P)
+                self.I_sig.emit(I)
+                self.D_sig.emit(D)
+
+                self.DR_sig.emit(DR)
+                self.DE_sig.emit(DE)
+                self.Int_sig.emit(interval)
+        
+                old_ctime  = ctime
+
             # make sure the gui stays reponsive, 3 s max delay. 
             if interval > 3: 
                 interval = 3
-            sleep(interval)
+            sleep(interval*0.9)
+
+            #print(time())
             
             
         self.display('Connection stopped')
+
+
+from gui.main import gui_signals, abort
+class MonitorTIPDevice(Thread):
+    def __init__(self,device,parameter):
+        Thread.__init__(self)
+        self.device    = device
+        self.parameter = parameter
+
+        self.change_time_signal   = pyqtSignal(float)
+        self.interval_signal      = pyqtSignal(float)
+        self.param_signal         = pyqtSignal(float)
+        gui_signals[device]       = {'interval_signal':self.interval_signal, 
+                                     'change_time_signal':self.change_time_signal, 
+                                     'param_signal':self.param_signal}
+        
+
+    def run(self):
+        ctime = 0
+        while not abort:
+
+            ctime    = float(get_param(self.device, 'change_time'))
+            interval = float(get_param(self.device, 'interval'))
+            param    = float(get_param(self.device, self.parameter))
+
+            if not (ctime == old_ctime):
+                old_ctime  = ctime
+                self.change_time_signal.emit(ctime)
+                self.interval_signal.emit(interval)
+                self.param_signal.emit(param)
+            #stay responsive
+            if interval > 3: 
+                interval = 3
+            sleep(interval*0.9)
+
+if __name__ == "__main__":
+
+    tip_device = MonitorTIPDevice('mxc','temperature')
+    tip_devics.start()
+
