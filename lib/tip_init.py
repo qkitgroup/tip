@@ -34,10 +34,10 @@ def setup_logging(config):
     
 
     #set loglevel from config
-    LLC = getattr(logging,config['system'].get("loglevel_console",'INFO').upper())
-    LLF = getattr(logging,config['system'].get("loglevel_file",'INFO').upper())
-    logging.info ("loglevel console: "+ config['system'].get("loglevel_console",'INFO'))
-    logging.info ("loglevel file: "+config['system'].get("loglevel_file",'INFO'))
+    LLC = getattr(logging,config['system'].get("loglevel_console",'WARNING').upper())
+    LLF = getattr(logging,config['system'].get("loglevel_file",'WARNING').upper())
+    logging.info ("loglevel console: "+ config['system'].get("loglevel_console",'WARNING'))
+    logging.info ("loglevel file: "+config['system'].get("loglevel_file",'WARNING'))
     consoleLogger.setLevel(LLC)
     fileLogger.setLevel(LLF)
 
