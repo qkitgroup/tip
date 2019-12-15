@@ -81,7 +81,8 @@ _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'calibration_active':_boolean,
                 'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
                 'control_channel':_int,
-                'interval':float, 'device_integration_time':float, 'delay':float,'timeout':float,
+                'interval':float, 'change_time':float,
+                'device_integration_time':float, 'delay':float,'timeout':float,
                 'control_resistor':float, 'control_default_heat':float,
                 'control_p':float, 'control_i':float, 'control_d':float,
                 'version':float,
@@ -128,10 +129,13 @@ def convert_to_dict(cp_conf): # config parser results
             
         config[inst] = params
     # add an system internal area with a few defaults
-    config['system'] = {
-            'version': 1.5,
-            'abort': False,
-    }
+    if config['system']:
+        config['system']['abort'] = False
+    else:
+        config['system'] = {
+                'version': 1.5,
+                'abort': False,
+        }
     return config
 
 

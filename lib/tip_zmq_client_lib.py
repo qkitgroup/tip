@@ -1,7 +1,7 @@
 #
+#  a set of convenient functions to talk to a TIP server.  
 #   
-#   
-#   Sends "Hello" to server, expects "World" back
+#  
 #
 
 import zmq

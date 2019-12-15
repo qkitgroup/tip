@@ -142,9 +142,14 @@ def set_param_handler(section,params):
 
     if param in section.keys():
         section[param] = value
+        if param in ["active"]:
+            activate_handler(section,param)
         return (section[param])
     else:
         return ("Error: parameter not recognized! "+param)
+
+def activate_handler(section,param):
+    pass
 
 def exit_handler(config):
     

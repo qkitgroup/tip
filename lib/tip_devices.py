@@ -3,6 +3,7 @@
 # thermomenter, data loging, etc.
 # written for TIP 2.0 by HR@KIT 2019 
 from math import log10
+import time
 import logging
 from lib.tip_config import config, device_instances, _types_dict
 from lib.tip_eich import TIPEich
@@ -18,6 +19,7 @@ class device(object):
         #self._execute_func = self._hollow_func
         self.scheduler = None
         #self.abort = False
+        config[name]['change_time'] = 0
 
     def _hollow_func(self):
         # dummy 
@@ -36,29 +38,24 @@ class device(object):
 
 
         if not config[self.name]['active']: return
+
+        # this function does the heavy lifting 
         self._execute_func()
+
         # if abort is changed while _execute_func() is running, it would need another cycle, thus: 
         if not config[self.name]['active']: return  
+
         # recursive hook into the scheduler queue:
         self.scheduler.enter(config[self.name]['interval'], 
             self.schedule_priority, 
             self.schedule)
-
-# class backend(device):
-#     def __init__(self,name):
-#         super(backend, self).__init__(name)
-#         config[name]['last_error'] = ""
-#         _types_dict['last_error'] = str
-
-#     def _execute_func():
-#         print("func <- executed!")
-#         print(self.name)
         
-
+# the thermometer class is thermometer specific, probably one of the few places in the entire code. 
 class thermometer(device):
     def __init__(self,name):
         super(thermometer, self).__init__(name)
         logging.info("init thermometer:"+ name)
+
         #
         # update the configuration with temperature specific items
         # 
@@ -73,7 +70,6 @@ class thermometer(device):
         #
         # make the item types known
         # 
-
         _types_dict['temperature'] = float
         _types_dict['control_temperature'] = float
         _types_dict['resistance'] = float
@@ -99,7 +95,6 @@ class thermometer(device):
         #
         # create a pid controller for the thermomenter
         #
-
         self.control = pidcontrol(name)
 
         #
@@ -125,9 +120,10 @@ class thermometer(device):
             T = self.calibration.get_T_from_R(Cal_R)
             config[self.name]['temperature'] = T
             logging.info (self.name + "\t T: %.05f K"% (T))
+            logging.debug("hi there")
 
-            if config[self.name]['control_active']:
-                print('entered control part')
+            if config[self.name]['control_active'] and config[config[self.name]['control_device']]['active']:
+                logging.debug('entered control part')
                 new_heat_value = self.control.get_new_heat_value(T)
                 
                 logging.debug(self.control_device.get_idn())
@@ -136,4 +132,9 @@ class thermometer(device):
                 
                 config[self.name]['heating_power'] = new_heat_value
                 logging.info('%s Heat: %.02f uW'%(self.name, new_heat_value*1e6))
+        
+        #
+        # update the modification timestamp
+        #
 
+        config[self.name]['change_time'] = time.time()

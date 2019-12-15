@@ -11,7 +11,7 @@ from lib.tip_zmq_server import srv_thread
 
 import devices.DriverTemplate_Bridge
 
-def setup_logging():
+def setup_logging(config):
     # everything is relative to the tip directory in the  moment: note the access rights
     tip_root_dir = os.path.split(tip.__file__)[0]
     format_str = "%(asctime)s %(levelname)-8s: %(message)s (%(filename)s:%(lineno)d)"
@@ -31,20 +31,27 @@ def setup_logging():
 
     consoleLogger = logging.StreamHandler()
     consoleLogger.setFormatter(formatter)
+    
+
+    #set loglevel from config
+    LLC = getattr(logging,config['system'].get("loglevel_console",'INFO').upper())
+    LLF = getattr(logging,config['system'].get("loglevel_file",'INFO').upper())
+    logging.info ("loglevel console: "+ config['system'].get("loglevel_console",'INFO'))
+    logging.info ("loglevel file: "+config['system'].get("loglevel_file",'INFO'))
+    consoleLogger.setLevel(LLC)
+    fileLogger.setLevel(LLF)
+
     fileLogger.addHandler(consoleLogger)
 
-    fileLogger.setLevel(logging.INFO)
-    consoleLogger.setLevel(logging.DEBUG)
-
 def load_instruments(config):
-    # load instruments first, since some devices, e.g. a thermometer depend on it. 
+    # load instruments first, since some devices, e.g. thermometers, depend on it. 
     # 
     logging.info("Config: Found defined instruments: "+str(config['system']['defined_instruments']))
     logging.info("Config: Active instruments: "+str(config['system']['active_instruments']))
     
     for inst in config['system']['active_instruments']:
         logging.info("loading driver for: "+inst)
-        #obj = importlib.import_module(config[inst]['device'],package = 'devices')
+        # load the module
         backend = importlib.import_module("devices."+config[inst]['device'])
         device_instances[inst] = backend.driver(inst)
 
@@ -57,8 +64,10 @@ def load_thermometers(config):
     for therm in config['system']['active_thermometers']:
         device_instances[therm] = thermometer(therm)
         device_instances[therm].backend = device_instances[config[therm]["device"]]
-        if config[therm]["control_device"]:
-            device_instances[therm].control_device = device_instances[config[therm]["control_device"]]
+        if config[therm]["control_device"]: 
+            # is the device active ?
+            if config[config[therm]["control_device"]]['active']:
+                device_instances[therm].control_device = device_instances[config[therm]["control_device"]]
         logging.info("add thermometer to scheduler: "+therm)
         tip_sched.add_thermometer(device_instances[therm])
 
@@ -69,7 +78,7 @@ def tip_init (settings_file = "settings_local.cfg"):
     
     config = convert_to_dict(load_config(settings_file))
 
-    setup_logging()
+    setup_logging(config)
 
     update_active_devices(config)
 

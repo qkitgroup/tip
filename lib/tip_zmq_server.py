@@ -11,6 +11,7 @@ from lib.tip_srv_lib import parse_request
 
 def serve_requests ():
     context = zmq.Context()
+    
     # FIXME: authentication is not working in the moment
     #auth = ThreadAuthenticator(context)
     #auth = Authenticator(context)
@@ -37,7 +38,7 @@ def serve_requests ():
 def srv_thread():
     thread = threading.Thread( target = serve_requests, args = () )
     thread.start()
-    time.sleep(10)
+
     
 
 
@@ -46,3 +47,4 @@ if __name__ == "__main__":
     config = convert_to_dict(load_config())
     #serve_requests()
     srv_thread()
+    time.sleep(10)
