@@ -14,34 +14,35 @@ import devices.DriverTemplate_Bridge
 def setup_logging(config):
     # everything is relative to the tip directory in the  moment: note the access rights
     tip_root_dir = os.path.split(tip.__file__)[0]
-    format_str = "%(asctime)s %(levelname)-8s: %(message)s (%(filename)s:%(lineno)d)"
-    logging.basicConfig(
-        filename=os.path.join(tip_root_dir,config['system'].get('logdir','logs'), 
-                                    strftime('tip_%Y%m%d_%H%M%S.log')),
-        format=format_str,
-        datefmt='%Y-%m-%d %H:%M:%S', 
-        level=logging.INFO,
-        filemode='a+'
-        )
-    
-
-    fileLogger = logging.getLogger()
-    formatter = logging.Formatter(format_str)
-    logging.info(' ---------- LOGGING STARTED ---------- ')
-
-    consoleLogger = logging.StreamHandler()
-    consoleLogger.setFormatter(formatter)
-    
 
     #set loglevel from config
     LLC = getattr(logging,config['system'].get("loglevel_console",'WARNING').upper())
     LLF = getattr(logging,config['system'].get("loglevel_file",'WARNING').upper())
-    logging.info ("loglevel console: "+ config['system'].get("loglevel_console",'WARNING'))
-    logging.info ("loglevel file: "+config['system'].get("loglevel_file",'WARNING'))
-    consoleLogger.setLevel(LLC)
-    fileLogger.setLevel(LLF)
 
-    fileLogger.addHandler(consoleLogger)
+    format_str = "%(asctime)s %(levelname)-8s: %(message)s (%(filename)s:%(lineno)d)"
+    
+    logging.basicConfig( 
+        level=logging.DEBUG,
+        format=format_str,
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    formatter = logging.Formatter(format_str)
+    
+    log = logging.getLogger()
+    FileLogger = logging.FileHandler(filename=os.path.join(tip_root_dir,config['system'].get('logdir','logs'), 
+                                    strftime('tip_%Y%m%d_%H%M%S.log')),mode='a+')
+    FileLogger.setFormatter(formatter)
+    log.addHandler(FileLogger)
+
+    logging.info(' ---------- LOGGING STARTED ---------- ')
+    logging.info("loglevel console: "+ config['system'].get("loglevel_console",'WARNING'))
+    logging.info("loglevel file: "+config['system'].get("loglevel_file",'WARNING'))
+
+    FileLogger.setLevel(LLF)
+    log.setLevel(LLC)
+
+
+    
 
 def load_instruments(config):
     # load instruments first, since some devices, e.g. thermometers, depend on it. 
