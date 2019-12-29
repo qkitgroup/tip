@@ -15,8 +15,22 @@ socket = context.socket(zmq.REQ)
 #socket = None
 
 def setup_connection(url="tcp://localhost:5000"):
-    print("Connecting to TIP server…")
+    print("Connecting to TIP server" +str(url))
+    socket.setsockopt(zmq.RCVTIMEO,1000) # wait no longer than a second to fail.
+    socket.setsockopt(zmq.LINGER,0)
     socket.connect(url)
+    try:
+        # make sure auth has worked ...
+        # check IP configuration if it fails here
+        socket.send_string("/ping")
+        message = socket.recv_string()
+        if message == "pong": 
+            return True
+        else: 
+            return False
+    except zmq.error.Again:
+        print("ERROR: Server not available or auth failed!")
+        return False
 
 def close_connection():
     print("Closing connection to TIP server…")
@@ -67,8 +81,9 @@ def test_speed():
 
 
 if __name__ == "__main__":
-
-    #test_speed()
-    #print(timeit.timeit("test_speed()",setup="from __main__ import test_speed",number = 100))
-    print(get_devices())
-    print(get_param("mxc","control_resistor"))
+    import sys
+    if setup_connection(url=sys.argv[1]):
+        #test_speed()
+        #print(timeit.timeit("test_speed()",setup="from __main__ import test_speed",number = 100))
+        print(get_devices())
+        print(get_param("mxc","temperature"))
