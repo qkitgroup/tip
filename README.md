@@ -23,8 +23,9 @@ Installation:
 ===
   * requrements: a recent python3 installation with scipy and zmq. Some drivers need extra modules.
   * clone TIP to an appropriate directory
-  * copy //settings.cfg// to //settings_local.cfg// and make changes there
-  * start the tip server by changing into the tip directory and //python3 tip.py//
+  * copy *settings.cfg* to *settings_local.cfg* and make changes there
+  * start the tip server by changing into the tip directory and *python3 tip.py*
+
 
 Authors:
 ===
