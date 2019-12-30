@@ -15,7 +15,7 @@ socket = context.socket(zmq.REQ)
 #socket = None
 
 def setup_connection(url="tcp://localhost:5000"):
-    print("Connecting to TIP server" +str(url))
+    print("Connecting to TIP server " +str(url))
     socket.setsockopt(zmq.RCVTIMEO,1000) # wait no longer than a second to fail.
     socket.setsockopt(zmq.LINGER,0)
     socket.connect(url)

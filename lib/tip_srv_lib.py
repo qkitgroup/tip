@@ -52,6 +52,8 @@ def parse_request(request):
         return (config['system']['version'])
     elif 'c' in cmd[0] or 'config' in cmd:
         return(json.dumps(config,indent=2,sort_keys=True))
+    elif 'p' in cmd[0] or 'ping' in cmd:
+        return "pong"
     elif 'm' in cmd[0] or 'macro' in cmd:
         return ""
     elif 'exit' in cmd:
