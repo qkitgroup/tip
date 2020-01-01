@@ -5,9 +5,7 @@
 
 tip
 ===
-TIP is a program to monitor and regulate complex machines. 
-
-TIP was developed having low temperature cryostates in mind, but is not limited to this.
+TIP is a program to monitor and regulate complex machines and was developed having a low temperature cryostate in mind. It is, however, not limited to that.
 
 Features:
 ===
@@ -16,15 +14,17 @@ Features:
   * PID control of the temperature
   * several drivers for resistance bridges
   * easy use of calibration tables
-  * entirely written in python, only few external dependencies.
+  * integrates well with QKIT
   * GUI for display and control of the temperatures
+  * entirely written in python, only few external dependencies.
 
 Installation:
 ===
-  * requrements: a recent python3 installation with scipy and zmq. Some drivers need extra modules.
+  * requrements: A recent python3 installation with *scipy* and *zmq*, the gui is based on *pyqt5* and *pyqtgraph*.
+  * some drivers need extra modules
   * clone TIP to an appropriate directory
   * copy *settings.cfg* to *settings_local.cfg* and make changes there
-  * start the tip server by changing into the tip directory and *python3 tip.py*
+  * start the tip server by changing into the tip directory and execute *python3 tip.py*
 
 
 Authors:

@@ -5,7 +5,7 @@ from time import strftime
 import importlib
 import tip
 from lib.tip_config import config, device_instances, load_config, convert_to_dict, update_active_devices
-from lib.tip_devices import device, thermometer
+from lib.tip_devices import device, thermometer, generic_device
 from lib.tip_scheduler import tip_scheduler
 from lib.tip_zmq_server import srv_thread 
 
@@ -43,7 +43,6 @@ def setup_logging(config):
 
 
 
-    
 
 def load_instruments(config):
     # load instruments first, since some devices, e.g. thermometers, depend on it. 
@@ -57,8 +56,8 @@ def load_instruments(config):
         backend = importlib.import_module("devices."+config[inst]['device'])
         device_instances[inst] = backend.driver(inst)
 
-def load_thermometers(config):
-    tip_sched  = tip_scheduler()
+def load_thermometers(config,tip_sched):
+    
     
     logging.info("Found thermometers: "+str(config['system']['defined_thermometers']))
     logging.info("Active thermometers: "+str(config['system']['active_thermometers']))
@@ -73,7 +72,29 @@ def load_thermometers(config):
         logging.info("add thermometer to scheduler: "+therm)
         tip_sched.add_thermometer(device_instances[therm])
 
-    tip_sched.run()
+    
+
+def load_generic_devices(config,tip_sched):
+    
+    
+    logging.info("Found generic devices: "+str(config['system']['defined_generic_devices']))
+    logging.info("Active generic devices: "+str(config['system']['active_generic_devices']))
+    
+    for device in config['system']['active_generic_devices']:
+        device_instances[device] = generic_device(device)
+        device_instances[device].backend = device_instances[config[device]["device"]]
+        """
+        if config[device]["control_device"]: 
+            # is the device active ?
+            if config[config[device]["control_device"]]['active']:
+                device_instances[device].control_device = device_instances[config[device]["control_device"]]
+        """
+        logging.info("add thermometer to scheduler: "+device)
+        tip_sched.add_device(device_instances[device])
+
+   
+
+    
 
     
 def tip_init (settings_file = "settings_local.cfg"):
@@ -88,8 +109,13 @@ def tip_init (settings_file = "settings_local.cfg"):
 
     load_instruments(config)
     
-    load_thermometers(config)
+    tip_sched  = tip_scheduler()
 
+    load_thermometers(config,tip_sched)
+
+    load_generic_devices(config,tip_sched)
+
+    tip_sched.run()
     #logging.info("Configuration at startup:"+config.dump_json())
     #print(device_instances.items())
 

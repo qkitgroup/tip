@@ -86,7 +86,7 @@ _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'control_resistor':float, 'control_default_heat':float,
                 'control_p':float, 'control_i':float, 'control_d':float,
                 'version':float,
-                'type':str, 'device':str, 'description':str, 'com_method':str, 'address':str, 'url':str,'gpib':str,
+                'type':str, 'device':str, 'device_uid':str, 'description':str, 'com_method':str, 'address':str, 'url':str,'gpib':str,
                 'control_device':str,
                 'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
                 'calibration_file_order':str, 'calibration_key_format':str
@@ -148,19 +148,22 @@ def update_active_devices(config):
     # 
     config['system']['defined_instruments'] = []
     config['system']['defined_thermometers'] = []
+    config['system']['defined_generic_devices'] = []
+
     config['system']['active_instruments'] = []
     config['system']['active_thermometers'] = []
+    config['system']['active_generic_devices'] = []
+
     DI = config['system']['defined_instruments']
     DT = config['system']['defined_thermometers']
+    DD = config['system']['defined_generic_devices']
+
     AI = config['system']['active_instruments']
     AT = config['system']['active_thermometers']
+    AD = config['system']['active_generic_devices']
 
     for inst in config.keys():
-        if config[inst].get("type","") == "bridge":
-            DI.append(inst)
-            if config[inst].get("active",False):
-                AI.append(inst)
-        if config[inst].get("type","") == "heater":
+        if config[inst].get("type","") == "instrument":
             DI.append(inst)
             if config[inst].get("active",False):
                 AI.append(inst)
@@ -168,7 +171,10 @@ def update_active_devices(config):
             DT.append(inst)
             if config[inst].get("active",False):
                 AT.append(inst)
-
+        if config[inst].get("type",False) in ["hygrometer","scale"]:
+            DD.append(inst)
+            if config[inst].get("active",False):
+                AD.append(inst)
 
 
 

@@ -120,7 +120,7 @@ class thermometer(device):
             T = self.calibration.get_T_from_R(Cal_R)
             config[self.name]['temperature'] = T
             logging.info (self.name + "\t T: %.05f K"% (T))
-            logging.debug("hi there")
+            
 
             if config[self.name]['control_active'] and config[config[self.name]['control_device']]['active']:
                 logging.debug('entered control part')
@@ -133,6 +133,93 @@ class thermometer(device):
                 config[self.name]['heating_power'] = new_heat_value
                 logging.info('%s Heat: %.02f uW'%(self.name, new_heat_value*1e6))
         
+        #
+        # update the modification timestamp
+        #
+
+        config[self.name]['change_time'] = time.time()
+
+
+# misc_device. 
+class generic_device(device):
+    def __init__(self,name):
+        super(generic_device, self).__init__(name)
+        logging.info("init generic device:"+ name)
+        self.measure_property = config[name]['property']
+        #
+        # update the configuration with 'property' specific items
+        # 
+        
+
+        config[name][self.measure_property] = 0
+        config[name]['sys_error'] = ""
+
+        #
+        # make the item types known
+        # 
+        
+        _types_dict[self.measure_property] = float
+        _types_dict['sys_error'] = str
+
+        """
+        #
+        # create a calibration object for the thermomenter
+        #
+        if config[name].get('calibration_active',False):
+            self.calibration = TIPEich(
+                config[name]['calibration_description'],
+                config[name]['calibration_file'],
+                config[name]['calibration_file_order'],
+                config[name]['calibration_interpolation'])
+
+            self.cal_key_formats = {}
+            self.cal_key_formats['R'] = lambda R: R
+            self.cal_key_formats['log10R'] = log10
+
+        #
+        # create a pid controller for the thermomenter
+        #
+        self.control = pidcontrol(name)
+
+        #
+        # Fixme missing: backend(R-Bridge), heater
+        #
+        """
+
+    def _execute_func(self):
+        " This function gets periodically called by the scheduler "
+
+        logging.debug("_execute_func called for "+self.name)
+        
+        self.backend.set_channel(     config[self.name]['device_channel'])
+        self.backend.set_excitation(  config[self.name]['device_excitation'])
+        self.backend.set_integration( config[self.name]['device_integration_time'])
+        
+        value = getattr(self.backend,"get_"+self.measure_property)()
+
+        config[self.name][self.measure_property]  = value
+        logging.info (self.name + "\t %s: %.01f "% (self.measure_property,value))
+
+        """
+        if config[name].get('calibration_active',False):
+            Cal_R = self.cal_key_formats[config[self.name]['calibration_key_format']](R)
+            T = self.calibration.get_T_from_R(Cal_R)
+            config[self.name]['temperature'] = T
+            logging.info (self.name + "\t T: %.05f K"% (T))
+            
+
+            if config[self.name]['control_active'] and config[config[self.name]['control_device']]['active']:
+                logging.debug('entered control part')
+                new_heat_value = self.control.get_new_heat_value(T)
+                
+                logging.debug(self.control_device.get_idn())
+                self.control_device.set_heater_channel(config[self.name]['control_channel'])
+                self.control_device.set_heater_power(new_heat_value)
+                
+                config[self.name]['heating_power'] = new_heat_value
+                logging.info('%s Heat: %.02f uW'%(self.name, new_heat_value*1e6))
+        """
+
         #
         # update the modification timestamp
         #
