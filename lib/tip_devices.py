@@ -31,7 +31,7 @@ class device(object):
         """
         This function is called recursively with schedule_periode delays 
         from the scheduler. The scheduler is called after execute_func has been executed again, 
-        which means that the total preiode is schedule_periode+duration_of(execute_func).
+        which means that the total periode is schedule_periode+duration_of(execute_func).
         """
         logging.debug("\nexec schedule() for " + self.name)
         logging.debug(self.name +" "+str(config[self.name]['interval']))

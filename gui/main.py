@@ -1,13 +1,8 @@
 # tip regulation gui / HR@KIT 2011 - 2019
 
-
-
 import sys
 import numpy
 
-# make it pyqt5 only ...
-#from PyQt4.QtCore import *
-#from PyQt4.QtGui import *
 from PyQt5.QtCore import * #Qt, QObject
 from PyQt5.QtWidgets import * # QApplication
 from PyQt5 import QtGui
@@ -22,6 +17,7 @@ from gui.tip_gui_cover import Ui_MainWindow
 from lib.tip_zmq_client_lib import setup_connection, close_connection, get_config, get_param, set_param, set_exit
 
 gui_signals = {}
+
 abort = False
 
 class MainWindow(QMainWindow, Ui_MainWindow):

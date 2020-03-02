@@ -29,7 +29,7 @@ def catch_tip(getit):
             return getit(*args)
         except zmq.error.ZMQError as e:
             print("ZMQError: "+str(e))
-            return "NaN"
+            return 0
     return getfunc
 
 get_param=catch_tip(get_param)
