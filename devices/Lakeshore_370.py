@@ -38,7 +38,7 @@ def driver(name):
     return LS
 
 class Lakeshore_37X(object):
-    def __init__(self, name, address, gpib="gpib::12", delay=0.2, timeout = 1, **kwargs):
+    def __init__(self, name, address, gpib="gpib::12", delay=0.1, timeout = 1, **kwargs):
 
 
         self._visa = visa.instrument(
@@ -169,7 +169,7 @@ class Lakeshore_37X(object):
         current_channel = self.get_channel()
         if current_channel == channel:
             # do nothing
-            return
+            pass
         else:
             logging.debug('Set channel to {:d}.'.format(channel))
             self._visa.write('SCAN {:d},{:d}'.format(channel, self._autoscan))
@@ -301,7 +301,7 @@ class Lakeshore_37X(object):
         resistance: float
             Resistance of the thermometer.
         """
-        if self._integration_time is not 0 :
+        if self._integration_time  > 0 :
             
             channel = self.get_channel()
             time.sleep(0.1)
@@ -560,7 +560,6 @@ class Lakeshore_37X(object):
             '2 Ohm',
             '6.32 Ohm',
             '20 Ohm',
-            '63.2', 
             '63.2 Ohm',
             '200 Ohm',
             '632 Ohm',
@@ -681,8 +680,8 @@ class Lakeshore_37X(object):
 if __name__ == "__main__":
     LS=Lakeshore_37X("LS370", "10.22.197.62")
     
-    scan_mode = False
-    fast_mode = True
+    scan_mode = True
+    fast_mode = False
 
     if scan_mode :
         for loop in range(10):
