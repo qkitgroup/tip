@@ -301,7 +301,7 @@ class Lakeshore_37X(object):
         resistance: float
             Resistance of the thermometer.
         """
-        if self._integration_time  > 0 :
+        if self._integration_time  > 1 :
             
             channel = self.get_channel()
             time.sleep(0.1)
@@ -343,6 +343,9 @@ class Lakeshore_37X(object):
 
         channel = self.get_channel()
         status, settle_time, window = self._get_filter(channel)
+        logging.debug('Settling time from bridge: %f'%(settle_time))
+        if integration < 1:
+            integration = 1
 
         if settle_time == integration:
             # do nothing
