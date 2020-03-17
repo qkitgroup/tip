@@ -55,16 +55,7 @@
          <string>Temperature</string>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>0</number>
          </property>
          <property name="spacing">
@@ -256,16 +247,7 @@
          <bool>false</bool>
         </property>
         <layout class="QGridLayout" name="gridLayout_3">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>0</number>
          </property>
          <property name="spacing">
@@ -365,7 +347,7 @@
             <string> W</string>
            </property>
            <property name="decimals">
-            <number>4</number>
+            <number>6</number>
            </property>
           </widget>
          </item>
@@ -548,6 +530,22 @@
    <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>P_SpinBox</tabstop>
+  <tabstop>I_SpinBox</tabstop>
+  <tabstop>D_SpinBox</tabstop>
+  <tabstop>newT_SpinBox</tabstop>
+  <tabstop>excitationBox</tabstop>
+  <tabstop>Int_field</tabstop>
+  <tabstop>Thermometer_box</tabstop>
+  <tabstop>T_field</tabstop>
+  <tabstop>R_field</tabstop>
+  <tabstop>rangeBox</tabstop>
+  <tabstop>H_field</tabstop>
+  <tabstop>Temp_view</tabstop>
+  <tabstop>Heat_view</tabstop>
+  <tabstop>Error_view</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

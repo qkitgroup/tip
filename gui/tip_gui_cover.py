@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'gui/tip_gui_cover.ui'
+# Form implementation generated from reading ui file 'tip_gui_cover.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.3
+# Created by: PyQt5 UI code generator 5.14.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -149,7 +149,7 @@ class Ui_MainWindow(object):
         self.H_field.setFrame(False)
         self.H_field.setReadOnly(True)
         self.H_field.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-        self.H_field.setDecimals(4)
+        self.H_field.setDecimals(6)
         self.H_field.setObjectName("H_field")
         self.gridLayout_3.addWidget(self.H_field, 1, 4, 1, 1)
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -235,6 +235,19 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.P_SpinBox, self.I_SpinBox)
+        MainWindow.setTabOrder(self.I_SpinBox, self.D_SpinBox)
+        MainWindow.setTabOrder(self.D_SpinBox, self.newT_SpinBox)
+        MainWindow.setTabOrder(self.newT_SpinBox, self.excitationBox)
+        MainWindow.setTabOrder(self.excitationBox, self.Int_field)
+        MainWindow.setTabOrder(self.Int_field, self.Thermometer_box)
+        MainWindow.setTabOrder(self.Thermometer_box, self.T_field)
+        MainWindow.setTabOrder(self.T_field, self.R_field)
+        MainWindow.setTabOrder(self.R_field, self.rangeBox)
+        MainWindow.setTabOrder(self.rangeBox, self.H_field)
+        MainWindow.setTabOrder(self.H_field, self.Temp_view)
+        MainWindow.setTabOrder(self.Temp_view, self.Heat_view)
+        MainWindow.setTabOrder(self.Heat_view, self.Error_view)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
