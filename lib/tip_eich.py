@@ -120,7 +120,7 @@ class TIPEich(object):
 
 	def _getT_from_splined_R(self,R=1000):
 		""" returns value of spline interpolated fit """
-		return splev(R, self.R_T_sprep, der=0)
+		return splev(R, self.R_T_sprep, der=0, ext=3)  # ext=3 returns boundary value (ext=0 [default] extrapolates)
 
 	def get_T_from_R(self,R):
 		""" only function which should be called from outside """
