@@ -8,10 +8,11 @@
 
 import logging
 import time
-import devices.visa_prologix as visa
+#import devices.visa_prologix as visa
 import serial
 
-from lib.tip_config import config
+
+#from lib.tip_config import config
 
 
 def driver(name):
@@ -25,17 +26,21 @@ def driver(name):
     config[name]['device_excitations'] = LS.excitations
     return LS
 
+
 class Lakeshore_372(object):
     def __init__(self, name, port, delay=0.1, timeout = 1, **kwargs):
 
+                
+        self.serial_dev = serial.Serial()
+        self.serial_dev.baudrate = 57600
+        self.serial_dev.bytesize = serial.SEVENBITS
+        self.serial_dev.stopbits = serial.STOPBITS_ONE
+        self.serial_dev.parity   = serial.PARITY_ODD 
+        self.serial_dev.port     = port
+        self.serial_dev.open()
 
-
-        ser = serial.Serial()
-        ser.baudrate = 9600
-        ser.port = port
-        ser.open()
-
-        self._visa = ser
+        
+        #self._visa = ser
         # self._visa = visa.instrument(
         #     gpib, 
         #     ip = address, 
@@ -75,8 +80,8 @@ class Lakeshore_372(object):
         #
         # reset the bridge and wait 5 seconds
         #
-        self._visa.write("*RST")
-        time.sleep(5)
+        self.write("*RST")
+        time.sleep(3)
         #
         # Get the bridge version
         #
@@ -84,12 +89,12 @@ class Lakeshore_372(object):
         #
         # Enable status reporing
         #
-        self._visa.write("*SRE 92")
+        self.write("*SRE 92")
         #
         # update the event status register to report all
         # here the bridge appears to be buggy
         #
-        self._visa.write("*ESE 220")
+        self.write("*ESE 220")
         #
         # disable autoscan
         #
@@ -98,8 +103,22 @@ class Lakeshore_372(object):
         #
         # clear the message buffer
         #
-        self._visa.write("*CLS")
-        
+        self.write("*CLS")
+    
+    def write(self,string):
+        #print(string, flush = True)
+        string+='\n'
+        self.serial_dev.write(string.encode("ascii"))
+
+    def read(self):
+        readstr =  self.serial_dev.read_until()
+        #print(readstr.strip().decode(),flush  = True)
+        return (readstr.strip().decode()) 
+
+    def ask(self,string):
+        self.write(string)
+        time.sleep(0.05)
+        return self.read()
 
     def get_idn(self):
         """
@@ -116,7 +135,7 @@ class Lakeshore_372(object):
         """
         # Corresponding command: <manufacturer>,<model>,<serial>,<date>[term] = *IDN?[term]
         logging.debug('Get IDN.')
-        return self._visa.ask('*IDN?')
+        return self.ask('*IDN?')
         
 
     ####################################################################################################################
@@ -137,7 +156,7 @@ class Lakeshore_372(object):
             Number of channel that is connected to the thermometer.
         """
         # Corresponding command: <channel>,<autoscan>[term] = SCAN?[term]
-        channel, autoscan = self._visa.ask("SCAN?").split(",")
+        channel, autoscan = self.ask("SCAN?").split(",")
         channel = int(channel)
         logging.debug('Get current channel: {:d}'.format(channel))
         return channel
@@ -167,9 +186,9 @@ class Lakeshore_372(object):
             pass
         else:
             logging.debug('Set channel to {:d}.'.format(channel))
-            self._visa.write('SCAN {:d},{:d}'.format(channel, self._autoscan))
-            self._visa.write('*OPC')
-            time.sleep(4)
+            self.write('SCAN {:d},{:d}'.format(channel, self._autoscan))
+            self.write('*OPC')
+            time.sleep(5)
         self._channel = channel
 
     def get_excitation(self):
@@ -221,9 +240,9 @@ class Lakeshore_372(object):
             logging.debug('Set excitation of channel {!s} to {!s}.'
                 .format(self._channel, excitation))
         
-            self._visa.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
+            self.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
                 .format(channel, excitation_mode, excitation, r_range, autorange, cs_off))
-            self._visa.write('*OPC')
+            self.write('*OPC')
             time.sleep(3)
         
     
@@ -266,9 +285,9 @@ class Lakeshore_372(object):
 
         if r_range == -1:  # autorange
             autorange = 1
-            self._visa.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
+            self.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
                 .format(channel, excitation_mode, excitation, r_range, autorange, cs_off))
-            self._visa.write('*OPC')
+            self.write('*OPC')
             time.sleep(3)
 
         elif r_range == current_r_range:
@@ -277,9 +296,9 @@ class Lakeshore_372(object):
         else:
             logging.debug('Set range of channel {:d} to {:d} ({!s}).'
             .format(channel, r_range,self.resistance_ranges[r_range]))
-            self._visa.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
+            self.write('RDGRNG {:d},{:d},{:d},{:d},{:d},{:d}'
                 .format(channel, excitation_mode, excitation, r_range, autorange, cs_off))
-            self._visa.write('*OPC')
+            self.write('*OPC')
             time.sleep(3)
 
 
@@ -303,7 +322,7 @@ class Lakeshore_372(object):
 
             for i in range(10):
                 # query the event status register, with 000 the bridge should be settled enough
-                ESR = int(self._visa.ask("*ESR?"))
+                ESR = int(self.ask("*ESR?"))
                 if int(ESR):
                     time.sleep(1)
                 else:
@@ -313,11 +332,11 @@ class Lakeshore_372(object):
 
             # Corresponding command: <ohm value>[term] = RDGR? <channel>[term]
             logging.debug('Get resistance of channel {:d}.'.format(channel))
-            resistance = float(self._visa.ask('RDGR? {:d}'.format(channel)))
+            resistance = float(self.ask('RDGR? {:d}'.format(channel)))
         else:
             # 'fast mode'
             logging.debug('Get resistance of channel {:d}.'.format(self._channel))
-            resistance = float(self._visa.ask('RDGR? {:d}'.format(self._channel)))
+            resistance = float(self.ask('RDGR? {:d}'.format(self._channel)))
 
         return resistance
 
@@ -373,25 +392,25 @@ class Lakeshore_372(object):
             return self._integration
 
     def _get_autoscan(self):
-        channel, autoscan = self._visa.ask("SCAN?").split(",")
+        channel, autoscan = self.ask("SCAN?").split(",")
         return bool(int(autoscan))
 
     def _set_autoscan(self,status = False):
 
-        channel, autoscan = self._visa.ask("SCAN?").split(",")
+        channel, autoscan = self.ask("SCAN?").split(",")
 
-        self._visa.write('SCAN {:d},{:d}'.format(int(channel), int(status)))
+        self.write('SCAN {:d},{:d}'.format(int(channel), int(status)))
         
 
     def _get_channel_parameters(self):
         # get channel parameters for comparison
         
         # query channel first
-        channel, autoscan = self._visa.ask("SCAN?").split(",")
+        channel, autoscan = self.ask("SCAN?").split(",")
 
         # and then the parameter
         mode, excitation, r_range, autorange, cs_off = \
-            self._visa.ask("RDGRNG? %s"%(channel)).split(",")
+            self.ask("RDGRNG? %s"%(channel)).split(",")
         # where 
         # mode [0: voltage excitation | 1:current excitation]
         # autorange [0: off | 1: on]
@@ -400,7 +419,7 @@ class Lakeshore_372(object):
 
         # and input scan parameters (unused)
         #onoff, dwell, pause, curveno, tempco = \
-        #    self._visa.ask("INSET? %s"%(channel)).split(",")
+        #    self.ask("INSET? %s"%(channel)).split(",")
         # where
         # ...
 
@@ -413,18 +432,18 @@ class Lakeshore_372(object):
 
     def _get_status_byte(self,channel):
         #channel = self.get_channel()
-        return (self._visa.ask("RDGST? %s"%(channel)))
+        return (self.ask("RDGST? %s"%(channel)))
 
     def _get_filter(self,channel):
         status, settle_time, window = \
-        self._visa.ask('FILTER? {:d}'.format(channel)).split(',')
+        self.ask('FILTER? {:d}'.format(channel)).split(',')
         return bool(int(status)), int(settle_time), int(window)
 
     def _set_filter(self, channel, status = True, settle_time = 5, window = 2 ):
 
         if self._get_filter(channel) != (status, settle_time, window):
-            self._visa.write('FILTER %d,%d,%d,%d'%(channel,int(status), settle_time, window))
-            self._visa.write('*OPC')
+            self.write('FILTER %d,%d,%d,%d'%(channel,int(status), settle_time, window))
+            self.write('*OPC')
             time.sleep(settle_time)
 
 
@@ -676,16 +695,19 @@ class Lakeshore_372(object):
 
 
 if __name__ == "__main__":
+    print ("debug start")
+
+
     LS=Lakeshore_372("LS372", "COM3")
     
     scan_mode = True
     fast_mode = False
-
+    print("IDN: %s"%(LS.idn))
     if scan_mode :
-        for loop in range(10):
-            print (loop)
+        for loop in range(3):
+            print ("loop %d"%(loop))
             for ch in [1,2,5,6]:
-                print(ch)
+                print("Channel: %d"%(ch))
                 LS.set_channel(ch)
                 LS.set_range(10)
                 LS.set_excitation(4)
@@ -703,7 +725,7 @@ if __name__ == "__main__":
         LS.set_integration(0)
         tm=time.time()
         for i in range(10):
-            print (LS.get_resistance())
+            print (LS.get_resistance(),flush = True)
         print (time.time()-tm)
         
 
