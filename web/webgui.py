@@ -5,21 +5,30 @@
 # start it with from the tip folder with tip running:
 # python gui/webgui.py 
 
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 from datetime import datetime, timezone
-
-from lib.tip_zmq_client_lib import setup_connection, get_param, get_device
 import zmq
-try:
-    setup_connection()
-    system = get_device('system')
-except zmq.error.ZMQError as e:
-    print("Error connecting to tip.py: "+str(e))
-    exit(1)
 
+#from lib.tip_zmq_client_lib import setup_connection, get_param, get_device
+from lib.tip_zmq_client_lib import TIP_clients
+
+from .webgui_settings_local import hostlist
+
+def connect_to_TIP_instances():
+    try:
+        TC = TIP_clients(hostlist[0])
+        #setup_connection(url="tcp://localhost:5000")
+        return TC
+    except zmq.error.ZMQError as e:
+        print("Error connecting to tip.py: "+str(e))
+        exit(1)
+
+TC = connect_to_TIP_instances()
+system = TC.get_device('system')
 output_elements = system['active_thermometers']
 #print(output_elements)
 
@@ -32,8 +41,8 @@ def catch_tip(getit):
             return 0
     return getfunc
 
-get_param=catch_tip(get_param)
-get_device=catch_tip(get_device)
+get_param=catch_tip(TC.get_param)
+get_device=catch_tip(TC.get_device)
 
 
 def generate_table(output_elements):

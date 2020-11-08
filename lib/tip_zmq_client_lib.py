@@ -79,6 +79,63 @@ def test_speed():
 
         #time.sleep(0.1)
 
+class TIP_clients(object):
+    def __init__(self,url="localhost:5000"):
+        self.url = url
+        self.context = zmq.Context()
+        self.socket = context.socket(zmq.REQ)
+        self.setup_connection(url="tcp://"+url)
+
+    def setup_connection(self,url="tcp://localhost:5000"):
+        print("Connecting to TIP server " +str(url))
+        self.socket.setsockopt(zmq.RCVTIMEO,1000) # wait no longer than a second to fail.
+        self.socket.setsockopt(zmq.LINGER,0)
+        self.socket.connect(url)
+        try:
+            # make sure auth has worked ...
+            # check IP configuration if it fails here
+            self.socket.send_string("/ping")
+            message = self.socket.recv_string()
+            if message == "pong": 
+                return True
+            else: 
+                return False
+        except zmq.error.Again:
+            print("ERROR: Server not available or auth failed!")
+            return False
+
+    def close_connection(self):
+        print("Closing connection to TIP server…")
+        self.socket.close()
+
+    def set_param(self,device, param, value):
+        self.socket.send_string("set/"+device+"/"+param+"/"+str(value))
+        message = self.socket.recv_string()
+        return (message)
+
+    def get_param(self,device, param):
+        self.socket.send_string("get/"+device+"/"+param)
+        message = self.socket.recv_string()
+        return (message)
+
+    def get_device(self,device):
+        self.socket.send_string("get/"+device+"/:")
+        message = self.socket.recv_string()
+        return json.loads(message)
+
+    def get_devices(self):
+        self.socket.send_string("get/:")
+        message = self.socket.recv_string()
+        return json.loads(message)
+
+    def get_config(self):
+        self.socket.send_string("get/::")
+        message = self.socket.recv_string()
+        return json.loads(message)
+
+    def set_exit(self):
+        return self.socket.send_string("EXIT")
+
 
 if __name__ == "__main__":
     import sys
