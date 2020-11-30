@@ -22,7 +22,9 @@ def serve_requests ():
 
     socket = context.socket(zmq.REP)
     socket.zap_domain = b'global'
-    socket.bind("tcp://*:"+str(config['system'].get('zmq_port',5000)))
+    bind_str = "tcp://*:"+str(config['system'].get('zmq_port',5000))
+    logging.info("TIP serving via ZMQ %s" % bind_str)
+    socket.bind(bind_str)
 
     while True:
         #  Wait for next request from client

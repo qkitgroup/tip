@@ -54,6 +54,8 @@ def parse_request(request):
         return(json.dumps(config,indent=2,sort_keys=True))
     elif 'p' in cmd[0] or 'ping' in cmd:
         return "pong"
+    elif 'e' in cmd[0] or 'exec' in cmd:
+        return exec_handler(cmds)
     elif 'm' in cmd[0] or 'macro' in cmd:
         return ""
     elif 'exit' in cmd:
@@ -149,6 +151,24 @@ def set_param_handler(section,params):
         return (section[param])
     else:
         return ("Error: parameter not recognized! "+param)
+
+
+def exec_handler(cmds):
+    "/exec/command/param"
+    try:
+        cmd = cmds.pop(0)
+    except IndexError:
+        return "Error: No instrument or device given!"
+    except Exception as e:
+        print ("exec_handler exception..." + str(e))
+        raise (e)
+    if cmd in config.keys():
+        if cmd in ['system']:
+            return ("ERROR: Section readonly! "+cmd)
+        else:
+            return (exec_param_handler(cmd,cmds))
+    else:
+        return ("Error: command not recognized not recognized! "+cmd)
 
 def activate_handler(section,param):
     pass

@@ -96,7 +96,9 @@ _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
 def load_config(settings_file = "settings_local.cfg", debug = False):
     # not used in the moment
     cp_conf = configparser.RawConfigParser(inline_comment_prefixes=';')
-    cp_conf.read(settings_file)
+    # windows acts weird on open files...
+    with open(settings_file) as f:
+        cp_conf.read_file(f)
     #if debug:
     #    pprint.pprint({section: dict(cp_conf[section]) for section in cp_conf.sections()})
     return cp_conf
@@ -136,6 +138,7 @@ def convert_to_dict(cp_conf): # config parser results
                 'version': 1.5,
                 'abort': False,
         }
+    
     return config
 
 

@@ -89,7 +89,7 @@ def load_generic_devices(config,tip_sched):
             if config[config[device]["control_device"]]['active']:
                 device_instances[device].control_device = device_instances[config[device]["control_device"]]
         """
-        logging.info("add thermometer to scheduler: "+device)
+        logging.info("add generic device to scheduler: "+device)
         tip_sched.add_device(device_instances[device])
 
    
