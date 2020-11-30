@@ -80,8 +80,12 @@ def test_speed():
         #time.sleep(0.1)
 
 class TIP_clients(object):
+    "This class allows to talk to several tip server"
     def __init__(self,url="localhost:5000"):
         self.url = url
+        from threading import Lock
+        self.get_lock = Lock()
+
         self.context = zmq.Context()
         self.socket = context.socket(zmq.REQ)
         self.setup_connection(url="tcp://"+url)
@@ -109,29 +113,34 @@ class TIP_clients(object):
         self.socket.close()
 
     def set_param(self,device, param, value):
-        self.socket.send_string("set/"+device+"/"+param+"/"+str(value))
-        message = self.socket.recv_string()
-        return (message)
+        with self.get_lock:
+            self.socket.send_string("set/"+device+"/"+param+"/"+str(value))
+            message = self.socket.recv_string()
+            return (message)
 
     def get_param(self,device, param):
-        self.socket.send_string("get/"+device+"/"+param)
-        message = self.socket.recv_string()
-        return (message)
+        with self.get_lock:
+            self.socket.send_string("get/"+device+"/"+param)
+            message = self.socket.recv_string()
+            return (message)
 
     def get_device(self,device):
-        self.socket.send_string("get/"+device+"/:")
-        message = self.socket.recv_string()
-        return json.loads(message)
+        with self.get_lock:
+            self.socket.send_string("get/"+device+"/:")
+            message = self.socket.recv_string()
+            return json.loads(message)
 
     def get_devices(self):
-        self.socket.send_string("get/:")
-        message = self.socket.recv_string()
-        return json.loads(message)
+        with self.get_lock:
+            self.socket.send_string("get/:")
+            message = self.socket.recv_string()
+            return json.loads(message)
 
     def get_config(self):
-        self.socket.send_string("get/::")
-        message = self.socket.recv_string()
-        return json.loads(message)
+        with self.get_lock:
+            self.socket.send_string("get/::")
+            message = self.socket.recv_string()
+            return json.loads(message)
 
     def set_exit(self):
         return self.socket.send_string("EXIT")
@@ -139,8 +148,13 @@ class TIP_clients(object):
 
 if __name__ == "__main__":
     import sys
-    if setup_connection(url=sys.argv[1]):
-        #test_speed()
-        #print(timeit.timeit("test_speed()",setup="from __main__ import test_speed",number = 100))
-        print(get_devices())
-        print(get_param("mxc","temperature"))
+    # if setup_connection(url=sys.argv[1]):
+    #     #test_speed()
+    #     #print(timeit.timeit("test_speed()",setup="from __main__ import test_speed",number = 100))
+    #     print(get_devices())
+    #     print(get_param("mxc","temperature"))
+    TC = TIP_clients("localhost:5000")
+    print(TC.get_devices())
+    for i in range(100):
+        time.sleep(0.3)
+        print(TC.get_param("mxc","temperature"))
