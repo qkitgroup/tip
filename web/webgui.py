@@ -10,13 +10,17 @@ import pprint
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_daq as daq
 from dash.dependencies import Input, Output
+
 from datetime import datetime, timezone
 import zmq
 
 from lib.tip_zmq_client_lib import TIP_clients
 
 from .webgui_settings_local import hostlist
+
+
 
 
 
@@ -36,12 +40,13 @@ class tip_webview(object):
         )
         self.app.config['suppress_callback_exceptions']=True
 
-        #for tip_host in tip_hosts:
-        self.create_layout(tip_hosts)
+        webview_layout = []
+        webview_layout.append(self.create_outer_layout())
+        webview_layout.append(self.create_inner_layout(tip_hosts))
+
+        self.app.layout = html.Div(webview_layout)
 
         for tip_host in tip_hosts:
-            #print("tip_host",tip_host.name)
-            #output_elements = [tip_host.name+":"+oe for oe in tip_host.output_elements]
             for output_element in tip_host.output_elements:
                 dynamically_generated_function = self.create_callback(tip_host,output_element)
                 self.app.callback(
@@ -58,8 +63,22 @@ class tip_webview(object):
         id_delim  = ":"
         return type+id_delim.join(args)
 
-    def create_layout(self,tip_hosts):
-        app = self.app
+    def create_outer_layout(self):
+        row = []
+        row.append(html.Div(
+                        [
+                        html.Div(
+                            html.Img(src="assets/TIP_logo.png",alt="TIP"),id="TipLogo"),
+                            html.H3("webview"),
+                            html.Div(
+                                [   html.A("TIP",href="https://github.com/qkitgroup/tip"),
+                                    html.A("#",href="#")
+                                ],className="topnav")
+                        ],className="header"))
+        return html.Div(row)
+
+    def create_inner_layout(self,tip_hosts):
+        #app = self.app
         plots= []
         for tip_host in tip_hosts:
             tip_host.data_x = {}
@@ -72,7 +91,7 @@ class tip_webview(object):
             
             row = []
 
-            COLUMNS = 3
+            COLUMNS = 6
             #for hd in range(COLUMNS):
             #    row.append(html.Th(""))
             #plots.append(html.Tr(row))
@@ -84,7 +103,9 @@ class tip_webview(object):
 
             for i,at in enumerate(table_elements):
                 if i == 0:
-                    row.append(html.Td(self.define_table(tip_host,table_elements))) #tip_host.output_elements)))
+                    row.append(html.Td(self.define_table_widget(tip_host,table_elements))) #tip_host.output_elements)))
+                    #row.append(html.Td(self.define_imagemap(tip_host,table_elements)))
+                    row.append(html.Td(self.define_tank(tip_host)))
                     continue
                 elif (i+1)%COLUMNS == 0:
                     row.append(html.Td(dcc.Graph(id="%s"%(at))))
@@ -107,14 +128,15 @@ class tip_webview(object):
                             n_intervals = 0
                         )
                 )
+        
         print ("create layout",plots)
         # add all elements to the global Table
-        app.layout = html.Div([
-            html.Table(plots)
-        ])
+        #app.layout = html.Div([
+        #    html.Table(plots)
+        #])
+        return html.Table(plots)
 
-
-    def define_table(self,tip_host,output_elements):
+    def define_table_widget(self,tip_host,output_elements):
         
         #print("##############",output_elements)
         return html.Div(html.Table(
@@ -135,7 +157,39 @@ class tip_webview(object):
             ]
             ),id=self.create_ID("","mytable",tip_host.name)
             )
-    def define_imagemap(self):
+    def define_imagemap(self,tip_host,output_elements):
+
+        return html.Div(
+        [
+            html.Img(src = "assets/cryo_all_stages_small_tip.jpg", height = "400"),#,style = "width:100%"),
+            html.Div(id='label-perl:mxc',  className = "Tmxc"),
+            html.Div("still",className = "Tstill"),
+            html.Div("4K",   className = "Tfk"),
+            html.Div("45K",  className = "Tffk")
+        ]
+        , className = "container",
+        )
+
+        #return html.Div()
+
+
+    def define_tank(self,tip_host):
+        return html.Div(
+        [
+        daq.GraduatedBar(
+            color={"ranges":{"red":[0,4],"yellow":[4,7],"green":[7,10]}},
+            showCurrentValue=True,
+            vertical=True,
+            value = 9,
+            min = 0,
+            max = 10,
+            step = 0.25,
+            labelPosition = "bottom",
+            label = tip_host.name,
+        )
+        ],
+        )
+
 
         """
     <div class="container">

@@ -420,3 +420,75 @@ there.
 
 /* Larger than Desktop HD */
 @media (min-width: 1200px) {}
+
+
+.container {
+  position: relative;
+  text-align: center;
+  color: white;
+  height:400px;
+}
+
+/* Bottom left text */
+.Tmxc {
+  position: absolute;
+  bottom: 15px;
+  left: 16px;
+  font-size: 24px;
+}
+
+.Tstill {
+  position: absolute;
+  bottom: 110px;
+  left: 16px;
+  font-size: 24px;
+}
+
+.Tfk {
+  position: absolute;
+  bottom: 200px;
+  left: 16px;
+  font-size: 24px;
+}
+
+.Tffk {
+  position: absolute;
+  bottom: 310px;
+  left: 16px;
+  font-size: 24px;
+}
+
+
+.header {
+  background-color: #f0000;
+  text-align: left; 
+  padding: 0px 10px;
+  text-shadow: #0FA0CE;
+  font-style: italic;
+}
+
+/* Style the topnav links */
+.topnav a {
+  float: right; 
+  display: block; 
+  /*display: inline; */
+  color: #f2f2f2;
+  text-align: center;
+  padding: 0px 10px;
+  text-decoration: none;
+  background-color: #f000000;
+}
+
+/* Change color on hover */
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+#TipLogo img {
+  height: 50px;
+  float: left;
+  padding: 0px, 0px;
+  border-radius: 5px;
+  margin: 10px 15px;
+}
