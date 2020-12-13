@@ -6,7 +6,7 @@ import json
 from threading import Lock
 import configparser
 
-
+from .tip_config_defaults import _config_defaults
 
 # 
 # thread save dictionary class
@@ -77,8 +77,12 @@ def _int(s): return int(float(s))
 #
 # mapping of parameter types
 # 
+# if a parameter is not recognized, it's value defaults to the type 'str'
+# this mapping is used when the configuration is loaded and 
+# when a value is set via the remote interface
 _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'calibration_active':_boolean,
+                'webview':_boolean,
                 'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
                 'control_channel':_int,
                 'interval':float, 'change_time':float,
@@ -86,10 +90,12 @@ _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'control_resistor':float, 'control_default_heat':float,
                 'control_p':float, 'control_i':float, 'control_d':float,
                 'version':float,
+                'webview_interval':float,
                 'type':str, 'device':str, 'device_uid':str, 'description':str, 'com_method':str, 'address':str, 'url':str,'gpib':str,
                 'control_device':str,
                 'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
-                'calibration_file_order':str, 'calibration_key_format':str
+                'calibration_file_order':str, 'calibration_key_format':str,
+                'webview_items':str 
             }
 
 
