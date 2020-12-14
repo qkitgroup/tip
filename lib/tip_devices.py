@@ -143,8 +143,8 @@ class thermometer(device):
 # scale_device. 
 class level(device):
     def __init__(self,name):
-        super(generic_device, self).__init__(name)
-        logging.info("init generic device:"+ name)
+        super(level, self).__init__(name)
+        logging.info("init level device:"+ name)
         self.measure_property = config[name]['property']
         #
         # update the configuration with 'property' specific items
