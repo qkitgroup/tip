@@ -178,14 +178,13 @@ class level(device):
 
         if fl == 0: 
             fl = 1 # prevent division by zero
-            logging.ERROR("full_level has to be >0")
-        logging.info("full level %f"%fl)
+            logging.error("full_level has to be >0")
 
         zl = config[self.name]['zero_level']
-        rl= (value-zl)/(fl-zl)
+        rl = (value-zl)/(fl-zl)
         config[self.name]['relative_level'] = rl
         logging.info (self.name + "\t %s: %.01f "% (self.measure_property,value))
-        logging.info (self.name + "\t %s: %.01f "% ("relative_level",rl))
+        logging.info (self.name + "\t %s: %.02f "% ("relative_level",rl))
 
         #
         # update the modification timestamp
