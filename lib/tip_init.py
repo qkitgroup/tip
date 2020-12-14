@@ -127,6 +127,8 @@ def tip_init (settings_file = "settings_local.cfg"):
     tip_sched  = tip_scheduler()
 
     load_thermometers(config,tip_sched)
+    
+    load_level_devices(config,tip_sched)
 
     load_generic_devices(config,tip_sched)
 
