@@ -33,7 +33,7 @@ class device(object):
         from the scheduler. The scheduler is called after execute_func has been executed again, 
         which means that the total periode is schedule_periode+duration_of(execute_func).
         """
-        logging.debug("\nexec schedule() for " + self.name)
+        logging.debug("exec schedule() for " + self.name)
         logging.debug(self.name +" "+str(config[self.name]['interval']))
 
 
@@ -138,6 +138,58 @@ class thermometer(device):
         #
 
         config[self.name]['change_time'] = time.time()
+
+
+# scale_device. 
+class level(device):
+    def __init__(self,name):
+        super(generic_device, self).__init__(name)
+        logging.info("init generic device:"+ name)
+        self.measure_property = config[name]['property']
+        #
+        # update the configuration with 'property' specific items
+        # 
+        config[name][self.measure_property] = 0
+        config[name]['relative_level'] = 0
+        config[name]['sys_error'] = ""
+        #
+        # make the item types known
+        # 
+        _types_dict[self.measure_property] = float
+        _types_dict['sys_error'] = str
+
+    def _execute_func(self):
+        " This function gets periodically called by the scheduler "
+
+        logging.debug("_execute_func called for "+self.name)
+        
+        self.backend.set_channel(     config[self.name]['device_channel'])
+        self.backend.set_excitation(  config[self.name]['device_excitation'])
+        self.backend.set_integration( config[self.name]['device_integration_time'])
+        
+        value = getattr(self.backend,"get_"+self.measure_property)()
+
+        config[self.name][self.measure_property]  = value
+
+        #
+        # compute the relative N2 fill
+        # 
+        fl = float(config[self.name]['full_level'])
+        if fl == 0: 
+            fl = 1 # prevent division by zero
+            logging.ERROR("full_level has to be >0")
+
+        zl = float(config[self.name]['zero_level'])
+        rl= (fl-zl)/fl
+        config[self.name]['relative_level'] = rl
+        logging.info (self.name + "\t %s: %.01f "% (self.measure_property,value))
+        logging.info (self.name + "\t %s: %.01f "% ("relative_level",rl))
+
+        #
+        # update the modification timestamp
+        #
+        config[self.name]['change_time'] = time.time()
+
 
 
 # misc_device. 

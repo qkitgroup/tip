@@ -100,7 +100,7 @@ _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
 
 
 def load_config(settings_file = "settings_local.cfg", debug = False):
-    # not used in the moment
+    
     cp_conf = configparser.RawConfigParser(inline_comment_prefixes=';')
     # windows acts weird on open files...
     with open(settings_file) as f:
@@ -158,18 +158,22 @@ def update_active_devices(config):
     config['system']['defined_instruments'] = []
     config['system']['defined_thermometers'] = []
     config['system']['defined_generic_devices'] = []
+    config['system']['defined_level_devices'] = []
 
     config['system']['active_instruments'] = []
     config['system']['active_thermometers'] = []
     config['system']['active_generic_devices'] = []
+    config['system']['active_level_devices'] = []
 
-    DI = config['system']['defined_instruments']
-    DT = config['system']['defined_thermometers']
-    DD = config['system']['defined_generic_devices']
+    DI  = config['system']['defined_instruments']
+    DT  = config['system']['defined_thermometers']
+    DD  = config['system']['defined_generic_devices']
+    DLD = config['system']['defined_level_devices']
 
-    AI = config['system']['active_instruments']
-    AT = config['system']['active_thermometers']
-    AD = config['system']['active_generic_devices']
+    AI  = config['system']['active_instruments']
+    AT  = config['system']['active_thermometers']
+    AD  = config['system']['active_generic_devices']
+    ALD = config['system']['active_level_devices']
 
     for inst in config.keys():
         if config[inst].get("type","") == "instrument":
@@ -184,6 +188,10 @@ def update_active_devices(config):
             DD.append(inst)
             if config[inst].get("active",False):
                 AD.append(inst)
+        if config[inst].get("type",False) in ["level"]:
+            DLD.append(inst)
+            if config[inst].get("active",False):
+                ALD.append(inst)
 
 
 

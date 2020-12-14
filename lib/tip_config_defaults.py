@@ -41,8 +41,8 @@ _default_thermometer = {
     'webview_interval'            : 30.0,           # seconds 
 }
 
-_default_scale = {
-    'type'                        : 'scale',
+_default_level = {
+    'type'                        : 'level',
     'active'                      : False,
     'description'                 : 'lN2 scale',
     'property'                    : 'weight',
@@ -55,6 +55,12 @@ _default_scale = {
     'device_range'                : 0,
     'device_integration_time'     : 0, # seconds, adds to the total scan interval time
     'device_uid'                  : 'KfH',
+    'zero_level'                  : 0, # gram
+    'full_level'                  : 24000, # gram, larger than 0!
+    # web visible
+    'webview'                     : True,           # should item be visible in the web ?
+    'webview_items'               : 'resistance temperature',  # list of items to be web visible
+    'webview_interval'            : 30.0,           # seconds 
 }
 
 _default_hygrometer = {
@@ -115,7 +121,7 @@ _system_defaults = {
 
 _config_defaults = {
     "thermometer" : _default_thermometer,
-    "scale"       : _default_scale,
+    "scale"       : _default_level,
     "hygrometer"  : _default_hygrometer,
     "instrument"  : _default_instrument,
     "system"      : _system_defaults,
