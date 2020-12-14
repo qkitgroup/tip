@@ -175,9 +175,11 @@ class level(device):
         # compute the relative N2 fill
         # 
         fl = float(config[self.name]['full_level'])
+
         if fl == 0: 
             fl = 1 # prevent division by zero
             logging.ERROR("full_level has to be >0")
+        logging.info("full level %f"%fl)
 
         zl = float(config[self.name]['zero_level'])
         rl= (fl-zl)/fl
