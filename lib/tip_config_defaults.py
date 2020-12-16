@@ -8,8 +8,8 @@ _default_thermometer = {
     'type'                        : 'thermometer',
     'active'                      : False,
     'description'                 : 'mixing chamber thermometer',
-    # measurement result placeholder(s)
-    'property'                    : 'resistance tempeature',
+    # measurement result placeholder(s), what to get from the driver
+    'property'                    : 'resistance',
     # scheduler parameter
     'interval'                    : 100.0,
     # device parameter: example resistance bridge

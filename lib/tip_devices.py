@@ -105,15 +105,22 @@ class thermometer(device):
     def _execute_func(self):
         " This function gets periodically called by the scheduler "
 
-        logging.debug("_execute_func called for "+self.name)
+        logging.debug("_execute_func called for " + self.name)
         
         self.backend.set_channel(     config[self.name]['device_channel'])
         self.backend.set_excitation(  config[self.name]['device_excitation'])
         self.backend.set_integration( config[self.name]['device_integration_time'])
-        
-        R = self.backend.get_resistance()
-        config[self.name]['resistance']  = R
-        logging.info (self.name + "\t R: %.01f Ohm"% (R))
+
+        m_property = config[self.name].get('property','resistance').lower()
+
+        if  m_property == 'resistance':
+            R = self.backend.get_resistance()
+            config[self.name]['resistance']  = R
+            logging.info (self.name + "\t R: %.01f Ohm"% (R))
+        elif m_property == 'temperature':
+            T = self.backend.get_temperature()
+            config[self.name]['temperature']  = T
+            logging.info (self.name + "\t T: %.01f "% (T))
 
         if config[self.name]['calibration_active']:
             Cal_R = self.cal_key_formats[config[self.name]['calibration_key_format']](R)
