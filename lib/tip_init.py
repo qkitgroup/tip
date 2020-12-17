@@ -5,7 +5,7 @@ from time import strftime
 import importlib
 import tip
 from lib.tip_config import config, device_instances, load_config, convert_to_dict, update_active_devices
-from lib.tip_devices import device, thermometer, level, generic_device
+from lib.tip_devices import device, thermometer, levelmeter, generic_device
 from lib.tip_scheduler import tip_scheduler
 from lib.tip_zmq_server import srv_thread 
 
@@ -73,14 +73,14 @@ def load_thermometers(config,tip_sched):
         tip_sched.add_thermometer(device_instances[therm])
 
 
-def load_level_devices(config,tip_sched):
+def load_levelmeter_devices(config,tip_sched):
     
     
-    logging.info("Found level device: " +str(config['system']['defined_level_devices']))
-    logging.info("Active level device: "+str(config['system']['active_level_devices']))
+    logging.info("Found levelmeter device: " +str(config['system']['defined_levelmeter_devices']))
+    logging.info("Active levelmeter device: "+str(config['system']['active_levelmeter_devices']))
     
-    for device in config['system']['active_level_devices']:
-        device_instances[device] = level(device)
+    for device in config['system']['active_levelmeter_devices']:
+        device_instances[device] = levelmeter(device)
         device_instances[device].backend = device_instances[config[device]["device"]]
         
         logging.info("add level device to scheduler: "+device)
@@ -128,7 +128,7 @@ def tip_init (settings_file = "settings_local.cfg"):
 
     load_thermometers(config,tip_sched)
     
-    load_level_devices(config,tip_sched)
+    load_levelmeter_devices(config,tip_sched)
 
     load_generic_devices(config,tip_sched)
 
