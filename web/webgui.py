@@ -14,7 +14,7 @@ import dash_html_components as html
 import dash_daq as daq
 from dash.dependencies import Input, Output
 
-from datetime import datetime, timezone
+from datetime import datetime
 import zmq
 
 from lib.tip_zmq_client_lib import TIP_clients
