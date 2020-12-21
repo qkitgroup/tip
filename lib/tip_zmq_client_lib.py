@@ -68,7 +68,7 @@ def set_exit():
 def test_speed():
     #  Do 10 requests, waiting each time for a response// debugging code
     for request in range(10):
-        print("Sending request %s …" % request)
+        print("Sending request %s ..." % request)
         socket.send_string("get/::")
         
         #  Get the reply.
@@ -109,7 +109,7 @@ class TIP_clients(object):
             return False
 
     def close_connection(self):
-        print("Closing connection to TIP server…")
+        print("Closing connection to TIP server...")
         self.socket.close()
 
     def set_param(self,device, param, value):
