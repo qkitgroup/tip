@@ -12,13 +12,13 @@ import time
 import serial
 
 
-#from lib.tip_config import config
+from lib.tip_config import config
 
 
 def driver(name):
-    
+    print("entering driver", flush = True)
     LS = Lakeshore_372(name,
-                port    = config[name]['port'],
+                address = config[name]['address'],
                 delay   = config[name]['delay'],
                 timeout = config[name]['timeout'])
 
@@ -28,7 +28,7 @@ def driver(name):
 
 
 class Lakeshore_372(object):
-    def __init__(self, name, port, delay=0.1, timeout = 1, **kwargs):
+    def __init__(self, name, address, delay=0.1, timeout = 1, **kwargs):
 
                 
         self.serial_dev = serial.Serial()
@@ -36,9 +36,9 @@ class Lakeshore_372(object):
         self.serial_dev.bytesize = serial.SEVENBITS
         self.serial_dev.stopbits = serial.STOPBITS_ONE
         self.serial_dev.parity   = serial.PARITY_ODD 
-        self.serial_dev.port     = port
+        self.serial_dev.port     = address
         self.serial_dev.open()
-
+        print("serial port opened", flush =  True)
         
         #self._visa = ser
         # self._visa = visa.instrument(
@@ -70,6 +70,7 @@ class Lakeshore_372(object):
         self._excitation = 1
         self._excitation_mode = 1
         
+        self.delay = delay
 
         ''' heater '''
         self._heater_channel = 0
@@ -117,7 +118,7 @@ class Lakeshore_372(object):
 
     def ask(self,string):
         self.write(string)
-        time.sleep(0.05)
+        time.sleep(self.delay)
         return self.read()
 
     def get_idn(self):
@@ -188,7 +189,7 @@ class Lakeshore_372(object):
             logging.debug('Set channel to {:d}.'.format(channel))
             self.write('SCAN {:d},{:d}'.format(channel, self._autoscan))
             self.write('*OPC')
-            time.sleep(5)
+            time.sleep(6)
         self._channel = channel
 
     def get_excitation(self):
@@ -406,7 +407,14 @@ class Lakeshore_372(object):
         # get channel parameters for comparison
         
         # query channel first
-        channel, autoscan = self.ask("SCAN?").split(",")
+        try:
+            query = self.ask("SCAN?")
+            logging.debug("get_channel_parameters %s"%query)
+            channel, autoscan = query.split(",")
+        except ValueError:
+            # most likely "SCAN?" did not return something
+            logging.error("Lakeshore 372: get_channel_parameters empty. Try once again.")
+            channel, autoscan = self.ask("SCAN?").split(",")
 
         # and then the parameter
         mode, excitation, r_range, autorange, cs_off = \
@@ -507,7 +515,7 @@ class Lakeshore_372(object):
             raise ValueError('Cannot set manual heater power to {!s}.\n{:s}'.format(power, e))
 
     def set_heater_range(self, range):
-        self._write('HTRRNG {:d}'.format(range))
+        self.write('HTRRNG {:d}'.format(range))
 
     def get_heater_power(self):
         """
@@ -545,7 +553,7 @@ class Lakeshore_372(object):
         """
         # Corresponding command: MODE <mode>[term]
         mode = 0  # <mode> 0 = local, 1 = remote, 2 = remote with local lockout.
-        self._write('MODE {:d}'.format(mode))
+        self.write('MODE {:d}'.format(mode))
 
     def _close(self):
         """
@@ -559,8 +567,13 @@ class Lakeshore_372(object):
         -------
         None
         """
-        visa._close_connection()
+        self.serial_dev.close()
 
+    def get_still_heater(self):
+        return float(self.ask('STILL?'))
+
+    def set_still_heater(self, val):
+        self.write('STILL %.2F' % (val))
 
 
 
@@ -695,17 +708,17 @@ class Lakeshore_372(object):
 
 
 if __name__ == "__main__":
-    print ("debug start")
+    print ("debug start",flush = True)
 
 
     LS=Lakeshore_372("LS372", "COM3")
     
     scan_mode = True
     fast_mode = False
-    print("IDN: %s"%(LS.idn))
+    print("IDN: %s"%(LS.idn),flush = True)
     if scan_mode :
         for loop in range(3):
-            print ("loop %d"%(loop))
+            print ("loop %d"%(loop), flush= True)
             for ch in [1,2,5,6]:
                 print("Channel: %d"%(ch))
                 LS.set_channel(ch)
@@ -714,8 +727,8 @@ if __name__ == "__main__":
                 LS.set_integration(10)
                 tm=time.time()
                 for i in range(5):
-                    print (LS.get_resistance())
-                print (time.time()-tm)
+                    print (LS.get_resistance(),flush = True)
+                print (time.time()-tm,flush = True)
 
     if fast_mode:
         ch = 0

@@ -115,6 +115,12 @@ class thermometer(device):
 
         if  m_property == 'resistance':
             R = self.backend.get_resistance()
+            if R == 0:
+                logging.warning(self.name + "\t Bridge reported zero resistance. Retry...")
+                R = self.backend.get_resistance()
+                if R == 0:
+                    logging.warning(self.name + "\t Bridge reported zero resistance. Skipping.")
+                    return None
             config[self.name]['resistance']  = R
             logging.info (self.name + "\t R: %.01f Ohm"% (R))
         elif m_property == 'temperature':
