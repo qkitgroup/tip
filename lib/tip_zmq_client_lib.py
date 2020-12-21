@@ -33,7 +33,7 @@ def setup_connection(url="tcp://localhost:5000"):
         return False
 
 def close_connection():
-    print("Closing connection to TIP server…")
+    print("Closing connection to TIP server...")
     socket.close()
 
 def set_param(device, param, value):
