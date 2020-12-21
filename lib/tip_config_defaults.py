@@ -8,7 +8,7 @@ _default_thermometer = {
     'description'                 : 'what kind/where',
     # measurement result placeholder(s), what to get from the driver, as in get_'property'()
     'property'                    : 'resistance',
-    'unit'                        : 'K'
+    'unit'                        : 'K',
     # scheduler parameter
     'interval'                    : 100.0, # seconds
     # device parameter: example resistance bridge
@@ -45,7 +45,7 @@ _default_levelmeter = {
     'active'                      : False,
     'description'                 : 'lN2 scale',
     'property'                    : 'weight',
-    'unit'                        : ''
+    'unit'                        : '',
     # scheduler parameter
     'interval'                    : 60, # seconds
     # device parameter: 
@@ -68,7 +68,7 @@ _default_hygrometer = {
     'active'                      : False,
     'description'                 : 'humidity sensor ',
     'property'                    : 'humidity',
-    'unit'                        : '%RH'
+    'unit'                        : '%RH',
     # scheduler parameter
     'interval'                    : 60, # seconds
     # device parameter: 

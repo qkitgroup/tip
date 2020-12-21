@@ -9,6 +9,7 @@
 import pprint
 import dash
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_daq as daq
 from dash.dependencies import Input, Output
@@ -37,12 +38,13 @@ class tip_webview(object):
         # create the dash instance
         self.app = dash.Dash(__name__,
             meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+            external_stylesheets=[dbc.themes.BOOTSTRAP],
         )
         self.app.config['suppress_callback_exceptions']=True
 
         webview_layout = []
         webview_layout.append(self.create_outer_layout())
-        webview_layout.append(self.create_inner_layout(tip_hosts))
+        webview_layout.append(self.create_inner_layout_2(tip_hosts))
 
         self.app.layout = html.Div(webview_layout)
 
@@ -52,7 +54,9 @@ class tip_webview(object):
                 self.app.callback(
                     [
                         Output(self.create_ID("",tip_host.name,output_element), 'figure'),
-                        Output(self.create_ID("label-",tip_host.name,output_element), 'children')
+                        Output(self.create_ID("label-",tip_host.name,output_element), 'children'),
+                        Output(self.create_ID("img-label-",tip_host.name,output_element), 'children')
+
                     ], 
                     [
                         Input(self.create_ID('interval-component-',tip_host.name,output_element), 'n_intervals')
@@ -73,9 +77,58 @@ class tip_webview(object):
                             html.Div(
                                 [   html.A("TIP",href="https://github.com/qkitgroup/tip"),
                                     html.A("#",href="#")
-                                ],className="topnav")
+                                ],className="topnav"),html.Br(),
                         ],className="header"))
         return html.Div(row)
+
+
+    def create_inner_layout_2(self,tip_hosts):
+        web_items = [] # this is the list of dash items
+        
+        for tip_host in tip_hosts:
+            tip_host.data_x = {}
+            tip_host.data_y = {}
+            # reset elements
+            for oe in tip_host.output_elements: 
+                tip_host.data_x[oe] = []
+                tip_host.data_y[oe] = []
+
+
+            table_elements = [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
+            #print(table_elements)
+            row = html.Div(
+            [
+                #dbc.Row(dbc.Col(html.Div("A single column"))),
+                dbc.Row(
+                    [
+                    dbc.Col(self.define_table_widget(tip_host,table_elements)),
+                    #dbc.Col(self.define_tank(tip_host)),
+                    dbc.Col(self.define_imagemap(tip_host,table_elements)),
+                    #dbc.Col(self.define_image_list()),
+                    ]
+                ),
+                dbc.Row(
+                [   
+                    dbc.Col(html.Div(html.Td(dcc.Graph(id="%s"%(te)))),width = 3) 
+                    for te in table_elements
+                ]
+                ),
+            ])
+            web_items.append(row)
+
+            
+            for oe in tip_host.output_elements:
+                web_items.append(
+                    dcc.Interval(
+                            id = self.create_ID('interval-component-',tip_host.name,oe),
+                            interval = 1000 * float(tip_host.get_param(oe,'interval')), # in milliseconds
+                            n_intervals = 0
+                        )
+                )
+            
+        #print(web_items)
+        return html.Div(web_items)
+
 
     def create_inner_layout(self,tip_hosts):
         #app = self.app
@@ -106,6 +159,7 @@ class tip_webview(object):
                     row.append(html.Td(self.define_table_widget(tip_host,table_elements))) #tip_host.output_elements)))
                     #row.append(html.Td(self.define_imagemap(tip_host,table_elements)))
                     row.append(html.Td(self.define_tank(tip_host)))
+                    #row.append(html.Td(self.define_image_list()))
                     continue
                 elif (i+1)%COLUMNS == 0:
                     row.append(html.Td(dcc.Graph(id="%s"%(at))))
@@ -117,6 +171,7 @@ class tip_webview(object):
             if (i+1)%COLUMNS != 0:
                 plots.append(html.Tr(row))
 
+            plots.append(self.define_image_list())
             #print ("create layout plots",plots)
             #print ("output_elements",tip_host.output_elements,"\n")
             # output element is a tip endpoint
@@ -148,10 +203,10 @@ class tip_webview(object):
             [
             html.Tr(
                 [
-                html.Td(" "),
-                html.Td("%s"%(oe)), 
-                html.Td(id="label-"+oe), 
-                html.Td("K")
+                    html.Td(" "),
+                    html.Td("%s"%(oe)), 
+                    html.Td(id="label-"+oe), 
+                    html.Td("K")
                 ]
                 ) for oe in output_elements 
             ]
@@ -162,15 +217,24 @@ class tip_webview(object):
         return html.Div(
         [
             html.Img(src = "assets/cryo_all_stages_small_tip.jpg", height = "400"),#,style = "width:100%"),
-            html.Div(id='label-perl:mxc',  className = "Tmxc"),
-            html.Div("still",className = "Tstill"),
-            html.Div("4K",   className = "Tfk"),
-            html.Div("45K",  className = "Tffk")
+            html.Div(id=self.create_ID("img-label-",tip_host.name,'mxc'),  className = "Tmxc"),
+            html.Div(id=self.create_ID("img-label-",tip_host.name,'T9884'),  className = "Tstill"),
+            html.Div(id=self.create_ID("img-label-",tip_host.name,'A1'),  className = "Tfk"),
+            html.Div(id=self.create_ID("img-label-",tip_host.name,'B1'),  className = "Tffk")
         ]
-        , className = "container",
+        , className = "img_container",
         )
 
-        #return html.Div()
+    def define_image_list(self):
+        return html.Div(
+                html.Ul([
+                    html.Li("testme"),
+                    html.Li("now"),
+                    html.Li("or"),
+                    html.Li("never"),
+                ] , className = "vertlist"
+                )
+        )
 
 
     def define_tank(self,tip_host):
@@ -280,7 +344,10 @@ css:
                 name = self.create_ID("",tip_host.name,device)
             ))
 
-            return {
+            #
+            # returns
+            #
+            graph = {
                 'data': traces,
                 'layout': dict(
                     xaxis = {
@@ -310,7 +377,11 @@ css:
                     font = {"color": "rgb(247, 223, 146)"},
                     autosize= True,
                 )
-            }, "%03g"%(float(tip_host.data_y[device][-1]))
+            }
+            table = "%.03f"%(float(tip_host.data_y[device][-1]))
+            img = "%.03f"%(float(tip_host.data_y[device][-1]))
+            return graph,table,img
+
         return update_figure
 
 class aquire_data(object):
@@ -318,11 +389,51 @@ class aquire_data(object):
         TC = self.connect_to_TIP_instance(tip_server)
         print(tip_server)
         system = TC.get_device('system')
+
         self.name = system['name']
-        self.output_elements = system['active_thermometers']
+        self.output_elements  = []
+        self.active_devices = system['active_devices']
 
         self.get_param=self.catch_tip(TC.get_param)
         self.get_device=self.catch_tip(TC.get_device)
+
+        self.check_webview_prop()
+
+    def check_webview_prop(self):
+        self.oe_intervals = {}
+        self.oe_items = {}
+        self.oe_unit = {}
+
+        for device in self.active_devices:
+            print (device)
+            wv =  self._boolean(self.get_param(device, 'webview'))
+            
+            if wv:
+                self.output_elements.append(device)
+            else:
+                continue
+
+            wv_items = self.get_param(device, 'webview_items').split(' ')
+            self.oe_items[device] = wv_items
+
+            wv_interval = float(self.get_param(device, 'webview_interval'))
+            if wv_interval > 0:
+                pass
+            else:
+                wv_interval = float(self.get_param(device, 'interval'))
+
+
+            unit = self.get_param(device, 'unit').split(' ')
+            self.oe_unit[device]=unit
+            
+            
+            self.oe_intervals[device] = wv_interval
+
+
+
+
+            
+    def _boolean(self,s): return s.lower() in ("yes", "true", "t", "1")
 
     def connect_to_TIP_instance(self,tip_server):
         try:

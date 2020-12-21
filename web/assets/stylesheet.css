@@ -422,10 +422,11 @@ there.
 @media (min-width: 1200px) {}
 
 
-.container {
+.img_container {
   position: relative;
-  text-align: center;
+  text-align: left;
   color: white;
+  /* background-color:white;*/
   height:400px;
 }
 
@@ -483,6 +484,11 @@ there.
 .topnav a:hover {
   background-color: #ddd;
   color: black;
+}
+.vertlist li {
+  display: inline;
+  list-style-type: none;
+  margin: 0 10px 0 0; 
 }
 
 #TipLogo img {

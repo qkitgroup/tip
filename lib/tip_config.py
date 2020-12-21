@@ -101,7 +101,7 @@ _types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
                 'control_device':str,
                 'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
                 'calibration_file_order':str, 'calibration_key_format':str,
-                'webview_items':str 
+                'webview_items':str, 'unit':str
             }
 
 
