@@ -13,6 +13,7 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_daq as daq
 from dash.dependencies import Input, Output
+import flask
 
 from datetime import datetime
 import zmq
@@ -24,6 +25,7 @@ from .webgui_settings_local import hostlist
 
 
 
+#print(dir(twv.app.server))
 
 class tip_webview(object):
 
@@ -35,10 +37,12 @@ class tip_webview(object):
             tip_hosts.append(aquire_data(tip_server = host))
         #print(tip_hosts)
 
+        self.server = flask.Flask(__name__) # define flask app.server
         # create the dash instance
         self.app = dash.Dash(__name__,
             meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
             external_stylesheets=[dbc.themes.BOOTSTRAP],
+            server = self.server
         )
         self.app.config['suppress_callback_exceptions']=True
 
@@ -127,6 +131,8 @@ class tip_webview(object):
                 )
             
         #print(web_items)
+        print("create layout",web_items)
+        
         return html.Div(web_items)
 
 
@@ -453,8 +459,15 @@ class aquire_data(object):
                 return 0
         return getfunc
 
+
 if __name__ == '__main__':
     #app.run_server(debug=True)
     #app.run_server()
     app = tip_webview()
     app.app.run_server()
+else:
+    # prepare for gunicorn server, e.g. exec
+    # 'gunicorn web.webgui:server -w 4 -b :8000'
+    # from tip root directory and open http://localhost:8000
+    twv = tip_webview() 
+    server = twv.server
