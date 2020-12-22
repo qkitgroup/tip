@@ -39,7 +39,7 @@ _default_thermometer = {
     'webview_items'               : 'temperature',  # list (space separated) of items to be web visible, should be items in the config
     'webview_interval'            : -1,             # seconds, only used if > 0
     'webview_widget_display'      : False,          # should device be e.g. displayed in cryo image?
-    'webview_widget_type'         : 'image_map',    # one of image_map, tank, graph,...
+    'webview_widget_type'         : 'image_map',    # one of image_map, tank, ...
     'webview_widget_map'          : 'Tmxc',         # map thermometer to either 'Tmxc'(mxc), 'Tstill'(still), 'Tfk'(4K), 'Tffk' (45K)
 }
 

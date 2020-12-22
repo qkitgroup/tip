@@ -51,21 +51,20 @@ class tip_webview(object):
         webview_layout.append(self.create_inner_layout(tip_hosts))
 
         self.app.layout = html.Div(webview_layout)
-
+        
         for tip_host in tip_hosts:
             for output_element in tip_host.output_elements:
+                output_list = []
+                input_list  = []
                 dynamically_generated_function = self.create_callback(tip_host,output_element)
-                self.app.callback(
-                    [
-                        Output(self.create_ID("",tip_host.name,output_element), 'figure'),
-                        Output(self.create_ID("label-",tip_host.name,output_element), 'children'),
-                        Output(self.create_ID("img-label-",tip_host.name,output_element), 'children')
-
-                    ], 
-                    [
-                        Input(self.create_ID('interval-component-',tip_host.name,output_element), 'n_intervals')
-                    ]
-                    )(dynamically_generated_function)
+                output_list.append(Output(self.create_ID("",tip_host.name,output_element), 'figure'))
+                output_list.append(Output(self.create_ID("label-",tip_host.name,output_element), 'children'))
+                if tip_host.oe_wv_wd[output_element]:
+                    print('img callback for ',tip_host.name, output_element)
+                    output_list.append(Output(self.create_ID("img-label-",tip_host.name,output_element), 'children'))
+                input_list.append(Input(self.create_ID('interval-component-',tip_host.name,output_element), 'n_intervals'))
+                
+                self.app.callback(output_list, input_list)(dynamically_generated_function)
 
     def create_ID(self,type,*args):
         id_delim  = ":"
@@ -106,6 +105,7 @@ class tip_webview(object):
         for tip_host in tip_hosts:
             cols.append(dbc.Col('',width=1))
             cols.append(dbc.Col(self.define_table_widget(tip_host),width = 3))
+            
             cols.append(dbc.Col(self.define_imagemap(tip_host)))
             
             #dbc.Col(self.define_table_widget(tip_host),width = 2)
@@ -135,7 +135,7 @@ class tip_webview(object):
                 )
             
         #print(web_items)
-        print("create layout",web_items)
+        #print("create layout",web_items)
         
         return html.Div(web_items)
 
@@ -174,17 +174,6 @@ class tip_webview(object):
         , className = "img_container",
         )
 
-    def define_image_list(self):
-        return html.Div(
-                html.Ul([
-                    html.Li("testme"),
-                    html.Li("now"),
-                    html.Li("or"),
-                    html.Li("never"),
-                ] , className = "vertlist"
-                )
-        )
-
 
     def define_tank(self,tip_host):
         return html.Div(
@@ -204,64 +193,8 @@ class tip_webview(object):
         )
 
 
-        """
-    <div class="container">
-    <img src="img_snow_wide.jpg" alt="Snow" style="width:100%;">
-    <div class="bottom-left">Bottom Left</div>
-    <div class="top-left">Top Left</div>
-    <div class="top-right">Top Right</div>
-    <div class="bottom-right">Bottom Right</div>
-    <div class="centered">Centered</div>
-    </div>
-
-
-css:
-
-.container {
-  position: relative;
-  text-align: center;
-  color: white;
-}
-
-/* Bottom left text */
-.bottom-left {
-  position: absolute;
-  bottom: 8px;
-  left: 16px;
-}
-
-/* Top left text */
-.top-left {
-  position: absolute;
-  top: 8px;
-  left: 16px;
-}
-
-/* Top right text */
-.top-right {
-  position: absolute;
-  top: 8px;
-  right: 16px;
-}
-
-/* Bottom right text */
-.bottom-right {
-  position: absolute;
-  bottom: 8px;
-  right: 16px;
-}
-
-/* Centered text */
-.centered {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-        """
-
     def create_callback(self,tip_host,device):
-        print(tip_host, device)
+        #print(tip_host, device)
         def update_figure(device_):
 
             MAXLENGTH = 150
@@ -329,7 +262,12 @@ css:
             }
             table = "%.04f %s"%(float(tip_host.data_y[device][-1]),tip_host.oe_unit[device][0])
             img = "%.04f %s"%(float(tip_host.data_y[device][-1]),tip_host.oe_unit[device][0])
-            return graph,table,img
+            
+            if tip_host.oe_wv_wd[device]:
+                return graph,table,img
+            else:
+                return graph,table
+            
 
         return update_figure
 
@@ -352,6 +290,9 @@ class aquire_data(object):
         self.oe_intervals = {}
         self.oe_items = {}
         self.oe_unit = {}
+        self.oe_wv_wd = {}
+        self.oe_wv_wt = {}
+        self.oe_wv_wm = {}
 
         for device in self.active_devices:
             print ('active device:',device)
@@ -378,12 +319,16 @@ class aquire_data(object):
             
             self.oe_intervals[device] = wv_interval
 
+            self.oe_wv_wd[device] = self._boolean(self.get_param(device, 'webview_widget_display'))
+            if self.oe_wv_wd[device]:
+                self.oe_wv_wt[device] = self.get_param(device, 'webview_widget_type')
+                self.oe_wv_wd[device] = self.get_param(device, 'webview_widget_map')
+                #'webview_widget_display'      : False,          # should device be e.g. displayed in cryo image?
+                #'webview_widget_type'         : 'image_map',    # one of image_map, tank, graph,...
+                #'webview_widget_map'          : 'Tmxc', 
+
         print("oe_items",self.oe_items)
 
-
-
-
-            
     def _boolean(self,s): return s.lower() in ("yes", "true", "t", "1")
 
     def connect_to_TIP_instance(self,tip_server):
