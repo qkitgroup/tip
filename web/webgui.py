@@ -48,7 +48,7 @@ class tip_webview(object):
 
         webview_layout = []
         webview_layout.append(self.create_outer_layout())
-        webview_layout.append(self.create_inner_layout_2(tip_hosts))
+        webview_layout.append(self.create_inner_layout(tip_hosts))
 
         self.app.layout = html.Div(webview_layout)
 
@@ -86,7 +86,7 @@ class tip_webview(object):
         return html.Div(row)
 
 
-    def create_inner_layout_2(self,tip_hosts):
+    def create_inner_layout(self,tip_hosts):
         web_items = [] # this is the list of dash items
         
         for tip_host in tip_hosts:
@@ -97,30 +97,34 @@ class tip_webview(object):
                 tip_host.data_x[oe] = []
                 tip_host.data_y[oe] = []
 
-
-            table_elements = [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
-            #print(table_elements)
-            row = html.Div(
-            [
-                #dbc.Row(dbc.Col(html.Div("A single column"))),
-                dbc.Row(
-                    [
-                    dbc.Col(self.define_table_widget(tip_host,table_elements)),
-                    #dbc.Col(self.define_tank(tip_host)),
-                    dbc.Col(self.define_imagemap(tip_host,table_elements)),
-                    #dbc.Col(self.define_image_list()),
-                    ]
-                ),
-                dbc.Row(
-                [   
-                    dbc.Col(html.Div(html.Td(dcc.Graph(id="%s"%(te)))),width = 3) 
-                    for te in table_elements
-                ]
-                ),
-            ])
-            web_items.append(row)
-
+        #for tip_host in tip_hosts:
+        #    table_elements = [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
+        #print(table_elements)
+        row = []
+            #dbc.Row(dbc.Col(html.Div("A single column"))),
+        cols = []
+        for tip_host in tip_hosts:
+            cols.append(dbc.Col('',width=1))
+            cols.append(dbc.Col(self.define_table_widget(tip_host),width = 3))
+            cols.append(dbc.Col(self.define_imagemap(tip_host)))
             
+            #dbc.Col(self.define_table_widget(tip_host),width = 2)
+            #dbc.Col(self.define_tank(tip_host)),
+            #dbc.Col(self.define_imagemap(tip_host))
+            #dbc.Col(self.define_image_list()),
+        row.append(dbc.Row(cols))
+        
+        
+        for tip_host in tip_hosts:
+            cols =  [   
+                dbc.Col(html.Div(html.Td(dcc.Graph(id="%s"%(te)))),width = 3) 
+                for te in [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
+            ]
+            row.append(dbc.Row(cols))
+        
+        web_items.append(html.Div(row))
+
+        for tip_host in tip_hosts:
             for oe in tip_host.output_elements:
                 web_items.append(
                     dcc.Interval(
@@ -136,90 +140,29 @@ class tip_webview(object):
         return html.Div(web_items)
 
 
-    def create_inner_layout(self,tip_hosts):
-        #app = self.app
-        plots= []
-        for tip_host in tip_hosts:
-            tip_host.data_x = {}
-            tip_host.data_y = {}
-
-            for oe in tip_host.output_elements: 
-                tip_host.data_x[oe] = []
-                tip_host.data_y[oe] = []
-
-            
-            row = []
-
-            COLUMNS = 6
-            #for hd in range(COLUMNS):
-            #    row.append(html.Th(""))
-            #plots.append(html.Tr(row))
-        
-
-            table_elements = [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
-            #print("table_elements",table_elements)
-            #table_elements.insert(0,"xyz")
-
-            for i,at in enumerate(table_elements):
-                if i == 0:
-                    row.append(html.Td(self.define_table_widget(tip_host,table_elements))) #tip_host.output_elements)))
-                    #row.append(html.Td(self.define_imagemap(tip_host,table_elements)))
-                    row.append(html.Td(self.define_tank(tip_host)))
-                    #row.append(html.Td(self.define_image_list()))
-                    continue
-                elif (i+1)%COLUMNS == 0:
-                    row.append(html.Td(dcc.Graph(id="%s"%(at))))
-                    plots.append(html.Tr(row))
-                    row=[]
-                else:
-                    row.append(html.Td(dcc.Graph(id="%s"%(at))))
-                
-            if (i+1)%COLUMNS != 0:
-                plots.append(html.Tr(row))
-
-            plots.append(self.define_image_list())
-            #print ("create layout plots",plots)
-            #print ("output_elements",tip_host.output_elements,"\n")
-            # output element is a tip endpoint
-            for oe in tip_host.output_elements:
-                plots.append(
-                    dcc.Interval(
-                            id = self.create_ID('interval-component-',tip_host.name,oe),
-                            interval = 1000 * float(tip_host.get_param(oe,'interval')), # in milliseconds
-                            n_intervals = 0
-                        )
-                )
-        
-        print ("create layout",plots)
-        # add all elements to the global Table
-        #app.layout = html.Div([
-        #    html.Table(plots)
-        #])
-        return html.Table(plots)
-
-    def define_table_widget(self,tip_host,output_elements):
-        
+    def define_table_widget(self,tip_host):
+        #output_elements = [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
         #print("##############",output_elements)
         return html.Div(html.Table(
             # Header
             [
-                html.Tr([html.Th(col) for col in [' ','Device','Value','Unit']])
+                #html.Tr([html.Th(col) for col in ['Device','Property','Value']])
+                html.Tr([html.Th(col) for col in [tip_host.name,'','']])
             ] +
             # Body
             [
             html.Tr(
                 [
-                    html.Td(" "),
                     html.Td("%s"%(oe)), 
-                    html.Td(id="label-"+oe), 
-                    html.Td("K")
+                    html.Td("%s"%(tip_host.oe_items[oe][0])),
+                    html.Td(id="label-"+self.create_ID("",tip_host.name,oe)), 
                 ]
-                ) for oe in output_elements 
+                ) for oe in tip_host.output_elements 
             ]
             ),id=self.create_ID("","mytable",tip_host.name)
             )
-    def define_imagemap(self,tip_host,output_elements):
-
+    def define_imagemap(self,tip_host):
+        #table_elements = [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
         return html.Div(
         [
             html.Img(src = "assets/cryo_all_stages_small_tip.jpg", height = "400"),#,style = "width:100%"),
@@ -330,8 +273,8 @@ css:
 
             tip_host.data_x[device].append(dtime)
             
-            values = float(tip_host.get_param(device,'temperature'))
-            
+            #values = float(tip_host.get_param(device,'temperature'))
+            values = float(tip_host.get_param(device,tip_host.oe_items[device][0]))
             tip_host.data_y[device].append(values)
 
             traces = []
@@ -362,7 +305,7 @@ css:
                         },#'tickformat':'%d',},
                     #'range':[2.3, 4.8]},
                     yaxis = {
-                        'title': 'Temperature',
+                        'title': tip_host.oe_items[device][0] +' ('+ tip_host.oe_unit[device][0]+")" , #'Temperature',
                         'gridwidth': '0.1','gridcolor' : 'gray'
                         }, #'range': [20, 90]},
                     #margin={'l': 20, 'b': 20, 't': 20, 'r': 20},
@@ -384,8 +327,8 @@ css:
                     autosize= True,
                 )
             }
-            table = "%.03f"%(float(tip_host.data_y[device][-1]))
-            img = "%.03f"%(float(tip_host.data_y[device][-1]))
+            table = "%.04f %s"%(float(tip_host.data_y[device][-1]),tip_host.oe_unit[device][0])
+            img = "%.04f %s"%(float(tip_host.data_y[device][-1]),tip_host.oe_unit[device][0])
             return graph,table,img
 
         return update_figure
@@ -411,7 +354,7 @@ class aquire_data(object):
         self.oe_unit = {}
 
         for device in self.active_devices:
-            print (device)
+            print ('active device:',device)
             wv =  self._boolean(self.get_param(device, 'webview'))
             
             if wv:
@@ -434,6 +377,8 @@ class aquire_data(object):
             
             
             self.oe_intervals[device] = wv_interval
+
+        print("oe_items",self.oe_items)
 
 
 

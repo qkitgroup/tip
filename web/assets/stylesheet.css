@@ -322,12 +322,42 @@ li {
 
 /* Tables
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+
+
 table {
+  table-layout: fixed;
+  width: 100%;
   border-collapse: collapse;
+  border: 0px solid white;
+  text-align: center;
+  font-size: 18px;
 }
+
+thead th:nth-child(1) {
+  width: 30%;
+  
+}
+
+thead th:nth-child(2) {
+  width: 30%;
+}
+
+thead th:nth-child(3) {
+  width: 40%;
+}
+
+/* thead th:nth-child(4) {
+  width: 35%;
+} */
+
+th, td {
+  padding: 1px;
+}
+
 th:not(.CalendarDay),
 td:not(.CalendarDay) {
-  padding: 12px 15px;
+  padding: 2px 2px;
   /* table-layout: fixed; */
   /*width:450px;*/
   text-align: left;
@@ -338,7 +368,6 @@ td:first-child:not(.CalendarDay) {
 th:last-child:not(.CalendarDay),
 td:last-child:not(.CalendarDay) {
   padding-right: 0; }
-
 
 /* Spacing
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
