@@ -38,7 +38,11 @@ _default_thermometer = {
     'webview'                     : True,           # should item be visible in the web ?
     'webview_items'               : 'temperature',  # list (space separated) of items to be web visible, should be items in the config
     'webview_interval'            : -1,             # seconds, only used if > 0
+    'webview_widget_display'      : False,          # should device be e.g. displayed in cryo image?
+    'webview_widget_type'         : 'image_map',    # one of image_map, tank, graph,...
+    'webview_widget_map'          : 'Tmxc',         # map thermometer to either 'Tmxc'(mxc), 'Tstill'(still), 'Tfk'(4K), 'Tffk' (45K)
 }
+
 
 _default_levelmeter = {
     'type'                        : 'levelmeter',
@@ -61,6 +65,10 @@ _default_levelmeter = {
     'webview'                     : True,              # should item be visible in the web ?
     'webview_items'               : 'relative_level',  # list of items to be web visible
     'webview_interval'            :  -1,               # seconds, only used if > 0
+    'webview_widget_display'      : False,          # should device be e.g. displayed in cryo image?
+    'webview_widget_type'         : 'tank',         # one of image_map, tank, graph,...
+    'webview_widget_map'          : '',         # map thermometer to either 'Tmxc'(mxc), 'Tstill'(still), 'Tfk'(4K), 'Tffk' (45K)
+
 }
 
 _default_hygrometer = {
@@ -81,6 +89,10 @@ _default_hygrometer = {
     'webview'                     : True,            # should item be visible in the web ?
     'webview_items'               : 'humidity',      # list of items to be web visible
     'webview_interval'            :  -1,             # seconds, only used if > 0
+    'webview_widget_display'      : False,          # should device be e.g. displayed in cryo image?
+    'webview_widget_type'         : 'tank',    # one of image_map, tank, graph,...
+    'webview_widget_map'          : '',         # map thermometer to either 'Tmxc'(mxc), 'Tstill'(still), 'Tfk'(4K), 'Tffk' (45K)
+
 }
 
 #
