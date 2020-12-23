@@ -110,12 +110,12 @@ class tip_webview(object):
         cols = []
         for tip_host in tip_hosts:
             #cols.append(dbc.Col('',width=1))
-            cols.append(dbc.Col(self.define_table_widget(tip_host),width = 3))
+            cols.append(dbc.Col(self.define_table_widget(tip_host), width = 3))
             
-            cols.append(dbc.Col(self.define_imagemap(tip_host),width = 2))
+            cols.append(dbc.Col(self.define_imagemap(tip_host), width = 2))
              
             #dbc.Col(self.define_table_widget(tip_host),width = 2)
-            cols.append(dbc.Col(self.define_tank(tip_host),width = 1))
+            cols.append(dbc.Col(self.define_tank(tip_host), width = 2))
             #dbc.Col(self.define_imagemap(tip_host))
             #dbc.Col(self.define_image_list()),
             #cols.append(dbc.Col(' ',width = 'auto'))
@@ -171,11 +171,11 @@ class tip_webview(object):
     def define_imagemap(self,tip_host):
 
         img_dict = {}
-        img_dict['0'] = html.Img(src = "assets/cryo_all_stages_small_tip.jpg", height = "400")
         for oe in tip_host.output_elements:
             if not tip_host.oe_wv_wd[oe]:
                 continue
             if tip_host.oe_wv_wt[oe] == 'image_map' and tip_host.oe_wv_wm[oe] in ['Tmxc','Tstill','Tfk','Tffk']:
+                img_dict['0'] = html.Img(src = "assets/cryo_all_stages_small_tip.jpg", height = "400")
                 img_dict[tip_host.oe_wv_wm[oe]] = html.Div(id=self.create_ID("img-label-",tip_host.name,oe),  
                     className = tip_host.oe_wv_wm[oe])
             
