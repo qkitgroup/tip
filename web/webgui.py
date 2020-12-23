@@ -60,11 +60,13 @@ class tip_webview(object):
                 output_list.append(Output(self.create_ID("",tip_host.name,output_element), 'figure'))
                 output_list.append(Output(self.create_ID("label-",tip_host.name,output_element), 'children'))
                 if tip_host.oe_wv_wd[output_element]:
-                    print('img callback for ',tip_host.name, output_element)
+                    
                     if tip_host.oe_wv_wt == 'image_map':
                         output_list.append(Output(self.create_ID("img-label-",tip_host.name,output_element), 'children'))
+                        print('img callback for ',tip_host.name, output_element)
                     if tip_host.oe_wv_wt == 'tank':
                         output_list.append(Output(self.create_ID("img-label-",tip_host.name,output_element), 'value'))
+                        print('img callback for ',tip_host.name, output_element)
 
                 input_list.append(Input(self.create_ID('interval-component-',tip_host.name,output_element), 'n_intervals'))
                 
