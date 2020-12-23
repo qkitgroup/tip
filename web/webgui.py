@@ -208,7 +208,8 @@ class tip_webview(object):
                     )
                 ],
                 )
-        return html.Div( list(img_dict.values()))
+        #return html.Div( list(img_dict.values()))
+        return html.Div(html.Table(html.Tr([html.Td(td) for td in list(img_dict.values()) ])))
 
     def create_callback(self,tip_host,device):
         #print(tip_host, device)
