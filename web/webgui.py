@@ -177,25 +177,29 @@ class tip_webview(object):
 
 
     def define_tank(self,tip_host):
-        return html.Div(
-        [
-        html.Label(['lN',html.Sub('2')]),
-        daq.GraduatedBar(
-            color={"ranges":{"red":[0,0.4],"yellow":[0.4,0.7],"green":[0.7,1]}},
-            showCurrentValue=True,
-            vertical=True,
-            value = 0.7,
-            min = 0,
-            max = 1,
-            step = 0.05,
-            labelPosition = "bottom",
-            size=365,
-            #label = 'lN2',
-            
-        )
-        ],
-        )
-
+        img_dict = {}
+        for oe in tip_host.output_elements:
+            if not tip_host.oe_wv_wd[oe]:
+                continue
+            if tip_host.oe_wv_wt[oe] == 'tank':
+                img_dict[oe] = html.Div(
+                [ 
+                html.Label(['lN',html.Sub('2')]),
+                daq.GraduatedBar(
+                    color={"ranges":{"red":[0,0.4],"yellow":[0.4,0.7],"green":[0.7,1]}},
+                    showCurrentValue=True,
+                    vertical=True,
+                    value = self.create_ID("img-label-",tip_host.name,oe),
+                    min = 0,
+                    max = 1,
+                    step = 0.05,
+                    labelPosition = "bottom",
+                    size=365,
+                    #label = 'lN2',
+                    )
+                ],
+                )
+        return html.Div( list(img_dict.values()))
 
     def create_callback(self,tip_host,device):
         #print(tip_host, device)
@@ -264,13 +268,22 @@ class tip_webview(object):
                     autosize= True,
                 )
             }
-            table = "%.04f %s"%(float(tip_host.data_y[device][-1]),tip_host.oe_unit[device][0])
-            img = "%.04f %s"%(float(tip_host.data_y[device][-1]),tip_host.oe_unit[device][0])
+
+            last_val  = float(tip_host.data_y[device][-1])   
+            table_str = "%.04f %s"%(last_val,tip_host.oe_unit[device][0])    
+            img_str   = table_str
             
+            retval = (graph,table_str)
+
             if tip_host.oe_wv_wd[device]:
-                return graph,table,img
+                if tip_host.oe_wv_wt[device] == 'image_map':
+                    return retval + (img_str,)
+                elif tip_host.oe_wv_wt[device] == 'tank':
+                    return retval + (last_val,)
+                else:
+                    return None
             else:
-                return graph,table
+                return retval
             
 
         return update_figure
