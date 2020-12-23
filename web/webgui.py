@@ -182,6 +182,8 @@ class tip_webview(object):
             if not tip_host.oe_wv_wd[oe]:
                 continue
             if tip_host.oe_wv_wt[oe] == 'tank':
+                print ('tank', oe)
+                print(self.create_ID("img-label-",tip_host.name,oe))
                 img_dict[oe] = html.Div(
                 [ 
                 html.Label(['lN',html.Sub('2')]),
