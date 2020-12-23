@@ -104,10 +104,10 @@ class tip_webview(object):
         cols = []
         for tip_host in tip_hosts:
             #cols.append(dbc.Col('',width=1))
-            cols.append(dbc.Col(self.define_table_widget(tip_host),width = 2))
+            cols.append(dbc.Col(self.define_table_widget(tip_host),width = 3))
             
             cols.append(dbc.Col(self.define_imagemap(tip_host),width = 2))
-            
+             
             #dbc.Col(self.define_table_widget(tip_host),width = 2)
             cols.append(dbc.Col(self.define_tank(tip_host),width = 1))
             #dbc.Col(self.define_imagemap(tip_host))
@@ -320,9 +320,11 @@ class aquire_data(object):
             unit = self.get_param(device, 'unit').split(' ')
             self.oe_unit[device]=unit
             
-            
             self.oe_intervals[device] = wv_interval
 
+            #
+            # is web widget display enabled  ?
+            #
             self.oe_wv_wd[device] = self._boolean(self.get_param(device, 'webview_widget_display'))
             if self.oe_wv_wd[device]:
                 self.oe_wv_wt[device] = self.get_param(device, 'webview_widget_type')
