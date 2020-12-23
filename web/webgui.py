@@ -66,7 +66,7 @@ class tip_webview(object):
                         print('img callback for ',tip_host.name, output_element)
                     if tip_host.oe_wv_wt[output_element] == 'tank':
                         output_list.append(Output(self.create_ID("img-label-",tip_host.name,output_element), 'value'))
-                        print('img callback for ',tip_host.name, output_element)
+                        print('tank callback for ',tip_host.name, output_element)
 
                 input_list.append(Input(self.create_ID('interval-component-',tip_host.name,output_element), 'n_intervals'))
                 
