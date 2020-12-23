@@ -115,7 +115,7 @@ class tip_webview(object):
             cols.append(dbc.Col(self.define_imagemap(tip_host), width = 2))
              
             #dbc.Col(self.define_table_widget(tip_host),width = 2)
-            cols.append(dbc.Col(self.define_tank(tip_host), width = 2))
+            cols.append(dbc.Col(self.define_tank(tip_host), width = 1))
             #dbc.Col(self.define_imagemap(tip_host))
             #dbc.Col(self.define_image_list()),
             #cols.append(dbc.Col(' ',width = 'auto'))
@@ -192,6 +192,7 @@ class tip_webview(object):
                 print(self.create_ID("img-label-",tip_host.name,oe))
                 img_dict[oe] = html.Div(
                 [ 
+                html.Label([oe]),
                 html.Label(['lN',html.Sub('2')]),
                 daq.GraduatedBar(
                     id = self.create_ID("img-label-",tip_host.name,oe),
@@ -203,7 +204,7 @@ class tip_webview(object):
                     max = 1,
                     step = 0.05,
                     labelPosition = "bottom",
-                    size=365,
+                    size=360,
                     #label = 'lN2',
                     )
                 ],
