@@ -188,10 +188,11 @@ class tip_webview(object):
                 [ 
                 html.Label(['lN',html.Sub('2')]),
                 daq.GraduatedBar(
+                    id = self.create_ID("img-label-",tip_host.name,oe),
                     color={"ranges":{"red":[0,0.4],"yellow":[0.4,0.7],"green":[0.7,1]}},
                     showCurrentValue=True,
                     vertical=True,
-                    value = self.create_ID("img-label-",tip_host.name,oe),
+                    value = 1,
                     min = 0,
                     max = 1,
                     step = 0.05,
