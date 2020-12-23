@@ -103,21 +103,22 @@ class tip_webview(object):
             #dbc.Row(dbc.Col(html.Div("A single column"))),
         cols = []
         for tip_host in tip_hosts:
-            cols.append(dbc.Col('',width=1))
-            cols.append(dbc.Col(self.define_table_widget(tip_host),width = 3))
+            #cols.append(dbc.Col('',width=1))
+            cols.append(dbc.Col(self.define_table_widget(tip_host),width = 2))
             
-            cols.append(dbc.Col(self.define_imagemap(tip_host)))
+            cols.append(dbc.Col(self.define_imagemap(tip_host),width = 2))
             
             #dbc.Col(self.define_table_widget(tip_host),width = 2)
-            #dbc.Col(self.define_tank(tip_host)),
+            cols.append(dbc.Col(self.define_tank(tip_host),width = 1))
             #dbc.Col(self.define_imagemap(tip_host))
             #dbc.Col(self.define_image_list()),
-        row.append(dbc.Row(cols))
+            #cols.append(dbc.Col(' ',width = 'auto'))
+        row.append(dbc.Row(cols,no_gutters=True,justify="start"))
         
-        
+        row.append(html.Br())
         for tip_host in tip_hosts:
             cols =  [   
-                dbc.Col(html.Div(html.Td(dcc.Graph(id="%s"%(te)))),width = 3) 
+                dbc.Col(html.Div(dcc.Graph(id="%s"%(te))),width = 3) 
                 for te in [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
             ]
             row.append(dbc.Row(cols))
@@ -153,8 +154,8 @@ class tip_webview(object):
             [
             html.Tr(
                 [
+                    #html.Td("%s"%(tip_host.oe_items[oe][0])),
                     html.Td("%s"%(oe)), 
-                    html.Td("%s"%(tip_host.oe_items[oe][0])),
                     html.Td(id="label-"+self.create_ID("",tip_host.name,oe)), 
                 ]
                 ) for oe in tip_host.output_elements 
@@ -162,32 +163,32 @@ class tip_webview(object):
             ),id=self.create_ID("","mytable",tip_host.name)
             )
     def define_imagemap(self,tip_host):
-        #table_elements = [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
-        return html.Div(
-        [
-            html.Img(src = "assets/cryo_all_stages_small_tip.jpg", height = "400"),#,style = "width:100%"),
-            html.Div(id=self.create_ID("img-label-",tip_host.name,'mxc'),  className = "Tmxc"),
-            html.Div(id=self.create_ID("img-label-",tip_host.name,'T9884'),  className = "Tstill"),
-            html.Div(id=self.create_ID("img-label-",tip_host.name,'A1'),  className = "Tfk"),
-            html.Div(id=self.create_ID("img-label-",tip_host.name,'B1'),  className = "Tffk")
-        ]
-        , className = "img_container",
-        )
+        img_dict = {}
+        img_dict['0'] = html.Img(src = "assets/cryo_all_stages_small_tip.jpg", height = "400")
+        for oe in tip_host.output_elements:
+            if tip_host.oe_wv_wt[oe] == 'image_map' and tip_host.oe_wv_wm[oe] in ['Tmxc','Tstill','Tfk','Tffk']:
+                img_dict[tip_host.oe_wv_wm[oe]] = html.Div(id=self.create_ID("img-label-",tip_host.name,oe),  
+                    className = tip_host.oe_wv_wm[oe])
+            
+        return html.Div( list(img_dict.values()), className = "img_container")
 
 
     def define_tank(self,tip_host):
         return html.Div(
         [
+        html.Label(['lN',html.Sub('2')]),
         daq.GraduatedBar(
-            color={"ranges":{"red":[0,4],"yellow":[4,7],"green":[7,10]}},
+            color={"ranges":{"red":[0,0.4],"yellow":[0.4,0.7],"green":[0.7,1]}},
             showCurrentValue=True,
             vertical=True,
-            value = 9,
+            value = 0.7,
             min = 0,
-            max = 10,
-            step = 0.25,
+            max = 1,
+            step = 0.05,
             labelPosition = "bottom",
-            label = tip_host.name,
+            size=365,
+            #label = 'lN2',
+            
         )
         ],
         )
@@ -322,7 +323,7 @@ class aquire_data(object):
             self.oe_wv_wd[device] = self._boolean(self.get_param(device, 'webview_widget_display'))
             if self.oe_wv_wd[device]:
                 self.oe_wv_wt[device] = self.get_param(device, 'webview_widget_type')
-                self.oe_wv_wd[device] = self.get_param(device, 'webview_widget_map')
+                self.oe_wv_wm[device] = self.get_param(device, 'webview_widget_map')
                 #'webview_widget_display'      : False,          # should device be e.g. displayed in cryo image?
                 #'webview_widget_type'         : 'image_map',    # one of image_map, tank, graph,...
                 #'webview_widget_map'          : 'Tmxc', 

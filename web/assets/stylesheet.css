@@ -288,7 +288,9 @@ select:focus {
 label,
 legend {
   display: block;
-  margin-bottom: 0px; }
+  margin-bottom: 0px;
+  font-size: 20px;
+ }
 fieldset {
   padding: 0;
   border-width: 0; }
@@ -330,13 +332,15 @@ table {
   width: 100%;
   border-collapse: collapse;
   border: 0px solid white;
-  text-align: center;
+  text-align: left;
   font-size: 18px;
+  margin: 0px 20px;
 }
 
 thead th:nth-child(1) {
   width: 30%;
-  
+  font-size: 24px;
+  font-weight: bold;
 }
 
 thead th:nth-child(2) {
@@ -351,6 +355,9 @@ thead th:nth-child(3) {
   width: 35%;
 } */
 
+th{
+  font-size: 24px;
+}
 th, td {
   padding: 1px;
 }
@@ -454,8 +461,8 @@ there.
 .img_container {
   position: relative;
   text-align: left;
-  color: white;
-  /* background-color:white;*/
+  color:white;
+  font-weight: bold;
   height:400px;
 }
 
