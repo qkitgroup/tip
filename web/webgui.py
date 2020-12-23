@@ -61,10 +61,10 @@ class tip_webview(object):
                 output_list.append(Output(self.create_ID("label-",tip_host.name,output_element), 'children'))
                 if tip_host.oe_wv_wd[output_element]:
                     
-                    if tip_host.oe_wv_wt == 'image_map':
+                    if tip_host.oe_wv_wt[output_element] == 'image_map':
                         output_list.append(Output(self.create_ID("img-label-",tip_host.name,output_element), 'children'))
                         print('img callback for ',tip_host.name, output_element)
-                    if tip_host.oe_wv_wt == 'tank':
+                    if tip_host.oe_wv_wt[output_element] == 'tank':
                         output_list.append(Output(self.create_ID("img-label-",tip_host.name,output_element), 'value'))
                         print('img callback for ',tip_host.name, output_element)
 
