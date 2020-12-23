@@ -119,7 +119,7 @@ class tip_webview(object):
             #dbc.Col(self.define_imagemap(tip_host))
             #dbc.Col(self.define_image_list()),
             #cols.append(dbc.Col(' ',width = 'auto'))
-        row.append(dbc.Row(cols,no_gutters=True,justify="start"))
+        row.append(dbc.Row(cols,no_gutters=True))
         
         row.append(html.Br())
         for tip_host in tip_hosts:
