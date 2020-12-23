@@ -163,9 +163,12 @@ class tip_webview(object):
             ),id=self.create_ID("","mytable",tip_host.name)
             )
     def define_imagemap(self,tip_host):
+
         img_dict = {}
         img_dict['0'] = html.Img(src = "assets/cryo_all_stages_small_tip.jpg", height = "400")
         for oe in tip_host.output_elements:
+            if not tip_host.oe_wv_wd[oe]:
+                continue
             if tip_host.oe_wv_wt[oe] == 'image_map' and tip_host.oe_wv_wm[oe] in ['Tmxc','Tstill','Tfk','Tffk']:
                 img_dict[tip_host.oe_wv_wm[oe]] = html.Div(id=self.create_ID("img-label-",tip_host.name,oe),  
                     className = tip_host.oe_wv_wm[oe])
