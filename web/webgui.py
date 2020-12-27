@@ -109,6 +109,7 @@ class tip_webview(object):
             #dbc.Row(dbc.Col(html.Div("A single column"))),
         cols = []
         for tip_host in tip_hosts:
+            """
             #cols.append(dbc.Col('',width=1))
             cols.append(dbc.Col(self.define_table_widget(tip_host), width = 3))
             
@@ -119,7 +120,12 @@ class tip_webview(object):
             #dbc.Col(self.define_imagemap(tip_host))
             #dbc.Col(self.define_image_list()),
             #cols.append(dbc.Col(' ',width = 'auto'))
-        row.append(dbc.Row(cols,no_gutters=True))
+            """
+            cols.append(html.Div(self.define_table_widget(tip_host), className = 'widgetline'))
+            cols.append(html.Div(self.define_imagemap(tip_host), className = 'widgetline'))
+            cols.append(html.Div(self.define_tank(tip_host), className = 'widgetline'))
+        #row.append(dbc.Row(cols))
+        row.append(html.Div(cols))
         
         row.append(html.Br())
         for tip_host in tip_hosts:
@@ -128,6 +134,7 @@ class tip_webview(object):
                 for te in [self.create_ID("",tip_host.name,oe) for oe in tip_host.output_elements]
             ]
             row.append(dbc.Row(cols))
+            row.append(html.Br())
         
         web_items.append(html.Div(row))
 
@@ -166,7 +173,7 @@ class tip_webview(object):
                 ]
                 ) for oe in tip_host.output_elements 
             ]
-            ),id=self.create_ID("","mytable",tip_host.name)
+            ),id=self.create_ID("","mytable",tip_host.name)#,className = 'widgetline'
             )
     def define_imagemap(self,tip_host):
 

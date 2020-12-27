@@ -329,31 +329,13 @@ li {
 
 table {
   table-layout: fixed;
-  width: 100%;
+  /* width: 100%; */
   border-collapse: collapse;
   border: 0px solid white;
   text-align: left;
   font-size: 18px;
   margin: 0px 20px;
 }
-
-thead th:nth-child(1) {
-  width: 30%;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-thead th:nth-child(2) {
-  width: 30%;
-}
-
-thead th:nth-child(3) {
-  width: 40%;
-}
-
-/* thead th:nth-child(4) {
-  width: 35%;
-} */
 
 th{
   font-size: 24px;
@@ -507,7 +489,7 @@ there.
 /* Style the topnav links */
 .topnav a {
   float: right; 
-  display: block; 
+  display: inline-block; 
   /*display: inline; */
   color: #f2f2f2;
   text-align: center;
@@ -533,4 +515,9 @@ there.
   padding: 0px, 0px;
   border-radius: 5px;
   margin: 10px 15px;
+}
+
+.widgetline {
+  display: inline-block; 
+  border: 0px solid #ccc;
 }
