@@ -520,4 +520,5 @@ there.
 .widgetline {
   display: inline-block; 
   border: 0px solid #ccc;
+  vertical-align: top;
 }
