@@ -20,7 +20,7 @@ import zmq
 
 from lib.tip_zmq_client_lib import TIP_clients
 
-from .webgui_settings_local import hostlist
+from .webview_settings_local import hostlist
 
 
 
@@ -223,7 +223,7 @@ class tip_webview(object):
         #print(tip_host, device)
         def update_figure(device_):
 
-            MAXLENGTH = 150
+            MAXLENGTH = 1500
             if len(tip_host.data_x[device]) > MAXLENGTH:
                 tip_host.data_x[device].pop(0)
                 tip_host.data_y[device].pop(0)
