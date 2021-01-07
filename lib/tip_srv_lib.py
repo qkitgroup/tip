@@ -83,7 +83,7 @@ def get_handler(cmds):
     elif ':' in cmd[0]:
         return json.dumps(list(config.keys()))
     else:
-        return ("Error: Subcommand not recognized! "+cmd)
+        return json.dumps("Error: GET cmd argument not recognized.\n -- Device names are case sensitive. -- \n:: "+cmd)
 
     
 def set_handler(cmds):
