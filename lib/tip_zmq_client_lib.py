@@ -81,12 +81,17 @@ def test_speed():
 
 class TIP_clients(object):
     "This class allows to talk to several tip server"
-    def __init__(self,url="localhost:5000"):
+    def __init__(self,url="localhost:5000", zmq_context = None ):
+
         self.url = url
         from threading import Lock
         self.get_lock = Lock()
+        if context:
+            "there should only be one zmq context in a process"
+            self.context = zmq_context
+        else:       
+            self.context = zmq.Context()
 
-        self.context = zmq.Context()
         self.socket = context.socket(zmq.REQ)
         self.setup_connection(url="tcp://"+url)
 
@@ -107,6 +112,8 @@ class TIP_clients(object):
         except zmq.error.Again:
             print("ERROR: Server not available or auth failed!")
             return False
+    def get_zmq_context(self):
+        return self.context
 
     def close_connection(self):
         print("Closing connection to TIP server...")

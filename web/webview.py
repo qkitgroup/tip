@@ -33,8 +33,15 @@ class tip_webview(object):
         
         
         tip_hosts = []
+        context = None # zmq context
         for host in hostlist:
-            tip_hosts.append(aquire_data(tip_server = host))
+            #print(host)
+            if context:
+                tip_hosts.append(aquire_data(tip_server = host, zmq_context=context))
+            else:
+                tip_hosts.append(aquire_data(tip_server = host))
+                context = tip_hosts[0].get_context()
+            
         #print(tip_hosts)
 
         self.server = flask.Flask(__name__) # define flask app.server
@@ -307,8 +314,9 @@ class tip_webview(object):
         return update_figure
 
 class aquire_data(object):
-    def __init__(self,tip_server = "localhost:5000"):
-        TC = self.connect_to_TIP_instance(tip_server)
+    def __init__(self,tip_server = "localhost:5000",zmq_context = None):
+
+        TC = self.connect_to_TIP_instance(tip_server,zmq_context)
         print(tip_server)
         system = TC.get_device('system')
 
@@ -368,9 +376,12 @@ class aquire_data(object):
 
     def _boolean(self,s): return s.lower() in ("yes", "true", "t", "1")
 
-    def connect_to_TIP_instance(self,tip_server):
+    def get_context(self):
+        return self.TC.get_zmq_context()
+    def connect_to_TIP_instance(self,tip_server,zmq_context = None):
         try:
-            TC = TIP_clients(tip_server)
+            TC = TIP_clients(tip_server, zmq_context = zmq_context)
+            self.TC = TC
             return TC
         except zmq.error.ZMQError as e:
             print("Error connecting to tip.py: "+str(e))
