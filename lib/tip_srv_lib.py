@@ -118,7 +118,7 @@ def get_param_handler(section,params):
     if param in section.keys():
         return (section[param])
     elif '' == param:
-        return ("Error: parameter not recognized! "+cmd)
+        return ("Error: parameter not recognized! "+param)
     elif ':' in param[0]:
         #return (json.dumps(list(section.keys())))
         return (json.dumps(section,indent=2,sort_keys=True))
