@@ -42,7 +42,7 @@ class tip_webview(object):
                 tip_hosts.append(aquire_data(tip_server = host))
                 context = tip_hosts[0].get_context()
             
-        #print(tip_hosts)
+        print("TIP_hosts",tip_hosts)
 
         self.server = flask.Flask(__name__) # define flask app.server
         # create the dash instance
@@ -234,11 +234,12 @@ class tip_webview(object):
             if len(tip_host.data_x[device]) > MAXLENGTH:
                 tip_host.data_x[device].pop(0)
                 tip_host.data_y[device].pop(0)
-            
+
             dtime = datetime.fromtimestamp(float(tip_host.get_param(device,'change_time')))
 
             tip_host.data_x[device].append(dtime)
-            
+            print ("data_y length ",tip_host.name ,device,"\t\t",len(tip_host.data_y[device]))
+            #print (tip_host.data_y[device])         
             #values = float(tip_host.get_param(device,'temperature'))
             values = float(tip_host.get_param(device,tip_host.oe_items[device][0]))
             tip_host.data_y[device].append(values)
@@ -269,23 +270,21 @@ class tip_webview(object):
                         'type': 'lin', 'title': 'time', 
                         'gridwidth': '0.1','gridcolor' : 'gray'
                         },#'tickformat':'%d',},
-                    #'range':[2.3, 4.8]},
                     yaxis = {
-                        'title': tip_host.oe_items[device][0] +' ('+ tip_host.oe_unit[device][0]+")" , #'Temperature',
-                        'gridwidth': '0.1','gridcolor' : 'gray'
+                        'title': tip_host.oe_items[device][0] +' ('+ tip_host.oe_unit[device][0]+")" , 
+                        'gridwidth': '0.1','gridcolor' : 'gray'#,'automargin':'True'
                         }, #'range': [20, 90]},
-                    #margin={'l': 20, 'b': 20, 't': 20, 'r': 20},
+                    
                     #legend={'x': 0, 'y': 1},
-                    #hovermode='closest',
-                    width = 400, height = 400,
+                    
+                    #width = 400, 
+                    height = 400,
                     transition = {'duration': 500},
                     title = {'text': tip_host.name+" "+device},
-                    #template = "plotly_white",
-                    #template = "plotly_dark",
-                    #template = "seaborn",
-                    showgrid = False,
+                    #showgrid = False,
                     gridcolor = "rgb(100,1000,100)",
-                    margin = dict(l=120, r=20, t=40, b=50),
+                    #margin = dict(l=80, r=20, t=10, b=50, pad=4),
+                    margin = {'t':90,'pad':2},
                     #showlegend= True,
                     paper_bgcolor = "rgba(0,0,0,0)",
                     plot_bgcolor =  'rgba(0,0,0,0)',
