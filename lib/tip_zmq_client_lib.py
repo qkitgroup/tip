@@ -86,13 +86,13 @@ class TIP_clients(object):
         self.url = url
         from threading import Lock
         self.get_lock = Lock()
-        if context:
+        if zmq_context:
             "there should only be one zmq context in a process"
             self.context = zmq_context
         else:       
             self.context = zmq.Context()
 
-        self.socket = context.socket(zmq.REQ)
+        self.socket = self.context.socket(zmq.REQ)
         self.setup_connection(url="tcp://"+url)
 
     def setup_connection(self,url="tcp://localhost:5000"):

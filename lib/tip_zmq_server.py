@@ -6,12 +6,13 @@ import zmq
 import zmq.auth
 from zmq.auth.thread import ThreadAuthenticator
 
-from lib.tip_config import config
+from lib.tip_config import config, internal
 from lib.tip_srv_lib import parse_request
 
 def serve_requests ():
     context = zmq.Context()
-
+    # save context for further usage to internal state dict
+    internal['zmq_context'] = context
     # FIXME: authentication is not working in the moment
     auth = ThreadAuthenticator(context,log=logging.getLogger())
     auth.start()

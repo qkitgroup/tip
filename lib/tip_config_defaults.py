@@ -1,4 +1,47 @@
 
+
+
+#
+# helper functons to convert string values into something useful
+#
+def _boolean(s): return s.lower() in ("yes", "true", "t", "1")
+def _int(s): return int(float(s))
+
+#
+# mapping of parameter types
+# 
+# if a parameter is not recognized, it's value defaults to the type 'str'
+# this mapping is used when the configuration is loaded and 
+# when a value is set via the remote interface
+#
+_types_dict = { 
+    'active':_boolean,'control_active':_boolean,'abort':_boolean,
+    'calibration_active':_boolean,
+    'webview':_boolean,'webview_widget_display':_boolean,
+    'gather':_boolean,
+
+    'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
+    'control_channel':_int,
+    'gather_max':_int,
+
+    'interval':float, 'change_time':float,
+    'device_integration_time':float, 'delay':float,'timeout':float,
+    'control_resistor':float, 'control_default_heat':float,
+    'control_p':float, 'control_i':float, 'control_d':float,
+    'zero_level':float, 'full_level':float,
+    'version':float,
+    'webview_interval':float,
+
+    'type':str, 'unit':str,
+    'device':str, 'device_uid':str, 'description':str, 'com_method':str, 
+    'address':str, 'url':str, 'gpib':str,
+    'control_device':str,
+    'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
+    'calibration_file_order':str, 'calibration_key_format':str,
+    'webview_items':str, 'webview_widget_type':str, 'webview_widget_map':str
+}
+
+
 #
 # we define default parameters for the object, which can be overwritten by the config settings
 #
@@ -11,6 +54,9 @@ _default_thermometer = {
     'unit'                        : 'K',
     # scheduler parameter
     'interval'                    : 100.0, # seconds
+    # should measurement values be gathered to a list ?
+    'gather'                      : False,
+    'gather_max'                  : 100,
     # device parameter: example resistance bridge
     'device'                      : 'Name_of_Instrument', # defined in the instruments section
     'device_channel'              : 0,
@@ -52,6 +98,9 @@ _default_levelmeter = {
     'unit'                        : '',
     # scheduler parameter
     'interval'                    : 60, # seconds
+    # should measurement values be gathered to a list ?
+    'gather'                      : False,
+    'gather_max'                  : 100,
     # device parameter: 
     'device'                      : 'TF_loadcell', # the instrument to use (driver, TIPDIR/devices/*)
     'device_channel'              : 0,
@@ -79,21 +128,52 @@ _default_hygrometer = {
     'unit'                        : '%RH',
     # scheduler parameter
     'interval'                    : 60, # seconds
+    # should measurement values be gathered to a list ?
+    'gather'                      : False,
+    'gather_max'                  : 100,
     # device parameter: 
-    'device'                      : 'TF_humidity', # the instrument to use (driver, TIPDIR/devices/*)
+    'device'                      : 'TF_humidity',   # the instrument to use (driver, TIPDIR/devices/*)
     'device_channel'              : 0,
     'device_excitation'           : 0,
     'device_range'                : 0,
-    'device_integration_time'     : 0, # seconds, adds to the total scan interval time
+    'device_integration_time'     : 0,               # seconds, adds to the total scan interval time
     'device_uid'                  : 'Loy',
     'webview'                     : True,            # should item be visible in the web ?
     'webview_items'               : 'humidity',      # list of items to be web visible
     'webview_interval'            :  -1,             # seconds, only used if > 0
-    'webview_widget_display'      : False,          # should device be e.g. displayed in cryo image?
-    'webview_widget_type'         : 'tank',    # one of image_map, tank, graph,...
-    'webview_widget_map'          : '',         # map thermometer to either 'Tmxc'(mxc), 'Tstill'(still), 'Tfk'(4K), 'Tffk' (45K)
+    'webview_widget_display'      : False,           # should device be e.g. displayed in cryo image?
+    'webview_widget_type'         : 'tank',          # one of image_map, tank, graph,...
+    'webview_widget_map'          : '',              # map thermometer to either 'Tmxc'(mxc), 'Tstill'(still), 'Tfk'(4K), 'Tffk' (45K)
 
 }
+
+_default_generic = {
+    'type'                        : 'generic',
+    'active'                      : False,
+    'description'                 : 'generic device',
+    'property'                    : '',              # !!! this has to be set for the generic device !!!
+    'unit'                        : '',
+    # scheduler parameter
+    'interval'                    : 60,              # seconds
+    # should measurement values be gathered to a list ?
+    'gather'                      : False,
+    'gather_max'                  : 100,
+    # device parameter: 
+    'device'                      : '',              # !!! the instrument to use (driver, TIPDIR/devices/*)
+    'device_channel'              : 0,
+    'device_excitation'           : 0,
+    'device_range'                : 0,
+    'device_integration_time'     : 0,               # seconds, adds to the total scan interval time
+    'device_uid'                  : '',
+    'webview'                     : False,           # should item be visible in the web ?
+    'webview_items'               : 'unset',         # list of items to be web visible
+    'webview_interval'            :  -1,             # seconds, only used if > 0
+    'webview_widget_display'      : False,           # should device be e.g. displayed in cryo image?
+    'webview_widget_type'         : 'unset',         # one of image_map, tank, graph,...
+    'webview_widget_map'          : '',              # map thermometer to either 'Tmxc'(mxc), 'Tstill'(still), 'Tfk'(4K), 'Tffk' (45K)
+
+}
+
 
 #
 # Instruments 
@@ -138,6 +218,7 @@ _config_defaults = {
     "thermometer"      : _default_thermometer,
     "levelmeter"       : _default_levelmeter,
     "hygrometer"       : _default_hygrometer,
+    "generic"          : _default_generic,
     "instrument"       : _default_instrument,
     "system_settings"  : _system_defaults,
 }

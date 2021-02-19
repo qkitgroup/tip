@@ -7,7 +7,7 @@ import json
 from threading import Lock
 import configparser
 
-from .tip_config_defaults import _config_defaults
+from .tip_config_defaults import _config_defaults, _types_dict, _boolean, _int
 
 # 
 # thread save dictionary class
@@ -68,41 +68,25 @@ class SettingsDict(MutableMapping):
 config  = SettingsDict()
 
 #
-# global device_instances
+# global device_instances, unused in the moment
 # 
 
 device_instances = SettingsDict()
 
-#
-# helper functons to convert string values into something useful
-#
-def _boolean(s): return s.lower() in ("yes", "true", "t", "1")
-def _int(s): return int(float(s))
 
 #
-# mapping of parameter types
+# global internal states
 # 
-# if a parameter is not recognized, it's value defaults to the type 'str'
-# this mapping is used when the configuration is loaded and 
-# when a value is set via the remote interface
-_types_dict = { 'active':_boolean,'control_active':_boolean,'abort':_boolean,
-                'calibration_active':_boolean,
-                'webview':_boolean,
-                'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
-                'control_channel':_int,
-                'interval':float, 'change_time':float,
-                'device_integration_time':float, 'delay':float,'timeout':float,
-                'control_resistor':float, 'control_default_heat':float,
-                'control_p':float, 'control_i':float, 'control_d':float,
-                'zero_level':float, 'full_level':float,
-                'version':float,
-                'webview_interval':float,
-                'type':str, 'device':str, 'device_uid':str, 'description':str, 'com_method':str, 'address':str, 'url':str,'gpib':str,
-                'control_device':str,
-                'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
-                'calibration_file_order':str, 'calibration_key_format':str,
-                'webview_items':str, 'unit':str
-            }
+
+internal = SettingsDict()
+
+
+
+#
+# map strings to their corresponding types
+#
+def convert_string_to_value(param, value):
+        return _types_dict.get(param,str)(value)
 
 
 def load_config(settings_file = "settings_local.cfg", debug = False):
@@ -159,9 +143,6 @@ def convert_to_dict(cp_conf): # config parser results
     return config
 
 
-def convert_string_to_value(param, value):
-        return _types_dict.get(param,str)(value)
-
 def update_active_devices(config):
     #
     #  some housekeeping lists for devices/instruments
@@ -180,7 +161,7 @@ def update_active_devices(config):
 
     DI  = config['system']['defined_instruments']
     DT  = config['system']['defined_thermometers']
-    DD  = config['system']['defined_generic_devices']
+    DGD = config['system']['defined_generic_devices']
     DLD = config['system']['defined_levelmeter_devices']
 
     AD  = config['system']['active_devices']
@@ -199,16 +180,17 @@ def update_active_devices(config):
             if config[inst].get("active",False):
                 AT.append(inst)
                 AD.append(inst)
-        if config[inst].get("type",False) in ["hygrometer","scale"]:
-            DD.append(inst)
-            if config[inst].get("active",False):
-                AGD.append(inst)
-                AD.append(inst)
-        if config[inst].get("type",False) in ["levelmeter"]:
+        if config[inst].get("type",False) == "levelmeter":
             DLD.append(inst)
             if config[inst].get("active",False):
                 ALD.append(inst)
+                AD.append(inst)                
+        if config[inst].get("type",False) in ["generic","hygrometer","scale"]:
+            DGD.append(inst)
+            if config[inst].get("active",False):
+                AGD.append(inst)
                 AD.append(inst)
+
 
 
 
