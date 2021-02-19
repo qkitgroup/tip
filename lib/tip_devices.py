@@ -8,7 +8,8 @@ import logging
 from lib.tip_config import config, device_instances, _types_dict, _boolean, _int 
 from lib.tip_eich import TIPEich
 from lib.tip_pidcontrol import pidcontrol
-from lib.tip_carbon_copier import check_logfile, prepare_data, update_hdf_file
+# future adds:
+#from lib.tip_carbon_copier import check_logfile, prepare_data, update_hdf_file
 
 class device(object):
 
