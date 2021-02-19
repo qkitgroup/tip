@@ -14,17 +14,14 @@ from lib.tip_config import config
 
 def driver(name):
     #print("entering driver", flush = True)
-    CBW = CBW_X_317(name,
-                address = config[name]['url'],
-                channel = config[name]['channel'],
-                timeout = config[name]['timeout'])
+    CBW = CBW_X_317(name, url = config[name]['url'])
     return CBW
 
 class CBW_X_317(object):
     
-    def __init__(self, name, url, channel=1, timeout = 1, **kwargs):
+    def __init__(self, name, url, **kwargs):
         self.heater_power = 0
-        self.channel = channel
+        self.channel = 1
         self.R = 120
         self.url = url # the url string has the form "url:port", if port is omitted, port 80 (http std) is assumed
         self._setup_http_connection(self.url)
