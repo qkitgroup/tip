@@ -70,15 +70,22 @@ class CBW_X_317(object):
         
 
     def set_heater_power(self,value):
-        self.heater_power = value
-        
-        voltage = math.sqrt(value*self.R)
-        return self.set_heater_voltage(voltage)
+        print("heater_power"+str(value))
+        if value < 0:
+            return self.set_heater_voltage(0)
+            self.heater_power = 0
+        else:  
+            self.heater_power = value
 
+            voltage = math.sqrt(value*self.R)
+            return self.set_heater_voltage(voltage)
+        
     def get_heater_channel(self):
         return self.channel
 
     def set_heater_channel(self,channel):
+        print("#########")
+        print (channel)
         if channel in [1,2,3,4,5]: 
             self.channel = channel
         else:
@@ -107,13 +114,14 @@ class CBW_X_317(object):
 
 if __name__ == "__main__":
     
-    ht=CBW_X_317("heater", url='192.168.1.2')
+    ht=CBW_X_317("heater", url='10.22.197.217')
     #ht._setup_http_connection('192.168.1.2')
     #print("connected")
     #ht.conn.debuglevel = 1
     res = ht._http_request("/state.xml")
     print(ht._read_request(res))
-    ht.set_heater_voltage(1.1)
-    res = ht._http_request("/state.xml")
-    print(ht._read_request(res))
-    ht.set_heater_voltage(0)
+    ht.set_heater_channel(2)
+    ht.set_heater_power(0)
+    #res = ht._http_request("/state.xml")
+    #print(ht._read_request(res))
+    #ht.set_heater_voltage(0)
