@@ -37,9 +37,10 @@ class Lakeshore_372(object):
         self.serial_dev.stopbits = serial.STOPBITS_ONE
         self.serial_dev.parity   = serial.PARITY_ODD 
         self.serial_dev.port     = address
+        self.serial_dev.timeout  = timeout
         self.serial_dev.open()
         print("serial port opened", flush =  True)
-        
+        print(self.serial_dev.timeout, flush = True)
         #self._visa = ser
         # self._visa = visa.instrument(
         #     gpib, 
@@ -403,22 +404,56 @@ class Lakeshore_372(object):
         self.write('SCAN {:d},{:d}'.format(int(channel), int(status)))
         
 
+    def _safeask(self,querystring,no_params=None):
+        for i in range(10):
+            try:
+                if i>0:
+                    logging.info("query again")
+                query = self.ask(querystring)
+                if i>0:
+                    logging.info(querystring + " response: %s"%query)    
+                response = query.split(",")
+                if no_params is not None:
+                    if len(response) != no_params:
+                        raise ValueError(response)
+                [int(f) for f in response] # check if all parameters are int compatible
+                return response
+            except ValueError:
+                logging.error("Lakeshore 372: '%s' returned '%s'. Try again."%(querystring,str(query)))
+                self.serial_dev.reset_input_buffer()
+                time.sleep(2)
+            except Exception as e:
+                logging.error("Lakeshore 372: '%s' caused error '%s'. Trying again."%(querystring,str(e)))
+                time.sleep(10)
+
+
     def _get_channel_parameters(self):
         # get channel parameters for comparison
         
         # query channel first
-        try:
-            query = self.ask("SCAN?")
-            logging.debug("get_channel_parameters %s"%query)
-            channel, autoscan = query.split(",")
-        except ValueError:
-            # most likely "SCAN?" did not return something
-            logging.error("Lakeshore 372: get_channel_parameters empty. Try once again.")
-            channel, autoscan = self.ask("SCAN?").split(",")
+        channel, autoscan = self._safeask("SCAN?",2)
+        #for i in range(10):
+        #    try:
+        #        if i>0:
+        #            logging.info("query again")
+        #        query = self.ask("SCAN?")
+        #        if i>0:
+        #            logging.info("get_channel_parameters %s"%query)    
+        #       logging.debug("get_channel_parameters %s"%query)
+        #       channel, autoscan = query.split(",")
+        #        break
+        #    except ValueError:
+        #        # most likely "SCAN?" did not return something
+        #       logging.error("Lakeshore 372: get_channel_parameters returned '%s'. Try once again."%str(query))
+        #        time.sleep(2)
+        #    except Exception as e:
+        #        logging.error("Lakeshore 372: get_channel_parameters error '%s'. Trying again."%str(e))
+        #       time.sleep(10)
+            
 
         # and then the parameter
         mode, excitation, r_range, autorange, cs_off = \
-            self.ask("RDGRNG? %s"%(channel)).split(",")
+            self._safeask("RDGRNG? %s"%(channel),5)
         # where 
         # mode [0: voltage excitation | 1:current excitation]
         # autorange [0: off | 1: on]
