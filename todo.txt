@@ -7,7 +7,6 @@ o  extend gui
    - read bridge ranges
    - 
 o  cleanup code, remove random comments
-o  get zmq authenticator working (!) to avoid random connections 
 o  add SIM bridge/heater
 o  add MMR3 bridge
 o  add Lakeshore 372
