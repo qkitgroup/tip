@@ -122,6 +122,7 @@ class SIM900(object):
             return False
 
         logging.debug('Get current channel: {:d}'.format(channel))
+        self._channel = channel
         return channel
 
 
@@ -167,12 +168,14 @@ class SIM900(object):
         val: int
             Excitation value of the bias with which the resistance of the thermometer is measured.
         """
-       
+        
+
         cmd = "EXCI?"
         excitation = self.get_value_from_SIM900(port,cmd)
        
         logging.debug('Get excitation of (current) channel {:d}: {:d} ({!s}) uV.'
-            .format(channel, excitation, self.excitations[excitation]))
+            .format(self._channel, excitation, self.excitations[excitation]))
+        self._excitation = excitation
         return excitation
 
     def set_excitation(self, excitation):
@@ -188,14 +191,12 @@ class SIM900(object):
         -------
         None
         """
-    
-        if current_excitation == excitation:
+
+        if self._excitation == excitation:
             # do nothing
             return
         else:
             port  = self.SIM921_port
-            #cmd = "EXCI %i;EXCI?"%(ex)
-            #return int(self.get_value_from_SIM900(port,cmd))
             cmd = "EXCI %i"%(excitation)
             self.set_value_on_SIM900(port,cmd)
             logging.debug('Set excitation of channel {!s} to {!s}.'
@@ -221,7 +222,7 @@ class SIM900(object):
         r_range = self.get_value_from_SIM900(port,cmd)
 
         logging.debug('Get range of (current) channel {:d}: {:d} ({!s} Ohm).'
-            .format(channel, r_range,self.resistances[r_range]))
+            .format(self._channel, r_range, self.resistances[r_range]))
         return r_range
 
     def set_range(self, r_range):
@@ -253,7 +254,7 @@ class SIM900(object):
             cmd = "RANG%i"%(r_range)
             self.set_value_on_SIM900(port,cmd)
             logging.debug('Set range of channel {:d} to {:d} ({!s}).'
-            .format(channel, r_range,self.resistance_ranges[r_range]))
+            .format(self._channel, r_range,self.resistance_ranges[r_range]))
         
             time.sleep(3)
 
@@ -271,7 +272,7 @@ class SIM900(object):
         resistance: float
             Resistance of the thermometer.
         """    
-        logging.debug('Get resistance of channel {:d}.'.format(channel))
+        #logging.debug('Get resistance of channel {:d}.'.format(channel))
         
         port  = self.SIM921_port
         cmd = 'RVAL?'
@@ -302,17 +303,16 @@ class SIM900(object):
         """
         
 
-        if settle_time == integration:
+        if self._integration_time == integration:
             # do nothing
             return
         else:
-        
             logging.debug('Set integration of channel {!s} to {!s}.'.format(self._channel, integration))
         self._integration_time = integration
     
     def get_integration(self):
         """
-        Gets the integration for the resistance measurement of the set channel.
+        Gets the integration time for the resistance measurement of the set channel.
 
         Parameters
         ----------
@@ -323,7 +323,7 @@ class SIM900(object):
         integration: float
             Integration, that composes of integration time and those averages.
         """
-        # Corresponding command: #<off/on>,<settle time>,<window>[term] = FILTER? <channel>[term]
+        
         try:
             logging.debug('Get integration of channel {!s}.'.format(self._channel))
             return self._integration
@@ -352,6 +352,25 @@ class SIM900(object):
         self.SIM.write('main_esc')
     
     def get_value_from_SIM900(self,port,cmd):
+        return get_value_from_SIM900_new(port,cmd)
+
+    def get_value_from_SIM900_new(self,port,cmd):
+        with self.ctrl_lock:
+            for i in range(50): #try 50 times, Andre 2015-05-31
+                try:
+                    self.SIM_prolog(port)
+                    self.SIM.write(str(cmd))
+                    print (self.SIM.ask("OPC?"))
+                    val = self.SIM.read()
+                    self.SIM_epilog()
+                    return val
+                except Exception as e:
+                    logging.debug(">>>Error #%i,%s: trying again '%s' on port %i"%(i,e,cmd,port))
+                    time.sleep(.5)
+                    continue
+            return False
+
+    def get_value_from_SIM900_orig(self,port,cmd):
         with self.ctrl_lock:
             for i in range(50): #try 50 times, Andre 2015-05-31
                 try:
@@ -365,6 +384,7 @@ class SIM900(object):
                     time.sleep(.5)
                     continue
             return False
+    
     def set_value_on_SIM900(self,port,cmd):
         with self.ctrl_lock:
             self.SIM_prolog(port)
@@ -418,25 +438,38 @@ class SIM900(object):
     """
 
 if __name__ == "__main__":
-    # port 6 is the port to the SRS SIM921 bridge, port 8 is the SIM925 multiplexer
-    SIM = SIM900("SIM900", address="10.22.197.34", SIM921_port=2,SIM925_port=1,) 
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    SIM = SIM900("SIM900", address="10.22.197.15", SIM921_port=2,SIM925_port, term_char = "\r\n", eos_char = "\r\n",) 
     print ("--- *IDN? ---")
     print (SIM._get_IDN(1))
     print (SIM._get_IDN(2))
+    
+    print ("--- resistance ---")
+    print (SIM.get_resistance())
+    
     print ("--- channels ---")
     print (SIM.get_channel())
     print (SIM.set_channel(1))
     print (SIM.get_channel())
+
     print ("--- excitation ---")
     print (SIM.get_excitation())
     print (SIM.set_excitation(4))
     print (SIM.get_excitation())
+
     print ("--- range ---")
+    print (SIM.get_range())
+    print (SIM.set_range(4))
+    print (SIM.get_range())
+
+    print ("--- excitation ---")
     print (SIM.get_excitation())
     print (SIM.set_excitation(4))
     print (SIM.get_excitation())
-    print ("--- resistance ---")
-    print (SIM.get_resistance())
+
+    
     
     #SIM._close_connection()
 
