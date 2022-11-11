@@ -42,7 +42,7 @@ class SIM900(object):
                  SIM928_port = 2  # <- this is not implemented anymore (for now)
                  ):
         
-        self.SIM         = visa.instrument(gpib, ip = address, delay = delay)
+        self.SIM         = visa.instrument(gpib, ip = address, delay = delay,  term_char = "\r\n", eos_char = "\r\n",)
         self.SIM921_port = SIM921_port
         self.SIM925_port = SIM925_port
         self.SIM928_port = SIM928_port
@@ -277,11 +277,10 @@ class SIM900(object):
         port  = self.SIM921_port
         cmd = 'RVAL?'
         # not sure if we need this, quite clumsy:
-        for i in range(3):
-            try: #andre 2015-04-02
-                return float(self.get_value_from_SIM900(port,cmd))
-            except ValueError:
-                continue
+        try:
+            return float(self.get_value_from_SIM900(port,cmd))
+        except ValueError as e:
+            logging.debug (f"SIM921 in get_resistance(): {e}")
         return None
 
         
@@ -352,23 +351,16 @@ class SIM900(object):
         self.SIM.write('main_esc')
     
     def get_value_from_SIM900(self,port,cmd):
-        return get_value_from_SIM900_new(port,cmd)
+        return self.get_value_from_SIM900_new(port,cmd)
 
     def get_value_from_SIM900_new(self,port,cmd):
-        with self.ctrl_lock:
-            for i in range(50): #try 50 times, Andre 2015-05-31
-                try:
-                    self.SIM_prolog(port)
-                    self.SIM.write(str(cmd))
-                    print (self.SIM.ask("OPC?"))
-                    val = self.SIM.read()
-                    self.SIM_epilog()
-                    return val
-                except Exception as e:
-                    logging.debug(">>>Error #%i,%s: trying again '%s' on port %i"%(i,e,cmd,port))
-                    time.sleep(.5)
-                    continue
-            return False
+        self.SIM_prolog(port)
+        self.SIM.write(str(cmd))
+        time.sleep(0.1)
+        val = self.SIM.read()
+        self.SIM_epilog()
+        return val
+        #logging.debug(">>>Error #%i,%s: trying again '%s' on port %i"%(i,e,cmd,port))
 
     def get_value_from_SIM900_orig(self,port,cmd):
         with self.ctrl_lock:
@@ -441,7 +433,7 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
-    SIM = SIM900("SIM900", address="10.22.197.15", SIM921_port=2,SIM925_port, term_char = "\r\n", eos_char = "\r\n",) 
+    SIM = SIM900("SIM900", address="10.22.197.15", SIM921_port = 2, SIM925_port = 1) 
     print ("--- *IDN? ---")
     print (SIM._get_IDN(1))
     print (SIM._get_IDN(2))
