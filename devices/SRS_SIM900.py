@@ -170,8 +170,7 @@ class SIM900(object):
         
         port  = self.SIM921_port
         cmd = "EXCI?"
-        excitation = self.get_value_from_SIM900(port,cmd)
-       
+        excitation = int (self.get_value_from_SIM900(port,cmd))
         logging.debug('Get excitation of (current) channel {:d}: {:d} ({!s}) uV.'
             .format(self._channel, excitation, self.excitations[excitation]))
         self._excitation = excitation
