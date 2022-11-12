@@ -46,13 +46,15 @@ class SIM900(object):
         self.SIM925_port = SIM925_port
         self.SIM928_port = SIM928_port
         #  mutex locks
-        self.ctrl_lock   = Lock()
+        #self.ctrl_lock   = Lock()
 
-        #print "params",ip,gpib,delay,SIM921_port,SIM925_port,SIM928_port
         """    
         exci={0:-1, 3:0, 10:1, 30:2, 100:3, 300:4, 1000:5, 3000:6, 10000:7, 30000:8}
         rang={0.02:0, 0.2:1, 2:2, 20:3, 200:4, 2000:5, 20000:6, 200000:7, 2000000:8, 20000000:9}
         tcon={0:-1, 0.3:0, 1:1, 3:2, 10:3, 30:4, 100:5, 300:6}
+
+        """
+        
         """
         self.ranges = [ # Ohm
                 0.02, 
@@ -66,9 +68,11 @@ class SIM900(object):
                 2000000, 
                 20000000
             ]
-
+        """
+        self.ranges = {0:0.02, 1:0.2, 2:2, 3:20, 4:200, 5:2000, 6:20000, 7:200000, 8:2000000, 9:20000000}
+        """
         self.excitations = [ # uV
-                #0:-1, 
+                0, # excitation off
                 3, 
                 10, 
                 30, 
@@ -79,9 +83,13 @@ class SIM900(object):
                 10000, 
                 30000
             ]
+        """
+        self.exexcitations = {-1:0, 0:3, 1:10, 2:30, 3:100, 4:300, 5:1000, 6:3000, 7:10000, 8:30000}
 
+        """
+        Filter timeconstants (TCON), settling time 7x longer
         self.integrations = [ # seconds
-                #0:-1, 
+                #-1  -> filter off
                 0.3, 
                 1, 
                 3, 
@@ -90,7 +98,8 @@ class SIM900(object):
                 100, 
                 300
             ]
-    
+        """
+        self.integrations = { -1:-1, 0:0.3, 1:1, 2:3, 3:10, 4:30, 5:100, 6:300}
 
     def get_IDN(self,port):
         cmd = "*IDN?"
@@ -171,7 +180,7 @@ class SIM900(object):
         port  = self.SIM921_port
         cmd = "EXCI?"
         excitation = int (self.get_value_from_SIM900(port,cmd))
-        logging.debug('Get excitation of (current) channel {:d}: {:d} ({!s}) uV.'
+        logging.debug('Get excitation of (current) channel {:d}: {:d} ({!s} uV).'
             .format(self._channel, excitation, self.excitations[excitation]))
         self._excitation = excitation
         return excitation
@@ -221,7 +230,7 @@ class SIM900(object):
         r_range = int (self.get_value_from_SIM900(port,cmd))
 
         logging.debug('Get range of (current) channel {:d}: {:d} ({!s} Ohm).'
-            .format(self._channel, r_range, self.resistances[r_range]))
+            .format(self._channel, r_range, self.ranges[r_range]))
         return r_range
 
     def set_range(self, r_range):
