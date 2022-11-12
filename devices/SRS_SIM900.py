@@ -422,10 +422,10 @@ class SIM900(object):
             return False
     
     def set_value_on_SIM900(self,port,cmd):
-        with self.ctrl_lock:
-            self.SIM_prolog(port)
-            self.SIM.write(str(cmd))
-            self.SIM_epilog()
+        #with self.ctrl_lock:
+        self.SIM_prolog(port)
+        self.SIM.write(str(cmd))
+        self.SIM_epilog()
     
     def _get_IDN(self,port):
         cmd = "*IDN?"
