@@ -247,7 +247,7 @@ class SIM900(object):
         None
         """
         
-
+        """
         if r_range == -1:  # autorange
             autorange = 1
             time.sleep(3)
@@ -256,15 +256,16 @@ class SIM900(object):
             # do nothing
             return
         else:
-            port  = self.SIM921_port
-            #cmd = "RANG%i;RANG?"%(range)
-            #return int(self.get_value_from_SIM900(port,cmd))
-            cmd = "RANG%i"%(r_range)
-            self.set_value_on_SIM900(port,cmd)
-            logging.debug('Set range of channel {:d} to {:d} ({!s}).'
-            .format(self._channel, r_range, self.ranges[r_range]))
-        
-            time.sleep(3)
+        """    
+        port  = self.SIM921_port
+        #cmd = "RANG%i;RANG?"%(range)
+        #return int(self.get_value_from_SIM900(port,cmd))
+        cmd = "RANG%i"%(r_range)
+        self.set_value_on_SIM900(port,cmd)
+        logging.debug('Set range of channel {:d} to {:d} ({!s}).'
+        .format(self._channel, r_range, self.ranges[r_range]))
+    
+        time.sleep(1)
 
 
     def get_resistance(self):
