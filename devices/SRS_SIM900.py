@@ -216,9 +216,9 @@ class SIM900(object):
             Resistance measurement range for the thermometer.
         """
         # Corresponding command: <mode>,<excitation>,<range>,<autorange>,<cs off>[term] = RDGRNG? <channel>[term]
-    
+        port  = self.SIM921_port
         cmd = "RANG?"
-        r_range = self.get_value_from_SIM900(port,cmd)
+        r_range = int (self.get_value_from_SIM900(port,cmd))
 
         logging.debug('Get range of (current) channel {:d}: {:d} ({!s} Ohm).'
             .format(self._channel, r_range, self.resistances[r_range]))
@@ -253,7 +253,7 @@ class SIM900(object):
             cmd = "RANG%i"%(r_range)
             self.set_value_on_SIM900(port,cmd)
             logging.debug('Set range of channel {:d} to {:d} ({!s}).'
-            .format(self._channel, r_range,self.resistance_ranges[r_range]))
+            .format(self._channel, r_range, self.ranges[r_range]))
         
             time.sleep(3)
 
@@ -262,7 +262,7 @@ class SIM900(object):
         """
         Gets the resistance value of the thermometer that is connected to the set channel.
         
-        Note from Matt @ SRS: 
+        Note from Matt @ SRS Nov. 2022: 
         The RVAL? and PHAS? are subject to the Output Filter time constant -- 
         they do NOT ignore the filter. So, RVAL? results will have to settle if there is a sudden change to the applied resistance.
         RVAL? and PHAS? always return the averaged values.
@@ -464,7 +464,7 @@ class SIM900(object):
     """
 
 if __name__ == "__main__":
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
     SIM = SIM900("SIM900", address="10.22.197.15", gpib = "GPIB::1",  SIM921_port = 2, SIM925_port = 1) 
