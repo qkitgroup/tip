@@ -151,12 +151,13 @@ class SIM900(object):
         
         current_channel = self.get_channel()
         if current_channel == channel:
+            logging.debug('Set (leave) channel at {:d}.'.format(channel))
             # do nothing
             pass
         else:
             logging.debug('Set channel to {:d}.'.format(channel))
             port  = self.SIM925_port
-            cmd = "CHAN%i;CHAN?"%(channel)
+            cmd = "CHAN %i;CHAN?"%(channel)
             try:
                 channel = int(self.get_value_from_SIM900(port,cmd))
             except ValueError:
@@ -201,6 +202,9 @@ class SIM900(object):
         
         if self._excitation == excitation:
             # do nothing
+            port  = self.SIM921_port
+            logging.debug('Set (leave) excitation of channel {!s} to {!s}.'
+                    .format(self._channel, excitation))
             return
         else:
             port  = self.SIM921_port
@@ -260,7 +264,7 @@ class SIM900(object):
         port  = self.SIM921_port
         #cmd = "RANG%i;RANG?"%(range)
         #return int(self.get_value_from_SIM900(port,cmd))
-        cmd = "RANG%i"%(r_range)
+        cmd = "RANG %i"%(r_range)
         self.set_value_on_SIM900(port,cmd)
         logging.debug('Set range of channel {:d} to {:d} ({!s}).'
         .format(self._channel, r_range, self.ranges[r_range]))
@@ -426,10 +430,6 @@ class SIM900(object):
         self.SIM_prolog(port)
         self.SIM.write(str(cmd))
         self.SIM_epilog()
-    
-    def _get_IDN(self,port):
-        cmd = "*IDN?"
-        return (self.get_value_from_SIM900(port,cmd)).strip()
         
     """ 
     def get_Rval(self):
@@ -497,7 +497,7 @@ if __name__ == "__main__":
 
     print ("--- range ---")
     print (SIM.get_range())
-    print (SIM.set_range(4))
+    print (SIM.set_range(5))
     print (SIM.get_range())
 
     print ("--- excitation ---")
