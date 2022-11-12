@@ -19,8 +19,6 @@ def driver(name):
     print("entering driver", flush = True)
     SIM = SIM900(name,
                 address     = config[name]['address'],
-                delay       = config[name]['delay'],
-                timeout     = config[name]['timeout'],
                 gpib        = config[name]['gpib'],
                 SIM921_port = config[name]['SIM921_port'],
                 SIM925_port = config[name]['SIM925_port'])
@@ -36,13 +34,14 @@ class SIM900(object):
                  name,
                  address = "",
                  delay = 0.2, 
-                 gpib = "GPIB::0",
-                 SIM921_port = 6,
-                 SIM925_port = 8,
+                 gpib = "GPIB::1",
+                 SIM921_port = 2,
+                 SIM925_port = 1,
                  SIM928_port = 2  # <- this is not implemented anymore (for now)
                  ):
         
-        self.SIM         = visa.instrument(gpib, ip = address, delay = delay,  term_char = "\r\n", eos_char = "\r\n",)
+        self.SIM         = visa.instrument(gpib, ip = address, delay = delay, 
+                                           instrument_delay= 0.1, term_char = "\r\n", eos_char = "\r\n")
         self.SIM921_port = SIM921_port
         self.SIM925_port = SIM925_port
         self.SIM928_port = SIM928_port
@@ -262,6 +261,23 @@ class SIM900(object):
     def get_resistance(self):
         """
         Gets the resistance value of the thermometer that is connected to the set channel.
+        
+        Note from Matt @ SRS: 
+        The RVAL? and PHAS? are subject to the Output Filter time constant -- 
+        they do NOT ignore the filter. So, RVAL? results will have to settle if there is a sudden change to the applied resistance.
+        RVAL? and PHAS? always return the averaged values.
+
+        What the user probably wants to do, especially since they are multiplexing between different resistance values using an external SIM925, is something like this:
+
+        [ configure the SIM925 to the desired channel to read ]
+        [ connect the SIM900 mainframe to the SIM921 ]
+
+        visa.write ('FRST')  // reset the post detection filter
+        [ add a TIME DELAY, corresponding to 7* the filter time constant ]
+        visa.write('RVAL?')
+        res = visa.read()
+
+
 
         Parameters
         ----------
@@ -289,7 +305,17 @@ class SIM900(object):
 
     def set_integration(self, integration):
         """
-        Sets the integration for the resistance measurement of the set channel.
+        Sets the integration time in seconds for the resistance measurement of the set channel.
+
+        The filter time constant can be read using the TCON? query, and then indexing based on the returned value:
+                TCON?   (Time Constant )    (Suggested MIN Settling Time)
+                0             0.3 s                       2.1 s
+                1             1 s                          7 s
+                2             3 s                          21 s
+                3             10 s                        70 s
+                4             30 s                        210 s
+                5             100 s                      700 s
+                6             300 s                      2100 s  (35 minutes)
 
         Parameters
         ----------
@@ -301,13 +327,19 @@ class SIM900(object):
         None
         """
         
+        for integration_setting in range(len(self.integrations)):
+            if integration <= self.integrations[integration_setting] * 7 :
+                self._integration_time_new  = self.integrations[integration_setting] * 7
+            else:
+                break
+        
 
-        if self._integration_time == integration:
+        if self._integration_time == self._integration_time_new:
             # do nothing
             return
         else:
             logging.debug('Set integration of channel {!s} to {!s}.'.format(self._channel, integration))
-        self._integration_time = integration
+        self._integration_time = self._integration_time_new
     
     def get_integration(self):
         """
@@ -332,6 +364,8 @@ class SIM900(object):
     
     def setup_device(self):
         pass
+
+    
     def SIM_prolog(self,port = 0, init = False):
         try:
             # commands to mainframe
@@ -356,7 +390,7 @@ class SIM900(object):
     def get_value_from_SIM900_new(self,port,cmd):
         self.SIM_prolog(port)
         self.SIM.write(str(cmd))
-        time.sleep(0.1)
+        time.sleep(0.05)
         val = self.SIM.read()
         self.SIM_epilog()
         return val
@@ -433,7 +467,7 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
-    SIM = SIM900("SIM900", address="10.22.197.15", SIM921_port = 2, SIM925_port = 1) 
+    SIM = SIM900("SIM900", address="10.22.197.15", gpib = "GPIB::1",  SIM921_port = 2, SIM925_port = 1) 
     print ("--- *IDN? ---")
     print (SIM._get_IDN(1))
     print (SIM._get_IDN(2))
