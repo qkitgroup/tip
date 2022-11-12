@@ -479,8 +479,8 @@ if __name__ == "__main__":
 
     SIM = SIM900("SIM900", address="10.22.197.15", gpib = "GPIB::1",  SIM921_port = 2, SIM925_port = 1) 
     print ("--- *IDN? ---")
-    print (SIM._get_IDN(1))
-    print (SIM._get_IDN(2))
+    print (SIM.get_IDN(1))
+    print (SIM.get_IDN(2))
     
     print ("--- resistance ---")
     print (SIM.get_resistance())
@@ -505,7 +505,7 @@ if __name__ == "__main__":
     print (SIM.set_excitation(4))
     print (SIM.get_excitation())
 
-    
-    
+    for i in range(10):
+        print (SIM.get_resistance())
     #SIM._close_connection()
 
