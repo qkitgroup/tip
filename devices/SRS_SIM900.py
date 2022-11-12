@@ -168,7 +168,7 @@ class SIM900(object):
             Excitation value of the bias with which the resistance of the thermometer is measured.
         """
         
-
+        port  = self.SIM921_port
         cmd = "EXCI?"
         excitation = self.get_value_from_SIM900(port,cmd)
        
@@ -190,7 +190,7 @@ class SIM900(object):
         -------
         None
         """
-
+        
         if self._excitation == excitation:
             # do nothing
             return
@@ -200,6 +200,7 @@ class SIM900(object):
             self.set_value_on_SIM900(port,cmd)
             logging.debug('Set excitation of channel {!s} to {!s}.'
                 .format(self._channel, excitation))
+            self._excitation = excitation
         
     
     def get_range(self):
