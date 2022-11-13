@@ -407,8 +407,8 @@ class SIM900(object):
             else:
                 break
 
-        print("Int new time filter:",_integration_time_new)
-        print("int setting: ",integration_setting," ",self.integrations[integration_setting])
+        print(f"Int filter settling time: {_integration_time_new}")
+        print(f"int setting: {integration_setting} ({self.integrations[integration_setting]}s)")
 
         current_integration_time = self.get_integration()
 
@@ -584,16 +584,20 @@ if __name__ == "__main__":
     print ("get: ", SIM.get_excitation())
 
     print ("--- range ---")
-    print ("set:6 ",SIM.set_range(6))
+    print ("set:6 ")
+    SIM.set_range(6)
     print ("get: ", SIM.get_range())
-    print ("set:5 ",SIM.set_range(5))
+    print ("set:5 ")
+    SIM.set_range(5)
     print ("get: ", SIM.get_range())
 
     print ("--- integration ---")
     print (SIM.integrations)
-    print ("set:7s ", SIM.set_integration(7))
+    print ("set:7s ")
+    SIM.set_integration(5)
     print ("get: ",   SIM.get_integration())
-    print ("set:10s ",SIM.set_integration(10))
+    print ("set:11s ")
+    SIM.set_integration(11)
     print ("get: ",   SIM.get_integration())
 
     for i in range(10):
