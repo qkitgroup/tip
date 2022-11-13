@@ -305,10 +305,11 @@ class SIM900(object):
         #
         # check weather the auto-gain cycle is complete
         cmd = "AGAI?"
-        for i in range(10):
+        for i in range(30):
             time.sleep(1)
             again = self.get_value_from_SIM900(self.SIM921_port,cmd)
             print (again)
+            print (i)
             
 
 
