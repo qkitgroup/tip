@@ -21,7 +21,8 @@ def driver(name):
                 address     = config[name]['address'],
                 gpib        = config[name]['gpib'],
                 SIM921_port = config[name]['SIM921_port'],
-                SIM925_port = config[name]['SIM925_port'])
+                SIM925_port = config[name]['SIM925_port'],
+                TIP_mode    = True)
 
     config[name]['device_ranges']       = SIM900.ranges
     config[name]['device_excitations']  = SIM900.excitations
@@ -37,7 +38,8 @@ class SIM900(object):
                  gpib = "GPIB::1",
                  SIM921_port = 2,
                  SIM925_port = 1,
-                 SIM928_port = 2  # <- this is not implemented anymore (for now)
+                 SIM928_port = 2,  # <- this is not implemented anymore (for now)
+                 TIP_mode = False
                  ):
         
         self.SIM         = visa.instrument(gpib, ip = address, delay = delay, 
@@ -45,8 +47,24 @@ class SIM900(object):
         self.SIM921_port = SIM921_port
         self.SIM925_port = SIM925_port
         self.SIM928_port = SIM928_port
-        #  mutex locks
-        #self.ctrl_lock   = Lock()
+
+        self.TIP_mode = TIP_mode
+        """
+        TIP_mode  
+
+        In TIP, the following sequence is carried out before a resistance measurement:
+        ---
+        self.backend.set_channel(     config[self.name]['device_channel'])
+        self.backend.set_excitation(  config[self.name]['device_excitation'])
+        self.backend.set_integration( config[self.name]['device_integration_time'])
+        ---
+        If one would reset the post-detection-filter each time, the settling time would be 3x as long. Thus, in TIP_mode, 
+        the function 
+        self.reset_post_detection_filter()
+        is only executed in 
+        self.set_integration()
+        """
+
 
         """    
         exci={0:-1, 3:0, 10:1, 30:2, 100:3, 300:4, 1000:5, 3000:6, 10000:7, 30000:8}
@@ -123,12 +141,8 @@ class SIM900(object):
         port  = self.SIM925_port
         cmd = "CHAN?"
         
-        try:
-            channel = int(self.get_value_from_SIM900(port,cmd))
-        except ValueError:
-            print ("Value Error at get_channel, channel may not be set correctly")
-            return False
-
+        channel = int(self.get_value_from_SIM900(port,cmd))
+        
         logging.debug('Get current channel: {:d}'.format(channel))
         return channel
 
@@ -150,19 +164,19 @@ class SIM900(object):
         
         current_channel = self.get_channel()
 
-        if current_channel == channel:
-            logging.debug('Set (leave) channel at {:d}.'.format(channel))
+        if channel == current_channel:
+            logging.debug(f"Set (leave) channel at {channel}.")
             # do nothing
             pass
         else:
-            logging.debug('Set channel to {:d}.'.format(channel))
+            logging.debug(f"Set channel to {channel}.")
             port  = self.SIM925_port
             cmd = f"CHAN {channel}"
             self.set_value_on_SIM900(port,cmd)
-            #logging.error("Value Error at set_channel, channel may not be set correctly")
 
-            # wait for the SIM921 to settle ...
-            self.reset_post_detection_filter()
+            if not self.TIP_mode:
+                # wait for the SIM921 to settle ...
+                self.reset_post_detection_filter()
 
 
     def get_excitation(self):
@@ -215,8 +229,9 @@ class SIM900(object):
             logging.debug('Set excitation of channel {!s} to {!s}.'
                 .format(self._channel, excitation))
 
-            # wait for the SIM921 to settle ...
-            self.reset_post_detection_filter()
+            if not self.TIP_mode:
+                # wait for the SIM921 to settle ...
+                self.reset_post_detection_filter()
             
         
     
@@ -264,14 +279,42 @@ class SIM900(object):
             cmd = "RANG %i"%(r_range)
             self.set_value_on_SIM900(port,cmd)
 
-            # wait for the SIM921 to settle ...
-            self.reset_post_detection_filter()
+            if not self.TIP_mode:
+                # wait for the SIM921 to settle ...
+                self.reset_post_detection_filter()
 
             logging.debug('Set range of channel {:d} to {:d} ({!s}).'
             .format(self._channel, r_range, self.ranges[r_range]))
 
             self.current_r_range = r_range
+        
     
+    def set_autogain(self):
+
+        """
+        Initiates the autogain cycle .
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        port  = self.SIM921_port
+        cmd = "AGAI ON"
+        self.set_value_on_SIM900(port,cmd)
+
+
+        #
+        # check weather the auto-gain cycle is complete
+        cmd = "AGAI?"
+        for i in range(5):
+            time.sleep(1)
+            again = self.get_value_from_SIM900(self.SIM921_port,cmd)
+            print (again)
+            
 
 
     def get_resistance(self):
@@ -343,7 +386,6 @@ class SIM900(object):
         None
         """
         
-        channel = self.get_channel()
         for integration_setting in range(len(self.integrations)):
             if integration <= self.integrations[integration_setting] * 7 :
                 self._integration_time_new  = self.integrations[integration_setting] * 7
@@ -352,16 +394,17 @@ class SIM900(object):
         print(integration_setting)
 
         if self._integration_time == self._integration_time_new:
-            logging.debug(f"Set (leave) integration of channel {channel} to {integration_setting}.")
+            logging.debug(f"Set (leave) integration setting to {integration_setting} ({self.integrations[integration_setting]*7} s).")
             return
         else:
             port  = self.SIM921_port
             cmd = f"TCON {integration_setting}"
             self.set_value_on_SIM900(port,cmd)
-            logging.debug(f"Set integration_setting of channel {channel} to {integration_setting} ({self.integrations[integration_setting]*7} s).")
+            logging.debug(f"Set integration setting to {integration_setting} ({self.integrations[integration_setting]*7} s).")
             
-            # wait for the SIM921 to settle ...
-            self.reset_post_detection_filter()
+            if self.TIP_mode:
+                # wait for the SIM921 to settle ...
+                self.reset_post_detection_filter()
 
         self._integration_time = self._integration_time_new
     
@@ -378,11 +421,10 @@ class SIM900(object):
         integration: float
             Integration setting, that relates to the integration time .
         """
-        channel = self.get_channel()
         cmd = "TCON?"
         port  = self.SIM921_port
         integration_setting = int (self.get_value_from_SIM900(port,cmd))
-        logging.debug(f"Get integration setting of channel {channel}: {integration_setting}")
+        logging.debug(f"Get integration setting : {integration_setting} ({self.integrations[integration_setting]*7} s)")
         return integration_setting
             
 
