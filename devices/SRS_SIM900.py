@@ -403,11 +403,12 @@ class SIM900(object):
         for integration_setting in range(len(self.integrations)):
             if integration >= self.integrations[integration_setting] * 7 :
                 _integration_time_new  = self.integrations[integration_setting] * 7
-                print("Int new time:",_integration_time_new)
+                
             else:
                 break
 
-        print("int setting: ",integration_setting)
+        print("Int new time filter:",_integration_time_new)
+        print("int setting: ",integration_setting," ",self.integrations[integration_setting])
 
         current_integration_time = self.get_integration()
 
@@ -589,10 +590,11 @@ if __name__ == "__main__":
     print ("get: ", SIM.get_range())
 
     print ("--- integration ---")
-    print ("set:7 ", SIM.set_integration(7))
-    print ("get: ",  SIM.get_integration())
-    print ("set:10 ",SIM.set_integration(10))
-    print ("get: ",  SIM.get_integration())
+    print (SIM.integrations)
+    print ("set:7s ", SIM.set_integration(7))
+    print ("get: ",   SIM.get_integration())
+    print ("set:10s ",SIM.set_integration(10))
+    print ("get: ",   SIM.get_integration())
 
     for i in range(10):
         print ("get:R ",SIM.get_resistance())
