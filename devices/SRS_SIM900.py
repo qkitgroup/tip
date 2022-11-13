@@ -401,7 +401,7 @@ class SIM900(object):
         """
         _integration_time_new = 0
         for integration_setting in range(len(self.integrations)):
-            if integration <= self.integrations[integration_setting] * 7 :
+            if integration >= self.integrations[integration_setting] * 7 :
                 _integration_time_new  = self.integrations[integration_setting] * 7
                 print(_integration_time_new)
             else:
@@ -560,7 +560,7 @@ if __name__ == "__main__":
     )
     formatter = logging.Formatter(format_str)
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    #logger.setLevel(logging.DEBUG)
 
     SIM = SIM900("SIM900", address="10.22.197.15", gpib = "GPIB::1",  SIM921_port = 2, SIM925_port = 1, TIP_mode=True) 
     print ("--- *IDN? ---")
