@@ -34,7 +34,7 @@ class SIM900(object):
     def __init__(self,
                  name,
                  address = "",
-                 delay = 0.2, 
+                 delay = 0.1, 
                  gpib = "GPIB::1",
                  SIM921_port = 2,
                  SIM925_port = 1,
@@ -43,7 +43,7 @@ class SIM900(object):
                  ):
         
         self.SIM         = visa.instrument(gpib, ip = address, delay = delay, 
-                                           instrument_delay= 0.1, term_char = "\r\n", eos_char = "\r\n")
+                                           instrument_delay= 0.05, term_char = "\r\n", eos_char = "\r\n")
         self.SIM921_port = SIM921_port
         self.SIM925_port = SIM925_port
         self.SIM928_port = SIM928_port
@@ -267,8 +267,9 @@ class SIM900(object):
         -------
         None
         """
-        
-        if r_range == self.current_r_range:
+
+        current_r_range = self.get_range()
+        if r_range == current_r_range:
             # do nothing
             return
         else:   
@@ -281,8 +282,6 @@ class SIM900(object):
                 self.reset_post_detection_filter()
 
             logging.debug(f"Set range: {r_range} ({self.ranges[r_range]} Ohm).")
-
-            self.current_r_range = r_range
         
     
     def set_autogain(self):
@@ -416,6 +415,7 @@ class SIM900(object):
         integration: float
             Integration setting, that relates to the integration time .
         """
+
         cmd = "TCON?"
         port  = self.SIM921_port
         integration_setting = int (self.get_value_from_SIM900(port,cmd))
@@ -557,7 +557,7 @@ if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    SIM = SIM900("SIM900", address="10.22.197.15", gpib = "GPIB::1",  SIM921_port = 2, SIM925_port = 1) 
+    SIM = SIM900("SIM900", address="10.22.197.15", gpib = "GPIB::1",  SIM921_port = 2, SIM925_port = 1, TIP_mode=True) 
     print ("--- *IDN? ---")
     print (SIM.get_IDN(1))
     print (SIM.get_IDN(2))
