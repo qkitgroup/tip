@@ -356,6 +356,26 @@ class SIM900(object):
 
         return resistance
 
+    def get_integration(self):
+        """
+        Gets the integration time for the resistance measurement of the set channel.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        integration: float
+            Integration setting, that relates to the integration time .
+        """
+
+        cmd = "TCON?"
+        port  = self.SIM921_port
+        integration_setting = int (self.get_value_from_SIM900(port,cmd))
+        logging.debug(f"Get integration setting : {integration_setting} ({self.integrations[integration_setting]*7} s)")
+        return integration_setting
+
     def set_integration(self, integration):
         """
         Sets the integration time in seconds for the resistance measurement of the set channel.
@@ -387,7 +407,10 @@ class SIM900(object):
                 break
         print(integration_setting)
 
-        if self._integration_time == self._integration_time_new:
+        current_integration_time = self.get_integration()
+
+        if current_integration_time == self._integration_time_new:
+            # do nothing
             logging.debug(f"Set (leave) integration setting to {integration_setting} ({self.integrations[integration_setting]*7} s).")
             return
         else:
@@ -399,28 +422,8 @@ class SIM900(object):
             if self.TIP_mode:
                 # wait for the SIM921 to settle ...
                 self.reset_post_detection_filter()
-
-        self._integration_time = self._integration_time_new
     
-    def get_integration(self):
-        """
-        Gets the integration time for the resistance measurement of the set channel.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        integration: float
-            Integration setting, that relates to the integration time .
-        """
-
-        cmd = "TCON?"
-        port  = self.SIM921_port
-        integration_setting = int (self.get_value_from_SIM900(port,cmd))
-        logging.debug(f"Get integration setting : {integration_setting} ({self.integrations[integration_setting]*7} s)")
-        return integration_setting
+    
             
 
     def reset_post_detection_filter(self):
@@ -583,7 +586,7 @@ if __name__ == "__main__":
     print (SIM.set_range(5))
     print (SIM.get_range())
 
-    print ("--- excitation ---")
+    print ("--- integration ---")
     print (SIM.set_integration(22))
     print (SIM.get_integration())
     print (SIM.set_integration(10))
