@@ -602,7 +602,7 @@ if __name__ == "__main__":
     print ("--- channels ---")
     print ("set:2 ",SIM.set_channel(2))
     print ("get: ", SIM.get_channel())
-    print ("set:2 ",SIM.set_channel(2))
+    print ("set:1 ",SIM.set_channel(1))
     print ("get: ", SIM.get_channel())
 
     print ("--- excitation ---")
@@ -620,6 +620,13 @@ if __name__ == "__main__":
     print ("set:5 ")
     SIM.set_range(5)
     print ("get: ", SIM.get_range())
+
+    print ("--- autorange ---")
+    print ("set autogain")
+    SIM.set_autogain()
+    print ("get range ", SIM.get_range())
+    print ("get exci  ", SIM.get_excitation())
+
 
     print ("--- integration ---")
     print (SIM.integrations)
