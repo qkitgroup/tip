@@ -362,11 +362,10 @@ class SIM900(object):
             print(f"in itteration: {integration_setting}")
             if integration >= self.integrations[integration_setting] * 7 :
                 _integration_time_new  = self.integrations[integration_setting] * 7
-            
-            else:
-                
+            else:    
                 break
-
+        if integration_setting > 0:
+            integration_setting -=1
         print(f"Int filter settling time: {_integration_time_new}")
         print(f"Int filter setting: {integration_setting} ({self.integrations[integration_setting]}s)")
 
