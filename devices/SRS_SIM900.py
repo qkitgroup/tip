@@ -222,7 +222,7 @@ class SIM900(object):
             logging.debug(f"Set (leave) excitation to {excitation}.")
         else:
             port  = self.SIM921_port
-            cmd = f"EXCI (excitation)"
+            cmd = f"EXCI {excitation}"
             self.set_value_on_SIM900(port,cmd)
             logging.debug(f"Set excitation to {excitation}.")
 
@@ -403,11 +403,11 @@ class SIM900(object):
         for integration_setting in range(len(self.integrations)):
             if integration >= self.integrations[integration_setting] * 7 :
                 _integration_time_new  = self.integrations[integration_setting] * 7
-                print(_integration_time_new)
+                print("Int new time:",_integration_time_new)
             else:
                 break
 
-        print(integration_setting)
+        print("int setting: ",integration_setting)
 
         current_integration_time = self.get_integration()
 
@@ -564,37 +564,37 @@ if __name__ == "__main__":
 
     SIM = SIM900("SIM900", address="10.22.197.15", gpib = "GPIB::1",  SIM921_port = 2, SIM925_port = 1, TIP_mode=True) 
     print ("--- *IDN? ---")
-    print (SIM.get_IDN(1))
-    print (SIM.get_IDN(2))
+    print ("get IDN:1 ",SIM.get_IDN(1))
+    print ("get IDN:2 ",SIM.get_IDN(2))
     
     print ("--- resistance ---")
-    print (SIM.get_resistance())
+    print ("get:R ",SIM.get_resistance())
     
     print ("--- channels ---")
-    print (SIM.set_channel(2))
-    print (SIM.get_channel())
-    print (SIM.set_channel(1))
-    print (SIM.get_channel())
+    print ("set:2 ",SIM.set_channel(2))
+    print ("get: ", SIM.get_channel())
+    print ("set:1 ",SIM.set_channel(1))
+    print ("get: ", SIM.get_channel())
 
     print ("--- excitation ---")
-    print (SIM.set_excitation(5))
-    print (SIM.get_excitation())
-    print (SIM.set_excitation(4))
-    print (SIM.get_excitation())
+    print ("set:5 ",SIM.set_excitation(5))
+    print ("get: ", SIM.get_excitation())
+    print ("set:4 ",SIM.set_excitation(4))
+    print ("get: ", SIM.get_excitation())
 
     print ("--- range ---")
-    print (SIM.set_range(6))
-    print (SIM.get_range())
-    print (SIM.set_range(5))
-    print (SIM.get_range())
+    print ("set:6 ",SIM.set_range(6))
+    print ("get: ", SIM.get_range())
+    print ("set:5 ",SIM.set_range(5))
+    print ("get: ", SIM.get_range())
 
     print ("--- integration ---")
-    print (SIM.set_integration(22))
-    print (SIM.get_integration())
-    print (SIM.set_integration(10))
-    print (SIM.get_integration())
+    print ("set:7 ", SIM.set_integration(7))
+    print ("get: ",  SIM.get_integration())
+    print ("set:10 ",SIM.set_integration(10))
+    print ("get: ",  SIM.get_integration())
 
     for i in range(10):
-        print (SIM.get_resistance())
+        print ("get:R ",SIM.get_resistance())
     #SIM._close_connection()
 
