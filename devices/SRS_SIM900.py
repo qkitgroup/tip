@@ -343,6 +343,7 @@ class SIM900(object):
         None
         """
         
+        channel = self.get_channel()
         for integration_setting in range(len(self.integrations)):
             if integration <= self.integrations[integration_setting] * 7 :
                 self._integration_time_new  = self.integrations[integration_setting] * 7
@@ -351,17 +352,16 @@ class SIM900(object):
         print(integration_setting)
 
         if self._integration_time == self._integration_time_new:
-            # do nothing
+            logging.debug(f"Set (leave) integration of channel {channel} to {integration_setting}.")
             return
         else:
             port  = self.SIM921_port
             cmd = f"TCON {integration_setting}"
             self.set_value_on_SIM900(port,cmd)
+            logging.debug(f"Set integration_setting of channel {channel} to {integration_setting} ({self.integrations[integration_setting]*7} s).")
             
             # wait for the SIM921 to settle ...
             self.reset_post_detection_filter()
-
-            logging.debug('Set integration of channel {!s} to {!s}.'.format(self._channel, integration))
 
         self._integration_time = self._integration_time_new
     
@@ -376,18 +376,15 @@ class SIM900(object):
         Returns
         -------
         integration: float
-            Integration, that composes of integration time .
+            Integration setting, that relates to the integration time .
         """
         channel = self.get_channel()
-        try:
-            logging.debug('Get integration (time) setting of channel {!s}.'.format(channel))
-            cmd = "TCON?"
-            port  = self.SIM921_port
-            self._integration = int (self.get_value_from_SIM900(port,cmd))
-            return self._integration
-        except Exception as err:
-            logging.error('Cannot get integration setting. Return last value instead. {!s}'.format(err))
-            return self._integration
+        cmd = "TCON?"
+        port  = self.SIM921_port
+        integration_setting = int (self.get_value_from_SIM900(port,cmd))
+        logging.debug(f"Get integration setting of channel {channel}: {integration_setting}")
+        return integration_setting
+            
 
     def reset_post_detection_filter(self):
         """
@@ -512,6 +509,14 @@ class SIM900(object):
     """
 
 if __name__ == "__main__":
+
+    format_str = "%(asctime)s %(levelname)-8s: %(message)s (%(filename)s:%(lineno)d)"
+    logging.basicConfig( 
+        #level=logging.DEBUG,
+        format=format_str,
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    formatter = logging.Formatter(format_str)
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
