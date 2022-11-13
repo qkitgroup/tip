@@ -378,9 +378,9 @@ class SIM900(object):
         integration: float
             Integration, that composes of integration time .
         """
-        
+        channel = self.get_channel()
         try:
-            logging.debug('Get integration (time) setting of channel {!s}.'.format(self._channel))
+            logging.debug('Get integration (time) setting of channel {!s}.'.format(channel))
             cmd = "TCON?"
             port  = self.SIM921_port
             self._integration = int (self.get_value_from_SIM900(port,cmd))
