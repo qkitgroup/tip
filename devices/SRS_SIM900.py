@@ -611,7 +611,7 @@ if __name__ == "__main__":
     print(SIM.exexcitations)
     print ("set:5 ",SIM.set_excitation(5))
     print ("get: ", SIM.get_excitation())
-    print ("set:2 ",SIM.set_excitation(2))
+    print ("set:6 ",SIM.set_excitation(6))
     print ("get: ", SIM.get_excitation())
 
     print ("--- range ---")
@@ -619,15 +619,15 @@ if __name__ == "__main__":
     print ("set:6 ")
     SIM.set_range(6)
     print ("get: ", SIM.get_range())
-    print ("set:4 ")
-    SIM.set_range(1)
+    print ("set:5 ")
+    SIM.set_range(5)
     print ("get: ", SIM.get_range())
 
     print ("--- autorange ---")
     print ("set autogain")
     SIM.set_autogain()
-    print ("get range ", SIM.get_range())
-    print ("get exci  ", SIM.get_excitation())
+    #print ("get range ", SIM.get_range())
+    #print ("get exci  ", SIM.get_excitation())
 
 
     print ("--- integration ---")
