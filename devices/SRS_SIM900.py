@@ -399,17 +399,19 @@ class SIM900(object):
         -------
         None
         """
-        
+        _integration_time_new = 0
         for integration_setting in range(len(self.integrations)):
             if integration <= self.integrations[integration_setting] * 7 :
-                self._integration_time_new  = self.integrations[integration_setting] * 7
+                _integration_time_new  = self.integrations[integration_setting] * 7
+                print(_integration_time_new)
             else:
                 break
+
         print(integration_setting)
 
         current_integration_time = self.get_integration()
 
-        if current_integration_time == self._integration_time_new:
+        if current_integration_time == _integration_time_new:
             # do nothing
             logging.debug(f"Set (leave) integration setting to {integration_setting} ({self.integrations[integration_setting]*7} s).")
             return
