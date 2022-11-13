@@ -305,7 +305,7 @@ class SIM900(object):
         #
         # check weather the auto-gain cycle is complete
         cmd = "AGAI?"
-        for i in range(5):
+        for i in range(10):
             time.sleep(1)
             again = self.get_value_from_SIM900(self.SIM921_port,cmd)
             print (again)
@@ -609,7 +609,7 @@ if __name__ == "__main__":
     print(SIM.exexcitations)
     print ("set:5 ",SIM.set_excitation(5))
     print ("get: ", SIM.get_excitation())
-    print ("set:4 ",SIM.set_excitation(4))
+    print ("set:2 ",SIM.set_excitation(2))
     print ("get: ", SIM.get_excitation())
 
     print ("--- range ---")
@@ -617,8 +617,8 @@ if __name__ == "__main__":
     print ("set:6 ")
     SIM.set_range(6)
     print ("get: ", SIM.get_range())
-    print ("set:5 ")
-    SIM.set_range(5)
+    print ("set:4 ")
+    SIM.set_range(4)
     print ("get: ", SIM.get_range())
 
     print ("--- autorange ---")
