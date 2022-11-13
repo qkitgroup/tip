@@ -196,8 +196,7 @@ class SIM900(object):
         port  = self.SIM921_port
         cmd = "EXCI?"
         excitation = int (self.get_value_from_SIM900(port,cmd))
-        logging.debug('Get excitation of (current) channel {:d}: {:d} ({!s} uV).'
-            .format(self._channel, excitation, self.exexcitations[excitation]))
+        logging.debug(f"Get excitation: {excitation} ({self.exexcitations[excitation]} uV).")
         
         return excitation
 
@@ -220,14 +219,13 @@ class SIM900(object):
         if excitation == current_excitation:
             # do nothing
             port  = self.SIM921_port
-            logging.debug('Set (leave) excitation of channel {!s} to {!s}.'
-                    .format(self._channel, excitation))
+            logging.debug(f"Set (leave) excitation to {excitation}.")
         else:
             port  = self.SIM921_port
             cmd = f"EXCI (excitation)"
             self.set_value_on_SIM900(port,cmd)
-            logging.debug('Set excitation of channel {!s} to {!s}.'
-                .format(self._channel, excitation))
+            logging.debug(f"Set excitation to {excitation}.")
+
 
             if not self.TIP_mode:
                 # wait for the SIM921 to settle ...
@@ -248,13 +246,12 @@ class SIM900(object):
         range: int
             Resistance measurement range for the thermometer.
         """
-        # Corresponding command: <mode>,<excitation>,<range>,<autorange>,<cs off>[term] = RDGRNG? <channel>[term]
+        
         port  = self.SIM921_port
         cmd = "RANG?"
         r_range = int (self.get_value_from_SIM900(port,cmd))
 
-        logging.debug('Get range of (current) channel {:d}: {:d} ({!s} Ohm).'
-            .format(self._channel, r_range, self.ranges[r_range]))
+        logging.debug(f"Get range: {r_range} ({self.ranges[r_range]} Ohm).")
         return r_range
 
     def set_range(self, r_range):
@@ -283,8 +280,7 @@ class SIM900(object):
                 # wait for the SIM921 to settle ...
                 self.reset_post_detection_filter()
 
-            logging.debug('Set range of channel {:d} to {:d} ({!s}).'
-            .format(self._channel, r_range, self.ranges[r_range]))
+            logging.debug(f"Set range: {r_range} ({self.ranges[r_range]} Ohm).")
 
             self.current_r_range = r_range
         
@@ -347,7 +343,6 @@ class SIM900(object):
         resistance: float
             Resistance of the thermometer.
         """    
-        #logging.debug('Get resistance of channel {:d}.'.format(channel))
         
         port  = self.SIM921_port
         cmd = 'RVAL?'
