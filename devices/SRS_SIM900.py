@@ -312,49 +312,7 @@ class SIM900(object):
             
 
 
-    def get_resistance(self):
-        """
-        Gets the resistance value of the thermometer that is connected to the set channel.
-        
-        Note from Matt @ SRS Nov. 2022: 
-        The RVAL? and PHAS? are subject to the Output Filter time constant -- 
-        they do NOT ignore the filter. So, RVAL? results will have to settle if there is a sudden change to the applied resistance.
-        RVAL? and PHAS? always return the averaged values.
-
-        What the user probably wants to do, especially since they are multiplexing between different resistance values using an external SIM925, is something like this:
-
-        [ configure the SIM925 to the desired channel to read ]
-        [ connect the SIM900 mainframe to the SIM921 ]
-
-        visa.write ('FRST')  // reset the post detection filter
-        [ add a TIME DELAY, corresponding to 7* the filter time constant ]
-        visa.write('RVAL?')
-        res = visa.read()
-
-
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        resistance: float
-            Resistance of the thermometer.
-        """    
-        
-        port  = self.SIM921_port
-        cmd = 'RVAL?'
-        # not sure if we need this, quite clumsy:
-        try:
-            return float(self.get_value_from_SIM900(port,cmd))
-        except ValueError as e:
-            logging.debug (f"SIM921 in get_resistance(): {e}")
-        return None
-
-        
-
-        return resistance
+   
 
     def get_integration(self):
         """
@@ -459,6 +417,89 @@ class SIM900(object):
         settling_time = self.integrations[current_integration_setting]*7
         time.sleep(settling_time)
 
+
+    def get_resistance(self):
+        """
+        Gets the resistance value of the thermometer that is connected to the set channel.
+        
+        Note from Matt @ SRS Nov. 2022: 
+        The RVAL? and PHAS? are subject to the Output Filter time constant -- 
+        they do NOT ignore the filter. So, RVAL? results will have to settle if there is a sudden change to the applied resistance.
+        RVAL? and PHAS? always return the averaged values.
+
+        What the user probably wants to do, especially since they are multiplexing between different resistance values using an external SIM925, is something like this:
+
+        [ configure the SIM925 to the desired channel to read ]
+        [ connect the SIM900 mainframe to the SIM921 ]
+
+        visa.write ('FRST')  // reset the post detection filter
+        [ add a TIME DELAY, corresponding to 7* the filter time constant ]
+        visa.write('RVAL?')
+        res = visa.read()
+
+
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        resistance: float
+            Resistance of the thermometer.
+        """    
+        
+        port  = self.SIM921_port
+        cmd = 'RVAL?'
+        # not sure if we need this, quite clumsy:
+        try:
+            return float(self.get_value_from_SIM900(port,cmd))
+        except ValueError as e:
+            logging.debug (f"SIM921 error in get_resistance(): {e}")
+            return 0
+        
+    def get_phase(self):
+        """
+        Gets the phase value of the thermometer.
+        
+        Note from Matt @ SRS Nov. 2022: 
+        The RVAL? and PHAS? are subject to the Output Filter time constant -- 
+        they do NOT ignore the filter. So, RVAL? results will have to settle if there is a sudden change to the applied resistance.
+        RVAL? and PHAS? always return the averaged values.
+
+        What the user probably wants to do, especially since they are multiplexing between different resistance values using an external SIM925, is something like this:
+
+        [ configure the SIM925 to the desired channel to read ]
+        [ connect the SIM900 mainframe to the SIM921 ]
+
+        visa.write ('FRST')  // reset the post detection filter
+        [ add a TIME DELAY, corresponding to 7* the filter time constant ]
+        visa.write('RVAL?')
+        res = visa.read()
+
+
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        resistance: float
+            Resistance of the thermometer.
+        """    
+        
+        port  = self.SIM921_port
+        cmd = 'PHAS?'
+        # not sure if we need this, quite clumsy:
+        try:
+            return float(self.get_value_from_SIM900(port,cmd))
+        except ValueError as e:
+            logging.debug (f"SIM921 error in get_phase(): {e}")
+            return 0
+        
+        
+
     def SIM_prolog(self,port = 0, init = False):
         try:
             # commands to mainframe
@@ -483,7 +524,7 @@ class SIM900(object):
     def get_value_from_SIM900_new(self,port,cmd):
         self.SIM_prolog(port)
         self.SIM.write(str(cmd))
-        time.sleep(0.05)
+        time.sleep(0.02)
         val = self.SIM.read()
         self.SIM_epilog()
         return val
@@ -504,22 +545,9 @@ class SIM900(object):
             return False
     
     def set_value_on_SIM900(self,port,cmd):
-        #with self.ctrl_lock:
         self.SIM_prolog(port)
         self.SIM.write(str(cmd))
         self.SIM_epilog()
-        
-    """ 
-    def get_Rval(self):
-        port  = self.SIM921_port
-        cmd = 'RVAL?'
-        for i in range(3):
-            try: #andre 2015-04-02
-                return float(self.get_value_from_SIM900(port,cmd))
-            except ValueError:
-                continue
-        return None
-    """
 
     
     """
@@ -578,12 +606,14 @@ if __name__ == "__main__":
     print ("get: ", SIM.get_channel())
 
     print ("--- excitation ---")
+    print(SIM.exexcitations)
     print ("set:5 ",SIM.set_excitation(5))
     print ("get: ", SIM.get_excitation())
     print ("set:4 ",SIM.set_excitation(4))
     print ("get: ", SIM.get_excitation())
 
     print ("--- range ---")
+    print (SIM.ranges)
     print ("set:6 ")
     SIM.set_range(6)
     print ("get: ", SIM.get_range())
@@ -593,14 +623,15 @@ if __name__ == "__main__":
 
     print ("--- integration ---")
     print (SIM.integrations)
-    print ("set:7s ")
+    print ("set: 5s ")
     SIM.set_integration(5)
     print ("get: ",   SIM.get_integration())
-    print ("set:11s ")
+    print ("set: 11s ")
     SIM.set_integration(11)
     print ("get: ",   SIM.get_integration())
 
     for i in range(10):
         print ("get:R ",SIM.get_resistance())
+        print ("get:P ",SIM.get_phase())
     #SIM._close_connection()
 
