@@ -262,8 +262,6 @@ class SIM900(object):
         else:
         """    
         port  = self.SIM921_port
-        #cmd = "RANG%i;RANG?"%(range)
-        #return int(self.get_value_from_SIM900(port,cmd))
         cmd = "RANG %i"%(r_range)
         self.set_value_on_SIM900(port,cmd)
         logging.debug('Set range of channel {:d} to {:d} ({!s}).'
@@ -346,13 +344,17 @@ class SIM900(object):
                 self._integration_time_new  = self.integrations[integration_setting] * 7
             else:
                 break
-        
+        print(integration_setting)
 
         if self._integration_time == self._integration_time_new:
             # do nothing
             return
         else:
+            port  = self.SIM921_port
+            cmd = f"TCON {integration_setting}"
+            self.set_value_on_SIM900(port,cmd)
             logging.debug('Set integration of channel {!s} to {!s}.'.format(self._channel, integration))
+
         self._integration_time = self._integration_time_new
     
     def get_integration(self):
@@ -366,20 +368,48 @@ class SIM900(object):
         Returns
         -------
         integration: float
-            Integration, that composes of integration time and those averages.
+            Integration, that composes of integration time .
         """
         
         try:
-            logging.debug('Get integration of channel {!s}.'.format(self._channel))
+            logging.debug('Get integration (time) setting of channel {!s}.'.format(self._channel))
+            cmd = "TCON?"
+            port  = self.SIM921_port
+            self._integration = int (self.get_value_from_SIM900(port,cmd))
             return self._integration
         except Exception as err:
-            logging.error('Cannot get integration. Return last value instead. {!s}'.format(err))
+            logging.error('Cannot get integration setting. Return last value instead. {!s}'.format(err))
             return self._integration
-    
-    def setup_device(self):
-        pass
 
-    
+    def reset_post_detection_filter(self):
+        """
+        resets the post detection filter. Should be called after each change in channel, range, excitation
+
+        The filter time constant can be read using the TCON? query, and then indexing based on the returned value:
+                TCON?   (Time Constant )    (Suggested MIN Settling Time)
+                0             0.3 s                       2.1 s
+                1             1 s                          7 s
+                2             3 s                          21 s
+                3             10 s                        70 s
+                4             30 s                        210 s
+                5             100 s                      700 s
+                6             300 s                      2100 s  (35 minutes)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """        
+        port  = self.SIM921_port
+        cmd = "FRST"
+        self.set_value_on_SIM900(port,cmd)
+
+        settling_time = self.integrations[get_integration()]*7
+        time.sleep(settling_time)
+
     def SIM_prolog(self,port = 0, init = False):
         try:
             # commands to mainframe
@@ -408,7 +438,6 @@ class SIM900(object):
         val = self.SIM.read()
         self.SIM_epilog()
         return val
-        #logging.debug(">>>Error #%i,%s: trying again '%s' on port %i"%(i,e,cmd,port))
 
     def get_value_from_SIM900_orig(self,port,cmd):
         with self.ctrl_lock:
