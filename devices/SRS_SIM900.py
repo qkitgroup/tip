@@ -130,7 +130,6 @@ class SIM900(object):
             return False
 
         logging.debug('Get current channel: {:d}'.format(channel))
-        self._channel = channel
         return channel
 
 
@@ -150,6 +149,7 @@ class SIM900(object):
         """
         
         current_channel = self.get_channel()
+
         if current_channel == channel:
             logging.debug('Set (leave) channel at {:d}.'.format(channel))
             # do nothing
@@ -157,12 +157,13 @@ class SIM900(object):
         else:
             logging.debug('Set channel to {:d}.'.format(channel))
             port  = self.SIM925_port
-            cmd = "CHAN %i;CHAN?"%(channel)
-            try:
-                channel = int(self.get_value_from_SIM900(port,cmd))
-            except ValueError:
-                logging.error("Value Error at set_channel, channel may not be set correctly")
-        self._channel = channel
+            cmd = f"CHAN {channel}"
+            self.set_value_on_SIM900(port,cmd)
+            #logging.error("Value Error at set_channel, channel may not be set correctly")
+
+            # wait for the SIM921 to settle ...
+            self.reset_post_detection_filter()
+
 
     def get_excitation(self):
         """
@@ -183,7 +184,7 @@ class SIM900(object):
         excitation = int (self.get_value_from_SIM900(port,cmd))
         logging.debug('Get excitation of (current) channel {:d}: {:d} ({!s} uV).'
             .format(self._channel, excitation, self.exexcitations[excitation]))
-        self._excitation = excitation
+        
         return excitation
 
     def set_excitation(self, excitation):
@@ -200,19 +201,23 @@ class SIM900(object):
         None
         """
         
-        if excitation == self._excitation:
+        current_excitation = self.get_excitation()
+
+        if excitation == current_excitation:
             # do nothing
             port  = self.SIM921_port
             logging.debug('Set (leave) excitation of channel {!s} to {!s}.'
                     .format(self._channel, excitation))
-            return
         else:
             port  = self.SIM921_port
-            cmd = "EXCI %i"%(excitation)
+            cmd = f"EXCI (excitation)"
             self.set_value_on_SIM900(port,cmd)
             logging.debug('Set excitation of channel {!s} to {!s}.'
                 .format(self._channel, excitation))
-            self._excitation = excitation
+
+            # wait for the SIM921 to settle ...
+            self.reset_post_detection_filter()
+            
         
     
     def get_range(self):
