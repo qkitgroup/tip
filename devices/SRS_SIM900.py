@@ -200,7 +200,7 @@ class SIM900(object):
         None
         """
         
-        if self._excitation == excitation:
+        if excitation == self._excitation:
             # do nothing
             port  = self.SIM921_port
             logging.debug('Set (leave) excitation of channel {!s} to {!s}.'
@@ -251,23 +251,22 @@ class SIM900(object):
         None
         """
         
-        """
-        if r_range == -1:  # autorange
-            autorange = 1
-            time.sleep(3)
-
-        elif r_range == current_r_range:
+        if r_range == self.current_r_range:
             # do nothing
             return
-        else:
-        """    
-        port  = self.SIM921_port
-        cmd = "RANG %i"%(r_range)
-        self.set_value_on_SIM900(port,cmd)
-        logging.debug('Set range of channel {:d} to {:d} ({!s}).'
-        .format(self._channel, r_range, self.ranges[r_range]))
+        else:   
+            port  = self.SIM921_port
+            cmd = "RANG %i"%(r_range)
+            self.set_value_on_SIM900(port,cmd)
+
+            # wait for the SIM921 to settle ...
+            self.reset_post_detection_filter()
+
+            logging.debug('Set range of channel {:d} to {:d} ({!s}).'
+            .format(self._channel, r_range, self.ranges[r_range]))
+
+            self.current_r_range = r_range
     
-        time.sleep(1)
 
 
     def get_resistance(self):
@@ -353,6 +352,10 @@ class SIM900(object):
             port  = self.SIM921_port
             cmd = f"TCON {integration_setting}"
             self.set_value_on_SIM900(port,cmd)
+            
+            # wait for the SIM921 to settle ...
+            self.reset_post_detection_filter()
+
             logging.debug('Set integration of channel {!s} to {!s}.'.format(self._channel, integration))
 
         self._integration_time = self._integration_time_new
@@ -515,24 +518,28 @@ if __name__ == "__main__":
     print (SIM.get_resistance())
     
     print ("--- channels ---")
+    print (SIM.set_channel(2))
     print (SIM.get_channel())
     print (SIM.set_channel(1))
     print (SIM.get_channel())
 
     print ("--- excitation ---")
+    print (SIM.set_excitation(5))
     print (SIM.get_excitation())
     print (SIM.set_excitation(4))
     print (SIM.get_excitation())
 
     print ("--- range ---")
+    print (SIM.set_range(6))
     print (SIM.get_range())
     print (SIM.set_range(5))
     print (SIM.get_range())
 
     print ("--- excitation ---")
-    print (SIM.get_excitation())
-    print (SIM.set_excitation(4))
-    print (SIM.get_excitation())
+    print (SIM.set_integration(22))
+    print (SIM.get_integration())
+    print (SIM.set_integration(10))
+    print (SIM.get_integration())
 
     for i in range(10):
         print (SIM.get_resistance())
