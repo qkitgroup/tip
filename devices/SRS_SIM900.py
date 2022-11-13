@@ -415,7 +415,8 @@ class SIM900(object):
         cmd = "FRST"
         self.set_value_on_SIM900(port,cmd)
 
-        settling_time = self.integrations[get_integration()]*7
+        current_integration_setting = self.get_integration()
+        settling_time = self.integrations[current_integration_setting]*7
         time.sleep(settling_time)
 
     def SIM_prolog(self,port = 0, init = False):
