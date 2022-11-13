@@ -359,15 +359,15 @@ class SIM900(object):
         """
         _integration_time_new = 0
         for integration_setting in range(len(self.integrations)):
-            print(f"in itteration: {integration_setting}")
+            #print(f"in itteration: {integration_setting}")
             if integration >= self.integrations[integration_setting] * 7 :
                 _integration_time_new  = self.integrations[integration_setting] * 7
             else:    
                 break
         if integration_setting > 0:
             integration_setting -=1
-        print(f"Int filter settling time: {_integration_time_new}")
-        print(f"Int filter setting: {integration_setting} ({self.integrations[integration_setting]}s)")
+        #print(f"Int filter settling time: {_integration_time_new}")
+        #print(f"Int filter setting: {integration_setting} ({self.integrations[integration_setting]}s)")
 
         current_integration_time = self.get_integration()
 
@@ -583,8 +583,7 @@ class SIM900(object):
 if __name__ == "__main__":
 
     format_str = "%(asctime)s %(levelname)-8s: %(message)s (%(filename)s:%(lineno)d)"
-    logging.basicConfig( 
-        #level=logging.DEBUG,
+    logging.basicConfig(
         format=format_str,
         datefmt='%Y-%m-%d %H:%M:%S'
     )
@@ -603,7 +602,7 @@ if __name__ == "__main__":
     print ("--- channels ---")
     print ("set:2 ",SIM.set_channel(2))
     print ("get: ", SIM.get_channel())
-    print ("set:1 ",SIM.set_channel(1))
+    print ("set:2 ",SIM.set_channel(2))
     print ("get: ", SIM.get_channel())
 
     print ("--- excitation ---")
@@ -634,5 +633,5 @@ if __name__ == "__main__":
     for i in range(10):
         print ("get:R ",SIM.get_resistance())
         print ("get:P ",SIM.get_phase())
-    #SIM._close_connection()
+
 
