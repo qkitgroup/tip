@@ -23,6 +23,7 @@ _types_dict = {
     'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
     'control_channel':_int,
     'gather_max':_int,
+    'SIM921_port':_int, 'SIM925_port':_int,
     'influxdb_port': _int,
 
     'interval':float, 'change_time':float,
@@ -40,7 +41,7 @@ _types_dict = {
     'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
     'calibration_file_order':str, 'calibration_key_format':str,
     'webview_items':str, 'webview_widget_type':str, 'webview_widget_map':str,
-    'influxdb_bucket': str, 'influxdb_token': str, 'influxdb_url': str
+    'influxdb_bucket': str, 'influxdb_token': str, 'influxdb_url': str, 'influxdb_org': str
 }
 
 
@@ -192,6 +193,8 @@ _default_instrument = {
     'port'                        : 9999,
     'delay'           		      : 0.2,       # seconds delay between sending end receiving commands
     'timeout'                     : 1.0,       # seconds
+    'SIM921_port'                 : 0,         # SIM900 Port 
+    'SIM925_port'                 : 0,         # SIM900 Port
 }
 
 
