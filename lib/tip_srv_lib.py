@@ -74,7 +74,9 @@ def get_handler(cmds):
     except Exception as e:
         print ("get_handler exception..." + str(e))
         raise (e)
-    if cmd in config.keys():
+    if cmd in ['influxdb_token']: # do not reply secret keys
+        return ""
+    elif cmd in config.keys():
         return (get_param_handler(config[cmd],cmds))
     elif '' == cmd:
         return ("Error: Subcommand not recognized! "+cmd)

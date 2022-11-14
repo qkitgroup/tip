@@ -6,6 +6,7 @@ from collections.abc import MutableMapping
 import json
 from threading import Lock
 import configparser
+from queue import SimpleQueue
 
 from .tip_config_defaults import _config_defaults, _types_dict, _boolean, _int
 
@@ -80,6 +81,21 @@ device_instances = SettingsDict()
 
 internal = SettingsDict()
 
+#
+# data log recorder queue (FIFO)
+#
+
+internal['dlr_queue'] = SimpleQueue()
+
+#
+# DLR datagram object to be posted vie the dlr_queue 
+#
+class dlr_datagram:
+    device      = ""
+    item        = ""
+    value       = 0      # <- this is important, since the value, time  stored in the config can be outdated.
+    change_time = 0      # <-
+
 
 
 #
@@ -151,24 +167,28 @@ def update_active_devices(config):
     config['system']['defined_thermometers'] = []
     config['system']['defined_generic_devices'] = []
     config['system']['defined_levelmeter_devices'] = []
+    config['system']['defined_logger_facilities'] = []
 
     config['system']['active_devices'] = []
     config['system']['active_instruments'] = []
     config['system']['active_thermometers'] = []
     config['system']['active_generic_devices'] = []
     config['system']['active_levelmeter_devices'] = []
-    config['system']['active_devices'] = []
+    config['system']['active_logger_facilities'] = []
+ 
 
     DI  = config['system']['defined_instruments']
     DT  = config['system']['defined_thermometers']
     DGD = config['system']['defined_generic_devices']
     DLD = config['system']['defined_levelmeter_devices']
+    DLF = config['system']['defined_logger_facilities']
 
     AD  = config['system']['active_devices']
     AI  = config['system']['active_instruments']
     AT  = config['system']['active_thermometers']
     AGD = config['system']['active_generic_devices']
     ALD = config['system']['active_levelmeter_devices']
+    ALF = config['system']['active_logger_facilities']
 
     for inst in config.keys():
         if config[inst].get("type","") == "instrument":
@@ -189,6 +209,11 @@ def update_active_devices(config):
             DGD.append(inst)
             if config[inst].get("active",False):
                 AGD.append(inst)
+                AD.append(inst)
+        if config[inst].get("type",False) == "logger":
+            DLF.append(inst)
+            if config[inst].get("active",False):
+                ALF.append(inst)
                 AD.append(inst)
 
 

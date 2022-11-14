@@ -5,7 +5,7 @@
 from math import log10
 import time
 import logging
-from lib.tip_config import config, device_instances, _types_dict, _boolean, _int 
+from lib.tip_config import config, device_instances, internal ,dlr_datagram, _types_dict, _boolean, _int 
 from lib.tip_eich import TIPEich
 from lib.tip_pidcontrol import pidcontrol
 # future adds:
@@ -78,6 +78,22 @@ class device(object):
 
         config[self.name][mproperties]    = gathered_values
         config[self.name]['change_times'] = change_times
+    
+    def dlr_record(self, device="", item="", value=0, change_time=0):
+        #
+        # data log recorder queue (e.g. with a influxdb backend)
+        # this function appends a log item to a -thread independent-  global queue
+        #
+        logging.debug(f"DLR-record dev:{device} it:{item} val:{value} ct:{change_time}")
+        dlr_dg = dlr_datagram()
+
+        dlr_dg.device      = device
+        dlr_dg.item        = item
+        dlr_dg.value       = value
+        dlr_dg.change_time = change_time
+
+        internal['dlr_queue'].put(dlr_dg)
+
 
 # the thermometer class is thermometer specific, probably one of the few places in the entire code. 
 class thermometer(device):
@@ -150,18 +166,61 @@ class thermometer(device):
                 if R == 0:
                     logging.warning(self.name + "\t Bridge reported zero resistance. Skipping.")
                     return None
+
             config[self.name]['resistance']  = R
             logging.info (self.name + "\t R: %.01f Ohm"% (R))
+
+            #
+            # update the timestamp
+            #
+            config[self.name]['change_time'] = time.time()
+            
+            #
+            # log the value to the data log recorder
+            #
+            self.dlr_record(
+                device       = self.name,
+                item         = 'resistance',
+                value        = config[self.name]['resistance'],
+                change_time  = config[self.name]['change_time']
+                )
+
         elif m_property == 'temperature':
             T = self.backend.get_temperature()
             config[self.name]['temperature']  = T
             logging.info (self.name + "\t T: %.01f "% (T))
+
+            #
+            # update the timestamp
+            #
+            config[self.name]['change_time'] = time.time()
+
+            #
+            # log the value to the data log recorder
+            #
+            self.dlr_record(
+                device       = self.name,
+                item         = 'temperature',
+                value        = config[self.name]['temperature'],
+                change_time  = config[self.name]['change_time']
+                )
 
         if config[self.name]['calibration_active']:
             Cal_R = self.cal_key_formats[config[self.name]['calibration_key_format']](R)
             T = self.calibration.get_T_from_R(Cal_R)
             config[self.name]['temperature'] = T
             logging.info (self.name + "\t T: %.05f K"% (T))
+
+            #
+            # log the value to the data log recorder
+            #
+            self.dlr_record(
+                device       = self.name,
+                item         = 'temperature',
+                value        = config[self.name]['temperature'],
+                change_time  = config[self.name]['change_time']
+                )
+
             
 
             if config[self.name]['control_active'] and config[config[self.name]['control_device']]['active']:
@@ -174,13 +233,17 @@ class thermometer(device):
                 
                 config[self.name]['heating_power'] = new_heat_value
                 logging.info('%s Heat: %.02f uW'%(self.name, new_heat_value*1e6))
-        
-        #
-        # update the modification timestamp
-        #
-
-        config[self.name]['change_time'] = time.time()
-
+                #
+                # log the value to the data log recorder
+                #
+                self.dlr_record(
+                    device       = self.name,
+                    item         = 'heating_power',
+                    value        = config[self.name]['heating_power'],
+                    change_time  = config[self.name]['change_time']
+                    )
+    
+    # end of thermometer class
 
 # scale_device. 
 class levelmeter(device):

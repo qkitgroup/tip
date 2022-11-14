@@ -23,6 +23,7 @@ _types_dict = {
     'port':_int, 'device_channel':_int, 'device_range':_int, 'device_excitation':_int,
     'control_channel':_int,
     'gather_max':_int,
+    'influxdb_port': _int,
 
     'interval':float, 'change_time':float,
     'device_integration_time':float, 'delay':float,'timeout':float,
@@ -38,7 +39,8 @@ _types_dict = {
     'control_device':str,
     'calibration_file':str, 'calibration_description':str, 'calibration_interpolation':str,
     'calibration_file_order':str, 'calibration_key_format':str,
-    'webview_items':str, 'webview_widget_type':str, 'webview_widget_map':str
+    'webview_items':str, 'webview_widget_type':str, 'webview_widget_map':str,
+    'influxdb_bucket': str, 'influxdb_token': str, 'influxdb_url': str
 }
 
 
@@ -194,6 +196,25 @@ _default_instrument = {
 
 
 #
+# logger facility
+#
+
+_default_logger = {
+    'type'                        : 'logger',
+    'active'                      : False,
+    'description'                 : 'logger facility',
+    'interval'                    : 60,        # s  
+    'influxdb_bucket'             : 'my-bucket', 
+    'influxdb_token'              : 'my-token',
+    'influxdb_url'                : 'url',
+    'influxdb_port'               : 3000,
+    'influxdb_org'                : 'the_org', 
+}
+
+
+
+
+#
 # system defaults
 #
 
@@ -220,5 +241,6 @@ _config_defaults = {
     "hygrometer"       : _default_hygrometer,
     "generic"          : _default_generic,
     "instrument"       : _default_instrument,
+    "logger"           : _default_logger,
     "system_settings"  : _system_defaults,
 }

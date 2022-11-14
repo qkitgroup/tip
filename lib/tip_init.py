@@ -4,10 +4,11 @@ import logging
 from time import strftime
 import importlib
 import tip
-from lib.tip_config import config, device_instances, load_config, convert_to_dict, update_active_devices
+from lib.tip_config import config, internal, device_instances, load_config, convert_to_dict, update_active_devices
 from lib.tip_devices import device, thermometer, levelmeter, generic_device
 from lib.tip_scheduler import tip_scheduler
 from lib.tip_zmq_server import srv_thread 
+from lib.tip_data_log_recorder import data_log_recorder
 
 import devices.DriverTemplate_Bridge
 
@@ -107,7 +108,21 @@ def load_generic_devices(config,tip_sched):
         logging.info("add generic device to scheduler: "+device)
         tip_sched.add_device(device_instances[device])
 
-   
+
+def setup_data_log_recorder(config,tip_sched):
+    # data log recorder (dlr)
+    # 
+    logging.info("Start DATA LOG RECORDER (DLR) facility.")
+    logging.info("Found logger facilities: " +str(config['system']['defined_logger_facilities']))
+    logging.info("Active logger facilities: "+str(config['system']['active_logger_facilities']))
+    
+    for device in config['system']['active_logger_facilities']:
+        device_instances[device] = data_log_recorder(device)
+        #device_instances[device].backend = device_instances[config[device]["device"]] # influxdb ?!
+        
+        logging.info(f"add logger device to scheduler: {device}")
+        tip_sched.add_device(device_instances[device])
+    
 
     
 
@@ -131,6 +146,8 @@ def tip_init (settings_file = "settings_local.cfg"):
     load_levelmeter_devices(config,tip_sched)
 
     load_generic_devices(config,tip_sched)
+
+    setup_data_log_recorder(config,tip_sched)
 
     tip_sched.run()
     #logging.info("Configuration at startup:"+config.dump_json())
