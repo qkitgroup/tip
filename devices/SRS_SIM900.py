@@ -26,9 +26,9 @@ def driver(name):
                 SIM925_port = config[name]['SIM925_port'],
                 TIP_mode    = True)
 
-    config[name]['device_ranges']       = SIM900.ranges
-    config[name]['device_excitations']  = SIM900.excitations
-    config[name]['device_integrations'] = SIM900.integrations
+    config[name]['device_ranges']       = SIM.ranges
+    config[name]['device_excitations']  = SIM.excitations
+    config[name]['device_integrations'] = SIM.integrations
     return SIM
 
 class SIM900(object):
