@@ -102,7 +102,7 @@ class SIM900(object):
                 30000
             ]
         """
-        self.exexcitations = {-1:0, 0:3, 1:10, 2:30, 3:100, 4:300, 5:1000, 6:3000, 7:10000, 8:30000}
+        self.excitations = {-1:0, 0:3, 1:10, 2:30, 3:100, 4:300, 5:1000, 6:3000, 7:10000, 8:30000}
 
         """
         Filter timeconstants (TCON), settling time 7x longer
@@ -196,7 +196,7 @@ class SIM900(object):
         port  = self.SIM921_port
         cmd = "EXCI?"
         excitation = int (self.get_value_from_SIM900(port,cmd))
-        logging.debug(f"Get excitation: {excitation} ({self.exexcitations[excitation]} uV).")
+        logging.debug(f"Get excitation: {excitation} ({self.excitations[excitation]} uV).")
         
         return excitation
 
@@ -608,7 +608,7 @@ if __name__ == "__main__":
     print ("get: ", SIM.get_channel())
 
     print ("--- excitation ---")
-    print(SIM.exexcitations)
+    print(SIM.excitations)
     print ("set:5 ",SIM.set_excitation(5))
     print ("get: ", SIM.get_excitation())
     print ("set:6 ",SIM.set_excitation(6))
