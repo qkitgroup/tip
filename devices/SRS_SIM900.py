@@ -13,7 +13,9 @@ import sys
 from threading import Lock
 import time
 import logging
-import visa_prologix as visa
+
+from lib.tip_config import config
+import devices.visa_prologix as visa
 
 def driver(name):
     print("entering driver", flush = True)
