@@ -19,8 +19,8 @@ from lib.tip_config import config, internal
 
 dlr_queue  = internal['dlr_queue']
 
-from influxdb_client import InfluxDBClient, Point
-from influxdb_client.client.write_api import SYNCHRONOUS, WritePrecision
+from influxdb import InfluxDBClient, Point
+from influxdb.client.write_api import SYNCHRONOUS, WritePrecision
 from time import time
 from random import random
 
@@ -112,12 +112,18 @@ class data_log_recorder(object):
 
 
     def _influxdb_point (self,system_name,device,item,value,change_time):
+        """
+            format in influxdb ?
+            _table	_measurement _field _value          _start _stop _time
+            0	temperature	mxc	0.01485230271700029	    2022-11-14T21:07:58.853Z	2022-11-14T22:07:58.853Z	2022-11-14T21:08:10.000Z
+        """
 
-        return Point.measurement(system_name)\
-            .tag("device",device)\
-            .field(item,value)\
+        return Point.measurement(item)\
+            .field(device,value)\
             .time(int(change_time*1e9))
-        
+            ##.tag("device",device)
+
+            
  
     def _submit_to_influxdb(self,influxdb_point):
         
