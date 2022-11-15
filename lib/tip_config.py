@@ -223,7 +223,7 @@ def update_active_devices(config):
 
 if __name__ == "__main__":
 
-    config = convert_to_dict(load_config(settings_file="settings_local2.cfg"))
+    config = convert_to_dict(load_config(settings_file="settings_local.cfg"))
     update_active_devices(config)
     #print (dump_json(config)
     print (json.dumps(config.store,indent=2,sort_keys=True))
