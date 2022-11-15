@@ -116,7 +116,7 @@ class data_log_recorder(object):
             _table	_measurement _field _value          _start _stop _time
             0	temperature	mxc	0.01485230271700029	    2022-11-14T21:07:58.853Z	2022-11-14T22:07:58.853Z	2022-11-14T21:08:10.000Z
         """
-
+        logging.debug(f"DLR submit to influxdb: {device} {item} {value} {change_time}")
         return Point.measurement(item)\
             .field(device,value)\
             .time(int(change_time*1e9))
@@ -126,8 +126,6 @@ class data_log_recorder(object):
  
     def _submit_to_influxdb(self,influxdb_point):
         
-        logging.debug ("DLR submit to influxdb:", str(influxdb_point.to_line_protocol()))
-
         client = InfluxDBClient(
             url    = config[self.name]['influxdb_url'], 
             token  = config[self.name]['influxdb_token'],
