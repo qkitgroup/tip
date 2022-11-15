@@ -89,7 +89,6 @@ class device(object):
 
         dlr_dg.device      = device
         dlr_dg.item        = item
-        dlr_dg.value       = value
         dlr_dg.change_time = change_time
 
         internal['dlr_queue'].put(dlr_dg)
@@ -168,7 +167,7 @@ class thermometer(device):
                     return None
 
             config[self.name]['resistance']  = R
-            logging.info (self.name + "\t R: %.01f Ohm"% (R))
+            logging.info (self.name + "\t R: %.05f Ohm"% (R))
 
             #
             # update the timestamp
