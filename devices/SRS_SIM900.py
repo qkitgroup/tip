@@ -145,10 +145,12 @@ class SIM900(object):
         port  = self.SIM925_port
         cmd = "CHAN?"
         
-        channel = int(self.get_value_from_SIM900(port,cmd))
-        
-        logging.debug('Get current channel: {:d}'.format(channel))
-        return channel
+    
+        channel = self.get_value_from_SIM900(port,cmd)
+        #print (channel)
+
+        logging.debug(f"Get current channel: {channel}")
+        return int(channel)
 
 
 
