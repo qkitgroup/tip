@@ -78,7 +78,7 @@ class data_log_recorder(object):
         #for d in devs:
         while (not dlrq.empty()):
             dlr_dg = dlrq.get()
-            #print(dlr_dg.device,dlr_dg.item,dlr_dg.value,dlr_dg.change_time)
+            print(dlr_dg.device,dlr_dg.item,dlr_dg.value,dlr_dg.change_time)
             key = dlr_dg.device + dlr_dg.item
             
             # prepare to downsample (average) values 
@@ -97,10 +97,9 @@ class data_log_recorder(object):
         for key in devitems_val:
             # calculate the value average 
             val_avg = sum(devitems_val[key])/len(devitems_val[key])
-
+            print ("DLR val_avg",val_avg)
             # define the influxdb data point
             ifp = self._influxdb_point(
-                config['system']['name'],
                 devitems_dev[key],
                 devitems_item[key],
                 val_avg,
@@ -111,7 +110,7 @@ class data_log_recorder(object):
 
 
 
-    def _influxdb_point (self,system_name,device,item,value,change_time):
+    def _influxdb_point (self,device,item,value,change_time):
         """
             format in influxdb ?
             _table	_measurement _field _value          _start _stop _time
