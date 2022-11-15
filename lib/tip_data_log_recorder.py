@@ -126,7 +126,7 @@ class data_log_recorder(object):
  
     def _submit_to_influxdb(self,influxdb_point):
         
-        logging.debug ("DLR submit to influxdb:",influxdb_point.to_line_protocol())
+        logging.debug ("DLR submit to influxdb:", str(influxdb_point.to_line_protocol()))
 
         client = InfluxDBClient(
             url    = config[self.name]['influxdb_url'], 
