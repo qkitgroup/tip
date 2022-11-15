@@ -22,8 +22,8 @@ def driver(name):
     SIM = SIM900(name,
                 address     = config[name]['address'],
                 gpib        = config[name]['gpib'],
-                SIM921_port = config[name]['SIM921_port'],
-                SIM925_port = config[name]['SIM925_port'],
+                SIM921_port = config[name]['sim921_port'],
+                SIM925_port = config[name]['sim925_port'],
                 TIP_mode    = True)
 
     config[name]['device_ranges']       = SIM.ranges
@@ -36,7 +36,7 @@ class SIM900(object):
     def __init__(self,
                  name,
                  address = "",
-                 delay = 0.1, 
+                 delay = 0.15, 
                  gpib = "GPIB::1",
                  SIM921_port = 2,
                  SIM925_port = 1,
@@ -44,6 +44,7 @@ class SIM900(object):
                  TIP_mode = False
                  ):
         
+        self.name = name
         self.SIM         = visa.instrument(gpib, ip = address, delay = delay, 
                                            instrument_delay= 0.05, term_char = "\r\n", eos_char = "\r\n")
         self.SIM921_port = SIM921_port
