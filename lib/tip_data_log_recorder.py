@@ -19,8 +19,8 @@ from lib.tip_config import config, internal
 
 dlr_queue  = internal['dlr_queue']
 
-from influxdb import InfluxDBClient, Point
-from influxdb.client.write_api import SYNCHRONOUS, WritePrecision
+from influxdb_client import InfluxDBClient, Point
+from influxdb_client.client.write_api import SYNCHRONOUS, WritePrecision
 from time import time
 from random import random
 
