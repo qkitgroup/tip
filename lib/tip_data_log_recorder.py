@@ -35,7 +35,7 @@ class data_log_recorder(object):
         # taken from config 
         self.influxdb_url     = "http://localhost:8086"
         self.influxdb_bucket  = "homebkt"
-        self.influxdb_token   = "KzmG8NueJP7jyQ9xkTPdIyLOWPbcCAt07T8cCOlcUq6msHpVJvB-JYVV3iKURie8pSaC1gtsWmR3IAh0PTPeAQ=="
+        self.influxdb_token   = "KzmG8NueJP7j..."
         self.influxdb_org     = "myorg"
         
         
@@ -78,7 +78,7 @@ class data_log_recorder(object):
         #for d in devs:
         while (not dlrq.empty()):
             dlr_dg = dlrq.get()
-            print(dlr_dg.device,dlr_dg.item,dlr_dg.value,dlr_dg.change_time)
+            #print(dlr_dg.device,dlr_dg.item,dlr_dg.value,dlr_dg.change_time)
             key = dlr_dg.device + dlr_dg.item
             
             # prepare to downsample (average) values 
@@ -97,7 +97,7 @@ class data_log_recorder(object):
         for key in devitems_val:
             # calculate the value average 
             val_avg = sum(devitems_val[key])/len(devitems_val[key])
-            print ("DLR val_avg",val_avg)
+            #print ("DLR val_avg",val_avg)
             # define the influxdb data point
             ifp = self._influxdb_point(
                 devitems_dev[key],
@@ -120,13 +120,13 @@ class data_log_recorder(object):
         return Point.measurement(item)\
             .field(device,value)\
             .time(int(change_time*1e9))
-            ##.tag("device",device)
+
 
             
  
     def _submit_to_influxdb(self,influxdb_point):
         
-        print (influxdb_point.to_line_protocol())
+        loggin.debug (influxdb_point.to_line_protocol())
 
         client = InfluxDBClient(
             url    = config[self.name]['influxdb_url'], 

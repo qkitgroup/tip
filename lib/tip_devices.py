@@ -89,6 +89,7 @@ class device(object):
 
         dlr_dg.device      = device
         dlr_dg.item        = item
+        dlr_dg.value       = value
         dlr_dg.change_time = change_time
 
         internal['dlr_queue'].put(dlr_dg)
