@@ -75,9 +75,9 @@ _default_thermometer = {
     'calibration_key_format'      : 'R',                 # support for 'R' and 'log10R'
     # feedback loop initial settings; to be changed with a tip client/gui
     'control_active'              : False,
-    'control_P'                   : 0.1,
-    'control_I'                   : 0.1,
-    'control_D'                   : 0.0,
+    'control_p'                   : 0.1,
+    'control_i'                   : 0.1,
+    'control_d'                   : 0.0,
     # control device: example a heater
     'control_device'              : 'Name_of_Instrument',  # defined in the instruments section
     'control_channel'             : 0,              # default channel 
