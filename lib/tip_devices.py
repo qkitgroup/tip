@@ -84,15 +84,17 @@ class device(object):
         # data log recorder queue (e.g. with a influxdb backend)
         # this function appends a log item to a -thread independent-  global queue
         #
-        logging.debug(f"DLR-record dev:{device} it:{item} val:{value} ct:{change_time}")
-        dlr_dg = dlr_datagram()
+        if config['system']['active_logger_facilities']:
+            #logging.debug(f"active logger facilities {config['system']['active_logger_facilities']}")
+            logging.debug(f"DLR-record dev:{device} it:{item} val:{value} ct:{change_time}")
+            dlr_dg = dlr_datagram()
 
-        dlr_dg.device      = device
-        dlr_dg.item        = item
-        dlr_dg.value       = value
-        dlr_dg.change_time = change_time
+            dlr_dg.device      = device
+            dlr_dg.item        = item
+            dlr_dg.value       = value
+            dlr_dg.change_time = change_time
 
-        internal['dlr_queue'].put(dlr_dg)
+            internal['dlr_queue'].put(dlr_dg)
 
 
 # the thermometer class is thermometer specific, probably one of the few places in the entire code. 
