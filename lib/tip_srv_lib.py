@@ -37,7 +37,7 @@ def parse_request(request):
             if CHANNEL is ommitted ('//') then the default channel is assumed
     """
     "tokenize the request string"
-    logging.info(request)
+    logging.debug(request)
 
     cmds = request.strip('/').split("/")
     "remove heading or trailing white spaces"
