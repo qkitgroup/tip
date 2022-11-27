@@ -12,6 +12,9 @@ from xml.dom.minidom import parseString
 
 from lib.tip_config import config
 
+# debug this driver?
+debug = False
+
 def driver(name):
     #print("entering driver", flush = True)
     CBW = CBW_X_317(name, url = config[name]['url'])
@@ -70,7 +73,7 @@ class CBW_X_317(object):
         
 
     def set_heater_power(self,value):
-        print("heater_power"+str(value))
+        logging.info("set heater power: "+str(value))
         if value < 0:
             return self.set_heater_voltage(0)
             self.heater_power = 0
@@ -84,8 +87,7 @@ class CBW_X_317(object):
         return self.channel
 
     def set_heater_channel(self,channel):
-        print("#########")
-        print (channel)
+        logging.debug(f"set heater channel: {channel}")
         if channel in [1,2,3,4,5]: 
             self.channel = channel
         else:
@@ -93,11 +95,16 @@ class CBW_X_317(object):
     
     def _setup_http_connection(self,url):
         self.conn = http.client.HTTPConnection(url)
+        if debug:
+            self.conn.debuglevel = 1
 
     def _http_request(self,request):
+
+        self.conn.connect()  # Bugfix 23102022: for some reason, we have to reconnect at every request
         self.conn.request("GET", request)        
         res = self.conn.getresponse()
-        logging.debug(res.status, res.reason)
+        logging.debug(f"heater http status: {res.status}  | reason: {res.reason}")
+
         if res.status != 200:
             raise Exception("http request failed")
         return res
