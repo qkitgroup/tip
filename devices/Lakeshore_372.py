@@ -41,18 +41,13 @@ class Lakeshore_372(object):
         self.serial_dev.open()
         print("serial port opened", flush =  True)
         print(self.serial_dev.timeout, flush = True)
-        #self._visa = ser
-        # self._visa = visa.instrument(
-        #     gpib, 
-        #     ip = address, 
-        #     delay = delay, 
-        #     term_char = "\n",
-        #     eos_char = "",
-        #     timeout = timeout,
-        #     instrument_delay = 0.06,
-        #     debug = False
-        #     )
-            
+
+        debug = False # clumsy
+        if debug: # if timing is critical set above "debug = True"  
+            print("serial port opened", flush =  True)
+            print(self.serial_dev.timeout, flush = True)
+        logging.debug(f"LS 372: serial port opened with timeout: {self.serial_dev.timeout}")
+
         #
         #  a few default values
         #
