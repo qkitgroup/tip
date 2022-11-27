@@ -224,7 +224,7 @@ class thermometer(device):
             
 
             if config[self.name]['control_active'] and config[config[self.name]['control_device']]['active']:
-                logging.debug('entered control part')
+                logging.debug('[^]<- entered control part')
                 new_heat_value = self.control.get_new_heat_value(T)
                 
                 logging.debug(self.control_device.get_idn())
@@ -233,6 +233,7 @@ class thermometer(device):
                 
                 config[self.name]['heating_power'] = new_heat_value
                 logging.info('%s Heat: %.02f uW'%(self.name, new_heat_value*1e6))
+
                 #
                 # log the value to the data log recorder
                 #
@@ -242,7 +243,7 @@ class thermometer(device):
                     value        = config[self.name]['heating_power'],
                     change_time  = config[self.name]['change_time']
                     )
-    
+                logging.debug('[^]-> leave control part')
     # end of thermometer class
 
 # scale_device. 
