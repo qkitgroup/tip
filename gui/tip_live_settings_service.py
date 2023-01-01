@@ -22,6 +22,14 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
 
+import os
+import sys
+PROJECT_ROOT = os.path.abspath(os.path.join(
+                  os.path.dirname(__file__), 
+                  os.pardir)
+)
+sys.path.append(PROJECT_ROOT)
+
 from lib.tip_zmq_client_lib import TIP_clients
 
 HTTP_hostName = "localhost"
@@ -206,7 +214,7 @@ if __name__ == "__main__":
     try:
         webServer.serve_forever()
     except KeyboardInterrupt:
-        pass
+        pass    
 
     webServer.server_close()
     print("Server stopped.")
