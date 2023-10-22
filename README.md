@@ -25,9 +25,10 @@ Installation:
   * clone TIP to an appropriate directory
   * copy *settings.cfg* to *settings_local.cfg* and make changes there
   * start the tip server by changing into the tip directory and execute *python3 tip.py*
+  * influxdb_client (v2) via pip: pip install 'influxdb-client[ciso]'
 
 
 Authors:
 ===
  *  A. Schneider  (v1)/ KIT
- *  H. Rotzinger (v1-)/ KIT
+ *  H. Rotzinger / KIT

@@ -6,7 +6,7 @@ Pfeiffer DPG 109 Display controller for digital vacuum gauges
 #import sys
 #import time
 import serial
-import pfeiffer_vacuum_protocol as pvp
+import devices.pfeiffer_vacuum_protocol as pvp
 
 #import tip.config
 
