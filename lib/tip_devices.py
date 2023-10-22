@@ -334,7 +334,7 @@ class generic_device(device):
 
         logging.debug("_execute_func called for "+self.name)
         
-        #self.backend.set_channel(     config[self.name]['device_channel'])
+        self.backend.set_channel(     config[self.name]['device_channel'])
         #self.backend.set_excitation(  config[self.name]['device_excitation'])
         #self.backend.set_integration( config[self.name]['device_integration_time'])
 

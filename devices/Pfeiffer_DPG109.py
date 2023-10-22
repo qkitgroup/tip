@@ -27,7 +27,7 @@ class Pfeiffer_DPG109(object):
     def get_idn(self):
         return( "" )
 
-    def set_channel(self,channel)
+    def set_channel(self,channel):
         self.channel = channel
 
     def get_pressure(self):
