@@ -8,7 +8,7 @@ Pfeiffer DPG 109 Display controller for digital vacuum gauges
 import serial
 import devices.pfeiffer_vacuum_protocol as pvp
 
-from tip.config import config
+from lib.tip_config import config
 
 def driver(name):
     drv  =  Pfeiffer_DPG109(name)
