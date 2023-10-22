@@ -369,7 +369,7 @@ class generic_device(device):
 
         # tell what happened
         #logging.info (self.name + "\t %s: %.01f "% (self.measure_property,value))
-        logging.info (f"{self.name}\t{self.measure_property}: {value:.01f} at {timestamp}")
+        logging.info (f"{self.name}\t{self.measure_property}: {value:.03e} at {timestamp}")
 
      
 
