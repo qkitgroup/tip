@@ -126,7 +126,7 @@ def read_pressure(s, addr):
     # Convert to a float
     mantissa = int(rdata[:4])
     exponent = int(rdata[4:])
-    return float(mantissa*10**(exponent-26))
+    return float(mantissa*10**(exponent-23)) # mantissa is 4 chars in units of 1/1000 and exponent is offset by 20 -> 23
 
 def write_pressure_setpoint(s, addr, val):
     # Format the data
