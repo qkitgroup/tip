@@ -341,24 +341,35 @@ class generic_device(device):
         #    
         # get the [measurement] value from the instrument   
         #
-        value = getattr(self.backend,"get_"+self.measure_property)()
-        config[self.name][self.measure_property]  = value
+        if config[self.name]['has_timestamp']:
+            value, timestamp = getattr(self.backend,"get_"+self.measure_property)()
+            config[self.name][self.measure_property]  = value
 
-        #
-        # update the modification timestamp
-        #
-        now = time.time()
-        config[self.name]['change_time'] = now
-        
+            #
+            # update the modification timestamp
+            #
+            config[self.name]['change_time'] = timestamp
+
+        else:
+            value = getattr(self.backend,"get_"+self.measure_property)()
+            config[self.name][self.measure_property]  = value
+
+            #
+            # update the modification timestamp
+            #
+            timestamp = time.time()
+            config[self.name]['change_time'] = timestamp
+            
         #
         # update the list of values, if configured
         # updates the config at 
         # 'measure_property'+'s'
         # 'change_times'
-        self.gather(self.measure_property, value, now)
+        self.gather(self.measure_property, value, timestamp)
 
         # tell what happened
-        logging.info (self.name + "\t %s: %.01f "% (self.measure_property,value))
+        #logging.info (self.name + "\t %s: %.01f "% (self.measure_property,value))
+        logging.info (f"{self.name}\t{self.measure_property}: {value:.01f} at {timestamp}")
 
      
 

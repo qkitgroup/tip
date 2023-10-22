@@ -156,6 +156,7 @@ _default_generic = {
     'description'                 : 'generic device',
     'property'                    : '',              # !!! this has to be set for the generic device !!!
     'unit'                        : '',
+    'has_timestamp'               : False,           # the device provides its own timestamp
     # scheduler parameter
     'interval'                    : 60,              # seconds
     # should measurement values be gathered to a list ?
