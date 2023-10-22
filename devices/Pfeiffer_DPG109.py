@@ -8,26 +8,30 @@ Pfeiffer DPG 109 Display controller for digital vacuum gauges
 import serial
 import devices.pfeiffer_vacuum_protocol as pvp
 
-#import tip.config
+from tip.config import config
 
-def driver():
-    drv  =  Pfeiffer_DPG109("name")
-    drv.setup_device()
+def driver(name):
+    drv  =  Pfeiffer_DPG109(name)
+    drv.setup_device(serial_dev = config[name]['address'])
+    drv.set_channel(channel = config[name]['channel'])
     return drv
 
 class Pfeiffer_DPG109(object):
     
     def __init__(self,name):
-        pass
+        self.channel = 0
     
     def setup_device(self,serial_dev = "/dev/ttyUSB0"):
         self.con = serial.Serial(serial_dev, timeout=1)
     
     def get_idn(self):
-        return( "None" )
-    
-    def get_pressure(self,channel):
-        p = pvp.read_pressure(self.con, channel)
+        return( "" )
+
+    def set_channel(self,channel)
+        self.channel = channel
+
+    def get_pressure(self):
+        p = pvp.read_pressure(self.con, self.channel)
         print(f'Pressure {p:.3e} mbar')
         return p
 
@@ -44,7 +48,8 @@ if __name__ == "__main__":
     for a in range(0,9): 
         print(a)
         try:
-            p = dpg.get_pressure(a)
+            dpg.set_channel(a)
+            p = dpg.get_pressure()
             print(f"type {dpg.get_gauge_type(a)}")
         except ValueError:
             # no response from the gauge -> probably nothing connected
