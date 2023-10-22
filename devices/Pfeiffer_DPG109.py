@@ -13,7 +13,6 @@ from lib.tip_config import config
 def driver(name):
     drv  =  Pfeiffer_DPG109(name)
     drv.setup_device(serial_dev = config[name]['address'])
-    drv.set_channel(channel = config[name]['device_channel'])
     return drv
 
 class Pfeiffer_DPG109(object):
