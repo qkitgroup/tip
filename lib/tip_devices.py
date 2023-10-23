@@ -359,7 +359,16 @@ class generic_device(device):
             #
             timestamp = time.time()
             config[self.name]['change_time'] = timestamp
-            
+        
+        #
+        # log the value to the data log recorder
+        #
+        self.dlr_record(
+            device       = self.name,
+            item         = 'pressure',
+            value        = config[self.name][self.measure_property],
+            change_time  = config[self.name]['change_time']
+            )
         #
         # update the list of values, if configured
         # updates the config at 
@@ -369,7 +378,7 @@ class generic_device(device):
 
         # tell what happened
         #logging.info (self.name + "\t %s: %.01f "% (self.measure_property,value))
-        logging.info (f"{self.name}\t{self.measure_property}: {value:.03e} at {timestamp}")
+        logging.info (f"{self.name}\t{self.measure_property}: {value:.03e} {config[self.name]['unit']} at {timestamp}")
 
      
 
