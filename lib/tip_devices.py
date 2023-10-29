@@ -381,7 +381,8 @@ class generic_device(device):
         #logging.info (self.name + "\t %s: %.01f "% (self.measure_property,value))
         if value is not None:
             logging.info (f"{self.name}\t{self.measure_property}: {value:.03e} {config[self.name]['unit']} at {timestamp}")
-
+        else:
+            logging.info (f"{self.name}\t{self.measure_property}: {value} {config[self.name]['unit']} at {timestamp}")
      
 
         
