@@ -30,9 +30,20 @@ class Pfeiffer_DPG109(object):
         self.channel = channel
 
     def get_pressure(self):
-        p = pvp.read_pressure(self.con, self.channel)
-        print(f'Pressure {p:.3e} mbar')
-        return p
+        try:
+            p = pvp.read_pressure(self.con, self.channel)
+            # print(f'Pressure {p:.3e} mbar')
+            
+            # sometimes the gauges return an underrange value = 0
+            if p == 0: 
+                return None
+            else:
+                return p
+            
+        except ValueError:
+            # value is e.g. raised when no gauge is connected
+            # this way we can still ask vor a value and then live with a None response
+            return None
 
     def get_gauge_type(self,channel):
         return pvp.read_gauge_type(self.con,channel)

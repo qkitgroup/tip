@@ -363,12 +363,13 @@ class generic_device(device):
         #
         # log the value to the data log recorder
         #
-        self.dlr_record(
-            device       = self.name,
-            item         = 'pressure',
-            value        = config[self.name][self.measure_property],
-            change_time  = config[self.name]['change_time']
-            )
+        if config[self.name][self.measure_property] is not None:
+            self.dlr_record(
+                device       = self.name,
+                item         = self.measure_property,
+                value        = config[self.name][self.measure_property],
+                change_time  = config[self.name]['change_time']
+                )
         #
         # update the list of values, if configured
         # updates the config at 
