@@ -125,20 +125,22 @@ class data_log_recorder(object):
             
  
     def _submit_to_influxdb(self,influxdb_point):
-        
-        client = InfluxDBClient(
-            url    = config[self.name]['influxdb_url'], 
-            token  = config[self.name]['influxdb_token'],
-            org    = config[self.name]['influxdb_org']
-         )
-        
-        write_api = client.write_api(write_options=SYNCHRONOUS)
-
-        write_api.write(
-            bucket = config[self.name]['influxdb_bucket'], 
-            record = influxdb_point
+        try:
+            client = InfluxDBClient(
+                url    = config[self.name]['influxdb_url'], 
+                token  = config[self.name]['influxdb_token'],
+                org    = config[self.name]['influxdb_org']
             )
-           
+        
+            write_api = client.write_api(write_options=SYNCHRONOUS)
+
+            write_api.write(
+                bucket = config[self.name]['influxdb_bucket'], 
+                record = influxdb_point
+                )
+        except ConnectionRefusedError:
+            logging.debug("DLR connection exception: ConnectionRefusedError with influxdb, ignoring")
+
     
     def _append_to_devitem_queue(self):
         pass
