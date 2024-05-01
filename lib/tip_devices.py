@@ -93,8 +93,8 @@ class device(object):
             dlr_dg.item        = item
             dlr_dg.value       = value
             dlr_dg.change_time = change_time
-
-            internal['dlr_queue'].put(dlr_dg)
+            for ald_device in config['system']['active_logger_facilities']:
+                internal['dlr_queues'][ald_device].put(dlr_dg)
 
 
 # the thermometer class is thermometer specific, probably one of the few places in the entire code. 

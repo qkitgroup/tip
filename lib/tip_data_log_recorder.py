@@ -17,7 +17,7 @@ from queue import Empty
 
 from lib.tip_config import config, internal
 
-dlr_queue  = internal['dlr_queue']
+#dlr_queue  = internal['dlr_queue']
 
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS, WritePrecision
@@ -37,6 +37,7 @@ class data_log_recorder(object):
         self.influxdb_bucket  = "homebkt"
         self.influxdb_token   = "KzmG8NueJP7j..."
         self.influxdb_org     = "myorg"
+        self.dlr_queue = internal['dlr_queues'][name]
         
         
 
@@ -69,7 +70,7 @@ class data_log_recorder(object):
         self.process_dlr()
 
     def process_dlr(self):
-        dlrq = internal['dlr_queue']
+        dlrq = self.dlr_queue #internal['dlr_queue']
         devitems_val   = {}
         devitems_time  = {}
         devitems_dev   = {}
@@ -148,7 +149,7 @@ class data_log_recorder(object):
     def prepare_influx_datagram(self, dlr_dg):
         pass
 
-    def send_to_influxdb(self):
+    def send_to_influxdb(self): # only for debugging 
     
         url = self.influxdb_url
         bucket = self.influxdb_bucket
@@ -173,7 +174,7 @@ class data_log_recorder(object):
 
     def _get_dlr_item(self):
         try:
-            device = dlr_queue.get(block=False)
+            device = self.dlr_queue.get(block=False)
         except Empty:
             return None 
 

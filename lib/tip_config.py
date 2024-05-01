@@ -86,6 +86,7 @@ internal = SettingsDict()
 #
 
 internal['dlr_queue'] = SimpleQueue()
+internal['dlr_queues'] = {}
 
 #
 # DLR datagram object to be posted vie the dlr_queue 

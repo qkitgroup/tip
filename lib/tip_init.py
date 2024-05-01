@@ -3,6 +3,7 @@ import os
 import logging
 from time import strftime
 import importlib
+from queue import SimpleQueue
 import tip
 from lib.tip_config import config, internal, device_instances, load_config, convert_to_dict, update_active_devices
 from lib.tip_devices import device, thermometer, levelmeter, generic_device
@@ -117,6 +118,9 @@ def setup_data_log_recorder(config,tip_sched):
     logging.info("Active logger facilities: "+str(config['system']['active_logger_facilities']))
     
     for device in config['system']['active_logger_facilities']:
+        logging.info(f"add logger device queue for: {device}")
+        internal['dlr_queues'][device] = SimpleQueue()
+
         device_instances[device] = data_log_recorder(device)
         #device_instances[device].backend = device_instances[config[device]["device"]] # influxdb ?!
         
