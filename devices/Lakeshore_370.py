@@ -48,7 +48,7 @@ class Lakeshore_37X(object):
             term_char = "\n",
             eos_char = "",
             timeout = timeout,
-            instrument_delay = 0.06,
+            instrument_delay = 0.1,
             debug = False
             )
             
