@@ -120,6 +120,7 @@ def setup_data_log_recorder(config,tip_sched):
     for device in config['system']['active_logger_facilities']:
         logging.info(f"add logger device queue for: {device}")
         internal['dlr_queues'][device] = SimpleQueue()
+        internal['dlr_submit_queues'][device] = list()
 
         device_instances[device] = data_log_recorder(device)
         #device_instances[device].backend = device_instances[config[device]["device"]] # influxdb ?!

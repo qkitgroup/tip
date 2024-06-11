@@ -97,6 +97,10 @@ class dlr_datagram:
     value       = 0      # <- this is important, since the value, time  stored in the config can be outdated.
     change_time = 0      # <-
 
+#
+# This is an attempt to make the submission of dlr_datagrams more robust
+# if the submission of datagrams fail, in the next round it is tried again. 
+internal['dlr_submit_queues'] = []
 
 
 #

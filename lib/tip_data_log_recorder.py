@@ -38,6 +38,7 @@ class data_log_recorder(object):
         self.influxdb_token   = "KzmG8NueJP7j..."
         self.influxdb_org     = "myorg"
         self.dlr_queue = internal['dlr_queues'][name]
+        self.dlr_submit_queue = internal['dlr_submit_queues'][name]
         
         
 
@@ -106,8 +107,10 @@ class data_log_recorder(object):
                 val_avg,
                 devitems_time[key]
             )
-            # submit it to the influxdb
-            self._submit_to_influxdb(ifp)
+            self.dlr_submit_queue.append(ifp)
+        
+        # submit it to the influxdb // also old values from a previous run can be in the queue
+        self._submit_to_influxdb(self.dlr_submit_queue)
 
 
 
@@ -125,8 +128,10 @@ class data_log_recorder(object):
 
             
  
-    def _submit_to_influxdb(self,influxdb_point):
+    def _submit_to_influxdb(self,influxdb_points_queue):
+
         try:
+            # prepare a connection to the influxdb
             client = InfluxDBClient(
                 url    = config[self.name]['influxdb_url'], 
                 token  = config[self.name]['influxdb_token'],
@@ -134,22 +139,29 @@ class data_log_recorder(object):
             )
         
             write_api = client.write_api(write_options=SYNCHRONOUS)
-
-            write_api.write(
-                bucket = config[self.name]['influxdb_bucket'], 
-                record = influxdb_point
-                )
+            
+            # try to send the queue of influxdb_points this time
+            for i,ifp in enumerate(influxdb_points_queue):
+                write_api.write(
+                    bucket = config[self.name]['influxdb_bucket'], 
+                    record = ifp
+                    )
+                
+            # delete all submitted influxdb points
+            del influxdb_points_queue[0:i]
+                
         except ConnectionRefusedError:
             logging.debug("DLR connection exception: ConnectionRefusedError with influxdb, ignoring")
+        except Exception as e:
+            logging.debug(f"DLR connection exception: {e} influxdb, ignoring")
 
-    
     def _append_to_devitem_queue(self):
         pass
 
     def prepare_influx_datagram(self, dlr_dg):
         pass
 
-    def send_to_influxdb(self): # only for debugging 
+    """ def send_to_influxdb(self): # only for debugging 
     
         url = self.influxdb_url
         bucket = self.influxdb_bucket
@@ -166,7 +178,7 @@ class data_log_recorder(object):
             .field("pressure", 10e-6*random())\
             .time(int(time()*1e9))        #,write_precision=WritePrecision.NS)
         print (p.to_line_protocol())
-        write_api.write(bucket=bucket, record=p)
+        write_api.write(bucket=bucket, record=p) """
 
     def _convert_to_influxdb_timestamp(self,change_time):
         # an integer representing epoch nanoseconds
@@ -181,5 +193,6 @@ class data_log_recorder(object):
 
 
 if __name__ ==  "__main__":
-    dlr =  data_log_recorder("test")
-    dlr.send_to_influxdb()
+    pass
+    #dlr =  data_log_recorder("test")
+    #dlr.send_to_influxdb()
