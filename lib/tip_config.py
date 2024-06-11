@@ -100,7 +100,7 @@ class dlr_datagram:
 #
 # This is an attempt to make the submission of dlr_datagrams more robust
 # if the submission of datagrams fail, in the next round it is tried again. 
-internal['dlr_submit_queues'] = []
+internal['dlr_submit_queues'] = {}
 
 
 #
