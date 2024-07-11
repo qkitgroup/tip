@@ -68,7 +68,8 @@ class CBW_X_317(object):
             4 : "/state.xml?an4State=",
             5 : "/state.xml?an5State=",          
         }
-        req  = self._http_request(sv_reqests[self.channel]+str(voltage))
+        formatted_voltage = "{:.5f}".format(voltage)
+        req  = self._http_request(sv_reqests[self.channel]+formatted_voltage)
         return self._read_request(req)
         
 
