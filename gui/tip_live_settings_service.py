@@ -91,12 +91,12 @@ class TIP_LSS(BaseHTTPRequestHandler):
 
         return dev,param,nval
 
-    def html_header(self,refresh_time=60):
+    def html_header(self,refresh_time=60,host='localhost', port = 8080):
         header = """<!DOCTYPE html>
         <html>
         <head>
         """
-        header += f'<meta http-equiv="refresh" content="{refresh_time}; url=http://localhost:8080">'
+        header += f'<meta http-equiv="refresh" content="{refresh_time}; url=http://{host}:{port}">'
         header += """
         <style>
         body {background-color: #E4E6F0;}

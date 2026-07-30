@@ -128,6 +128,24 @@ def setup_data_log_recorder(config,tip_sched):
         logging.info(f"add logger device to scheduler: {device}")
         tip_sched.add_device(device_instances[device])
     
+def setup_live_settings_service(config,tip_sched):
+    # data log recorder (dlr)
+    # 
+    logging.info("Start LIVE SETTINGS SERVICE (LSS) facility.")
+    logging.info("Found LSS facilities: " +str(config['system']['defined_live_settings_service']))
+    logging.info("Active LSS facilities: "+str(config['system']['active_live_settings_service']))
+    
+    for device in config['system']['active_live_settings_service']:
+        pass
+        #logging.info(f"add LSS queue for: {device}")
+        #internal['dlr_queues'][device] = SimpleQueue()
+        #internal['dlr_submit_queues'][device] = []
+
+        #device_instances[device] = data_log_recorder(device)
+        #device_instances[device].backend = device_instances[config[device]["device"]] # influxdb ?!
+        
+        #logging.info(f"add logger device to scheduler: {device}")
+        #tip_sched.add_device(device_instances[device])
 
     
 
