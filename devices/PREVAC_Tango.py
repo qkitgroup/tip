@@ -20,7 +20,7 @@ class PREVAC_Tango(object):
         self.tango_device = ""
         self.tango_device_id = ""
     
-    def setup_device(self,TANGO_HOST = "TANGO_HOST",TANGO_PORT = 20000):
+    def setup_device(self,TANGO_HOST = "localhost",TANGO_PORT = 20000):
         # for now, we overwrite the environment variable.
         self.tango_host = f"{TANGO_HOST}:{TANGO_PORT}"
         os.environ['TANGO_HOST'] = self.tango_host
@@ -55,7 +55,7 @@ class PREVAC_Tango(object):
 
 if __name__ == "__main__":
     d = 'synthesium/gaugevalues/spc_bara'
-    tg=PREVAC_Tango()
+    tg=PREVAC_Tango("test")
     tg.setup_device()
     tg.set_tango_device(d)
     p = dpg.get_pressure()
