@@ -60,5 +60,6 @@ if __name__ == "__main__":
     print ("setup_device done")
     tg.set_tango_device(d)
     print ("set_tango_device done")
-    p = tg.get_pressure()
-    print(f"Pressure on device {d} is {p}")
+    for i in range(10):
+        p = tg.get_pressure()
+        print(f"Pressure on device {d} is {p}")
