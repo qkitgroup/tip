@@ -58,5 +58,5 @@ if __name__ == "__main__":
     tg=PREVAC_Tango("test")
     tg.setup_device()
     tg.set_tango_device(d)
-    p = dpg.get_pressure()
+    p = tg.get_pressure()
     print(f"Pressure on device {d} is {p}")
