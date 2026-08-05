@@ -57,6 +57,8 @@ if __name__ == "__main__":
     d = 'synthesium/gaugevalues/spc_bara'
     tg=PREVAC_Tango("test")
     tg.setup_device()
+    print ("setup_device done")
     tg.set_tango_device(d)
+    print ("set_tango_device done")
     p = tg.get_pressure()
     print(f"Pressure on device {d} is {p}")
