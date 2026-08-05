@@ -8,8 +8,7 @@ import logging
 from lib.tip_config import config, device_instances, internal ,dlr_datagram, _types_dict, _boolean, _int 
 from lib.tip_eich import TIPEich
 from lib.tip_pidcontrol import pidcontrol
-# future adds:
-#from lib.tip_carbon_copier import check_logfile, prepare_data, update_hdf_file
+
 
 class device(object):
 
@@ -334,7 +333,15 @@ class generic_device(device):
 
         logging.debug("_execute_func called for "+self.name)
         
-        self.backend.set_channel(     config[self.name]['device_channel'])
+        # This is a bit ugly, since it treats the "tango" backend separately 
+        # this is required since tango uses non-integer device names
+        if not config[self.name]['com_method']:
+            self.backend.set_channel(          config[self.name]['device_channel'])
+        elif config[self.name]['com_method'] == 'tango':
+            self.backend.set_tango_device(     config[self.name]['device_uid'])
+        else:
+            self.backend.set_channel(          config[self.name]['device_channel'])
+
         #self.backend.set_excitation(  config[self.name]['device_excitation'])
         #self.backend.set_integration( config[self.name]['device_integration_time'])
 
