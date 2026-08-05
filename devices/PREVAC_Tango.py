@@ -21,9 +21,10 @@ class PREVAC_Tango(object):
         self.tango_device_id = ""
     
     def setup_device(self,TANGO_HOST = "TANGO_HOST",TANGO_PORT = 20000):
+        # for now, we overwrite the environment variable.
         self.tango_host = f"{TANGO_HOST}:{TANGO_PORT}"
         os.environ['TANGO_HOST'] = self.tango_host
-        tango.ApiUtil.get_env_var("TANGO_HOST") 
+        print (tango.ApiUtil.get_env_var("TANGO_HOST") )
     
     def get_idn(self):
         return( f"{self.tango_device_id} on TANGO server {self.tango_host}" )
@@ -53,16 +54,9 @@ class PREVAC_Tango(object):
         pass
 
 if __name__ == "__main__":
-    
-    dpg=PREVAC_Tango()
-    dpg.setup_device()
-    for a in range(0,9): 
-        print(a)
-        try:
-            dpg.set_channel(a)
-            p = dpg.get_pressure()
-            print(f"type {dpg.get_gauge_type(a)}")
-        except ValueError:
-            # no response from the gauge -> probably nothing connected
-            pass
-    
+    d = 'synthesium/gaugevalues/spc_bara'
+    tg=PREVAC_Tango()
+    tg.setup_device()
+    tg.set_tango_device(d)
+    p = dpg.get_pressure()
+    print(f"Pressure on device {d} is {p}")
