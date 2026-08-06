@@ -21,10 +21,16 @@ class PREVAC_Tango(object):
         self.tango_device_id = ""
     
     def setup_device(self,TANGO_HOST = "localhost",TANGO_PORT = 20000):
-        # for now, we overwrite the environment variable.
+        # The TANGO_HOST environment variable directs TANGO to the server 
+        # However, when it is reset by the python driver it stalls up to 12 s
+        # so we only set it if required 
         self.tango_host = f"{TANGO_HOST}:{TANGO_PORT}"
-        os.environ['TANGO_HOST'] = self.tango_host
-        print (tango.ApiUtil.get_env_var("TANGO_HOST") )
+        if tango.ApiUtil.get_env_var("TANGO_HOST") == self.tango_host:
+            pass
+        else:
+            os.environ['TANGO_HOST'] = self.tango_host
+
+        return (tango.ApiUtil.get_env_var("TANGO_HOST") )
     
     def get_idn(self):
         return( f"{self.tango_device_id} on TANGO server {self.tango_host}" )
@@ -36,9 +42,6 @@ class PREVAC_Tango(object):
     def get_pressure(self):
         try:
             p = self.tango_device.value
-            # print(f'Pressure {p:.3e} mbar')
-            
-            # sometimes the gauges return an underrange value = 0
             if p == 0: 
                 return None
             else:
