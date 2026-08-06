@@ -20,17 +20,21 @@ class PREVAC_Tango(object):
         self.tango_device = ""
         self.tango_device_id = ""
     
-    def setup_device(self,TANGO_HOST = "localhost",TANGO_PORT = 20000):
+    def setup_device(self,TANGO_HOST = "127.0.0.1",TANGO_PORT = 20000):
         # The TANGO_HOST environment variable directs TANGO to the server 
         # However, when it is reset by the python driver it stalls up to 12 s
         # so we only set it if required 
         self.tango_host = f"{TANGO_HOST}:{TANGO_PORT}"
-        if tango.ApiUtil.get_env_var("TANGO_HOST") == self.tango_host:
+        tango_host_env = tango.ApiUtil.get_env_var("TANGO_HOST")
+        #print (f"#{self.tango_host}##{tango_host_env}#") 
+        if tango_host_env == self.tango_host:
+            #print (" TANGO_HOST not set")
             pass
         else:
             os.environ['TANGO_HOST'] = self.tango_host
+            #print ("TANGO_HOST reset")
+            pass
 
-        return (tango.ApiUtil.get_env_var("TANGO_HOST") )
     
     def get_idn(self):
         return( f"{self.tango_device_id} on TANGO server {self.tango_host}" )
