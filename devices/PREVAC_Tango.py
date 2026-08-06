@@ -11,7 +11,8 @@ from lib.tip_config import config
 def driver(name):
     drv  =  PREVAC_Tango(name)
     drv.setup_device(TANGO_HOST = config[name]['address'], 
-                     TANGO_PORT = config[name]['port'])
+                     TANGO_PORT = config[name]['port'],
+                     com_method = config[name]['com_method'])
     return drv
 
 class PREVAC_Tango(object):
@@ -19,11 +20,13 @@ class PREVAC_Tango(object):
     def __init__(self,name):
         self.tango_device = ""
         self.tango_device_id = ""
+        print(config[name])
     
-    def setup_device(self,TANGO_HOST = "127.0.0.1",TANGO_PORT = 20000):
+    def setup_device(self,TANGO_HOST = "127.0.0.1",TANGO_PORT = 20000, com_method = ''):
         # The TANGO_HOST environment variable directs TANGO to the server 
         # However, when it is reset by the python driver it stalls up to 12 s
         # so we only set it if required 
+        self.com_method = com_method
         self.tango_host = f"{TANGO_HOST}:{TANGO_PORT}"
         tango_host_env = tango.ApiUtil.get_env_var("TANGO_HOST")
         #print (f"#{self.tango_host}##{tango_host_env}#") 

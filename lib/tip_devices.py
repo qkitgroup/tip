@@ -5,7 +5,7 @@
 from math import log10
 import time
 import logging
-from lib.tip_config import config, device_instances, internal ,dlr_datagram, _types_dict, _boolean, _int 
+from lib.tip_config import config, device_instances, internal, dlr_datagram, _types_dict, _boolean, _int 
 from lib.tip_eich import TIPEich
 from lib.tip_pidcontrol import pidcontrol
 
