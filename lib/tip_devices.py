@@ -335,9 +335,11 @@ class generic_device(device):
         
         # This is a bit ugly, since it treats the "tango" backend separately 
         # this is required since tango uses non-integer device names
-        if not config[self.name]['com_method']:
+        com_method = config[config[self.name]['device']]['com_method']
+        print (com_method)
+        if not com_method:
             self.backend.set_channel(          config[self.name]['device_channel'])
-        elif config[self.name]['com_method'] == 'tango':
+        elif com_method == 'tango':
             self.backend.set_tango_device(     config[self.name]['device_uid'])
         else:
             self.backend.set_channel(          config[self.name]['device_channel'])
